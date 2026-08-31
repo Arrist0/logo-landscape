@@ -217,42 +217,70 @@ with col2:
         st.cache_data.clear()
         st.rerun()
 
+# Show available columns for debugging
+with col1:
+    st.caption(f"📋 Columns found: {', '.join(df.columns.tolist())}")
+
 # Sidebar filters
 with st.sidebar:
     st.markdown("### 🔍 Filter Options")
     
+    # Auto-detect column names
+    shape_col = next((col for col in df.columns if col.lower() in ['shape', 'logo shape', 'shape type']), None)
+    color_col = next((col for col in df.columns if col.lower() in ['color', 'logo color', 'color palette']), None)
+    industry_col = next((col for col in df.columns if col.lower() in ['industry', 'sector', 'category']), None)
+    country_col = next((col for col in df.columns if col.lower() in ['country', 'region', 'location']), None)
+    brand_col = next((col for col in df.columns if col.lower() in ['brand name', 'brand', 'name', 'company']), None)
+    image_col = next((col for col in df.columns if col.lower() in ['image url', 'image', 'logo url', 'url']), None)
+    
     # Multi-select filters
-    shapes = sorted(df['Shape'].dropna().unique().tolist())
-    selected_shapes = st.multiselect(
-        "Shape",
-        options=shapes,
-        default=[],
-        key="shape_filter"
-    )
+    selected_shapes = []
+    if shape_col:
+        shapes = sorted(df[shape_col].dropna().unique().tolist())
+        selected_shapes = st.multiselect(
+            "Shape",
+            options=shapes,
+            default=[],
+            key="shape_filter"
+        )
+    else:
+        st.warning("⚠️ Shape column not found")
     
-    colors = sorted(df['Color'].dropna().unique().tolist())
-    selected_colors = st.multiselect(
-        "Color",
-        options=colors,
-        default=[],
-        key="color_filter"
-    )
+    selected_colors = []
+    if color_col:
+        colors = sorted(df[color_col].dropna().unique().tolist())
+        selected_colors = st.multiselect(
+            "Color",
+            options=colors,
+            default=[],
+            key="color_filter"
+        )
+    else:
+        st.warning("⚠️ Color column not found")
     
-    industries = sorted(df['Industry'].dropna().unique().tolist())
-    selected_industries = st.multiselect(
-        "Industry",
-        options=industries,
-        default=[],
-        key="industry_filter"
-    )
+    selected_industries = []
+    if industry_col:
+        industries = sorted(df[industry_col].dropna().unique().tolist())
+        selected_industries = st.multiselect(
+            "Industry",
+            options=industries,
+            default=[],
+            key="industry_filter"
+        )
+    else:
+        st.warning("⚠️ Industry column not found")
     
-    countries = sorted(df['Country'].dropna().unique().tolist())
-    selected_countries = st.multiselect(
-        "Country",
-        options=countries,
-        default=[],
-        key="country_filter"
-    )
+    selected_countries = []
+    if country_col:
+        countries = sorted(df[country_col].dropna().unique().tolist())
+        selected_countries = st.multiselect(
+            "Country",
+            options=countries,
+            default=[],
+            key="country_filter"
+        )
+    else:
+        st.warning("⚠️ Country column not found")
     
     st.markdown("---")
     st.markdown(f"**Last updated:** {datetime.now().strftime('%Y-%m-%d %H:%M')}")
@@ -260,14 +288,14 @@ with st.sidebar:
 # Apply filters
 filtered_df = df.copy()
 
-if selected_shapes:
-    filtered_df = filtered_df[filtered_df['Shape'].isin(selected_shapes)]
-if selected_colors:
-    filtered_df = filtered_df[filtered_df['Color'].isin(selected_colors)]
-if selected_industries:
-    filtered_df = filtered_df[filtered_df['Industry'].isin(selected_industries)]
-if selected_countries:
-    filtered_df = filtered_df[filtered_df['Country'].isin(selected_countries)]
+if selected_shapes and shape_col:
+    filtered_df = filtered_df[filtered_df[shape_col].isin(selected_shapes)]
+if selected_colors and color_col:
+    filtered_df = filtered_df[filtered_df[color_col].isin(selected_colors)]
+if selected_industries and industry_col:
+    filtered_df = filtered_df[filtered_df[industry_col].isin(selected_industries)]
+if selected_countries and country_col:
+    filtered_df = filtered_df[filtered_df[country_col].isin(selected_countries)]
 
 # Stats
 col1, col2, col3, col4 = st.columns(4)
@@ -281,25 +309,28 @@ with col1:
     """, unsafe_allow_html=True)
 
 with col2:
+    industry_count = filtered_df[industry_col].nunique() if industry_col else 0
     st.markdown(f"""
     <div class="stat-box">
-        <div class="stat-number">{filtered_df['Industry'].nunique()}</div>
+        <div class="stat-number">{industry_count}</div>
         <div class="stat-label">Industries</div>
     </div>
     """, unsafe_allow_html=True)
 
 with col3:
+    country_count = filtered_df[country_col].nunique() if country_col else 0
     st.markdown(f"""
     <div class="stat-box">
-        <div class="stat-number">{filtered_df['Country'].nunique()}</div>
+        <div class="stat-number">{country_count}</div>
         <div class="stat-label">Countries</div>
     </div>
     """, unsafe_allow_html=True)
 
 with col4:
+    color_count = filtered_df[color_col].nunique() if color_col else 0
     st.markdown(f"""
     <div class="stat-box">
-        <div class="stat-number">{filtered_df['Color'].nunique()}</div>
+        <div class="stat-number">{color_count}</div>
         <div class="stat-label">Color Palettes</div>
     </div>
     """, unsafe_allow_html=True)
@@ -320,9 +351,9 @@ if len(filtered_df) > 0:
             # Card container
             with st.container(border=True):
                 # Image
-                if pd.notna(row.get('Image URL')):
+                if image_col and pd.notna(row.get(image_col)):
                     try:
-                        img = load_image(row['Image URL'])
+                        img = load_image(row[image_col])
                         if img:
                             st.image(img, use_column_width=True)
                         else:
@@ -331,22 +362,23 @@ if len(filtered_df) > 0:
                         st.markdown('<div style="width:100%; height:200px; background:#f0f0f0; display:flex; align-items:center; justify-content:center; border-radius:8px; color:#999;">Image error</div>', unsafe_allow_html=True)
                 
                 # Brand name
-                st.markdown(f"<div style='font-weight: 700; font-size: 1.1rem; margin: 1rem 0 0.75rem 0;'>{row['Brand Name']}</div>", unsafe_allow_html=True)
+                brand_name = row[brand_col] if brand_col else "Unknown Brand"
+                st.markdown(f"<div style='font-weight: 700; font-size: 1.1rem; margin: 1rem 0 0.75rem 0;'>{brand_name}</div>", unsafe_allow_html=True)
                 
                 # Badges
                 badges_html = "<div style='display: flex; flex-wrap: wrap; gap: 0.5rem;'>"
                 
-                if pd.notna(row.get('Shape')):
-                    badges_html += f"<span style='background: #e3f2fd; color: #1976d2; padding: 0.3rem 0.6rem; border-radius: 20px; font-size: 0.75rem; font-weight: 600;'>{row['Shape']}</span>"
+                if shape_col and pd.notna(row.get(shape_col)):
+                    badges_html += f"<span style='background: #e3f2fd; color: #1976d2; padding: 0.3rem 0.6rem; border-radius: 20px; font-size: 0.75rem; font-weight: 600;'>{row[shape_col]}</span>"
                 
-                if pd.notna(row.get('Color')):
-                    badges_html += f"<span style='background: #f3e5f5; color: #7b1fa2; padding: 0.3rem 0.6rem; border-radius: 20px; font-size: 0.75rem; font-weight: 600;'>{row['Color']}</span>"
+                if color_col and pd.notna(row.get(color_col)):
+                    badges_html += f"<span style='background: #f3e5f5; color: #7b1fa2; padding: 0.3rem 0.6rem; border-radius: 20px; font-size: 0.75rem; font-weight: 600;'>{row[color_col]}</span>"
                 
-                if pd.notna(row.get('Industry')):
-                    badges_html += f"<span style='background: #e8f5e9; color: #388e3c; padding: 0.3rem 0.6rem; border-radius: 20px; font-size: 0.75rem; font-weight: 600;'>{row['Industry']}</span>"
+                if industry_col and pd.notna(row.get(industry_col)):
+                    badges_html += f"<span style='background: #e8f5e9; color: #388e3c; padding: 0.3rem 0.6rem; border-radius: 20px; font-size: 0.75rem; font-weight: 600;'>{row[industry_col]}</span>"
                 
-                if pd.notna(row.get('Country')):
-                    badges_html += f"<span style='background: #fff3e0; color: #f57c00; padding: 0.3rem 0.6rem; border-radius: 20px; font-size: 0.75rem; font-weight: 600;'>{row['Country']}</span>"
+                if country_col and pd.notna(row.get(country_col)):
+                    badges_html += f"<span style='background: #fff3e0; color: #f57c00; padding: 0.3rem 0.6rem; border-radius: 20px; font-size: 0.75rem; font-weight: 600;'>{row[country_col]}</span>"
                 
                 badges_html += "</div>"
                 st.markdown(badges_html, unsafe_allow_html=True)
