@@ -14,9 +14,21 @@ CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vT-qp8XmpX4c-mvFbIaB8
 
 @st.cache_data(ttl=2)
 def load_data():
-    # Read CSV and strip spaces from column header strings
+    # Read raw CSV
     df = pd.read_csv(CSV_URL)
-    df.columns = [str(c).strip() for c in df.columns]
+    
+    # Check if the first row contains actual column headers (if S.No. is in header or first row)
+    first_col = str(df.columns[0]).strip().lower()
+    if first_col in ["s.no.", "s.no", "sno", "sr.no"]:
+        # Headers are fine, clean column names
+        df.columns = [str(c).strip() for c in df.columns]
+    else:
+        # Check if row 0 has the headers
+        first_row = [str(x).strip().lower() for x in df.iloc[0].values]
+        if "s.no." in first_row or "s.no" in first_row or "logo" in first_row:
+            df.columns = [str(x).strip() for x in df.iloc[0].values]
+            df = df.iloc[1:].reset_index(drop=True)
+
     return df
 
 try:
@@ -25,37 +37,36 @@ except Exception as e:
     st.error(f"Error loading data: {e}")
     st.stop()
 
-# Debug: Print detected headers in sidebar to verify connection
 st.sidebar.header("🔍 Filter Options")
-with st.sidebar.expander("📌 Detected Sheet Headers", expanded=False):
+with st.sidebar.expander("📌 Detected Sheet Headers", expanded=True):
     st.write(list(df.columns))
 
 if st.sidebar.button("🔄 Sync Live Data"):
     st.cache_data.clear()
     st.rerun()
 
-# Advanced Helper function to locate columns dynamically
+# Specific column term mapping matching your screenshot's labels
 def find_column(df, search_terms):
     for col in df.columns:
         col_clean = str(col).lower().replace("_", " ").replace("-", " ").strip()
         for term in search_terms:
-            if term.lower() in col_clean:
+            if term.lower() == col_clean or term.lower() in col_clean:
                 return col
     return None
 
-brand_col = find_column(df, ["brand", "name", "title", "company", "organization", "logo name"])
-shape_col = find_column(df, ["shape", "geometry", "form"])
-color_col = find_column(df, ["color", "primary color", "hue", "theme color"])
+brand_col = find_column(df, ["brand name", "logo name", "brand", "company", "name", "title"])
+shape_col = find_column(df, ["shape", "geometry", "form", "structure"])
+color_col = find_column(df, ["colour", "color", "primary color", "hex"])
 industry_col = find_column(df, ["industry", "organization type", "org type", "sector", "category", "type"])
 country_col = find_column(df, ["country", "region", "location", "origin"])
-img_col = find_column(df, ["image", "url", "link", "photo", "logo", "img", "src"])
+img_col = find_column(df, ["image url", "image_url", "logo", "image", "url", "link", "photo", "src"])
 
 # Filters
 search_query = st.sidebar.text_input("Search Brand Name:", "")
 
 def get_options(col_name):
     if col_name and col_name in df.columns:
-        return sorted([str(x).strip() for x in df[col_name].dropna().unique() if str(x).strip() != ""])
+        return sorted([str(x).strip() for x in df[col_name].dropna().unique() if str(x).strip() not in ["", "nan", "N/A"]])
     return []
 
 selected_shapes = st.sidebar.multiselect("Select Shape(s):", options=get_options(shape_col))
@@ -63,7 +74,7 @@ selected_colors = st.sidebar.multiselect("Select Color(s):", options=get_options
 selected_industries = st.sidebar.multiselect("Select Industry:", options=get_options(industry_col))
 selected_countries = st.sidebar.multiselect("Select Country:", options=get_options(country_col))
 
-# Filter dataset
+# Apply filters
 filtered_df = df.copy()
 
 if search_query and brand_col:
@@ -81,7 +92,7 @@ if selected_industries and industry_col:
 if selected_countries and country_col:
     filtered_df = filtered_df[filtered_df[country_col].astype(str).isin(selected_countries)]
 
-# Gallery Output
+# Display Gallery Grid
 st.markdown(f"**Showing {len(filtered_df)} of {len(df)} Logos**")
 st.divider()
 
@@ -95,7 +106,6 @@ else:
         col = cols[idx % cols_per_row]
         with col:
             with st.container():
-                # Display image or placeholder
                 img_url = str(row[img_col]).strip() if img_col and pd.notna(row[img_col]) else ""
                 
                 if img_url and img_url.lower().startswith("http"):
@@ -107,7 +117,7 @@ else:
                 b_name = str(row[brand_col]).strip() if brand_col and pd.notna(row[brand_col]) else "Unnamed Brand"
                 st.subheader(b_name)
 
-                # Attributes
+                # Metadata
                 s_val = str(row[shape_col]).strip() if shape_col and pd.notna(row[shape_col]) else "N/A"
                 c_val = str(row[color_col]).strip() if color_col and pd.notna(row[color_col]) else "N/A"
                 i_val = str(row[industry_col]).strip() if industry_col and pd.notna(row[industry_col]) else "N/A"
