@@ -1,6 +1,9 @@
 import streamlit as st
 import pandas as pd
 import re
+import requests
+from PIL import Image
+from io import BytesIO
 
 st.set_page_config(
     page_title="Logo Research Explorer",
@@ -8,12 +11,34 @@ st.set_page_config(
     layout="wide"
 )
 
-st.title("🎨 Interactive Logo Research Gallery")
-st.markdown("Live dynamic visualization connected directly to Google Sheets.")
+st.markdown("""
+<style>
+    .header-container {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        padding: 2rem;
+        color: white;
+        margin: -1rem -1rem 2rem -1rem;
+        border-radius: 0 0 20px 20px;
+    }
+    .header-container h1 {
+        margin: 0;
+        font-size: 2.2rem;
+        font-weight: 700;
+    }
+    .header-container p {
+        margin: 0.5rem 0 0 0;
+        opacity: 0.9;
+    }
+</style>
+<div class="header-container">
+    <h1>🎨 Interactive Logo Research Gallery</h1>
+    <p>Live dynamic visualization connected directly to Google Sheets • 163+ medical & healthcare logos</p>
+</div>
+""", unsafe_allow_html=True)
 
 CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vT-qp8XmpX4c-mvFbIaB80DxAgVt7FELa1Bb5b1z5nZjBUu_r5f1GCC24A-2DmozwoRT-umwLhu9Iyz/pub?gid=609445256&single=true&output=csv"
 
-@st.cache_data(ttl=2)
+@st.cache_data(ttl=3600)
 def load_data():
     df = pd.read_csv(CSV_URL)
     # Strip whitespace from column headers
@@ -26,26 +51,50 @@ except Exception as e:
     st.error(f"Error loading data: {e}")
     st.stop()
 
-# Helper function to convert Google Drive view links to direct image URLs
+# Better Google Drive image URL transformation
 def transform_image_url(url_str):
-    url_str = str(url_str).strip()
-    if not url_str or url_str.lower() in ["nan", "n/a", "none"]:
+    """Convert Google Drive share/view links to direct image URLs"""
+    if pd.isna(url_str):
         return ""
     
+    url_str = str(url_str).strip()
+    
+    # Check if it's already a valid URL
+    if not url_str or url_str.lower() in ["nan", "n/a", "none", ""]:
+        return ""
+    
+    # If it's a Google Drive link, extract file ID and convert
     if "drive.google.com" in url_str:
-        match = re.search(r'(?:file/d/|id=)([a-zA-Z0-9_-]+)', url_str)
+        # Pattern 1: /d/FILE_ID/
+        match = re.search(r'/d/([a-zA-Z0-9_-]+)', url_str)
         if match:
             file_id = match.group(1)
-            return f"https://lh3.googleusercontent.com/d/{file_id}"
-            
-    return url_str
+            return f"https://drive.google.com/uc?export=view&id={file_id}"
+        
+        # Pattern 2: id=FILE_ID
+        match = re.search(r'id=([a-zA-Z0-9_-]+)', url_str)
+        if match:
+            file_id = match.group(1)
+            return f"https://drive.google.com/uc?export=view&id={file_id}"
+    
+    # If it's already a direct image URL, return as is
+    if url_str.startswith("http"):
+        return url_str
+    
+    return ""
 
-# Sidebar Filters
-st.sidebar.header("🔍 Filter Options")
-
-if st.sidebar.button("🔄 Sync Live Data"):
-    st.cache_data.clear()
-    st.rerun()
+@st.cache_data(ttl=3600)
+def load_image(url):
+    """Try to load image from URL with better error handling"""
+    try:
+        if not url or not url.startswith("http"):
+            return None
+        response = requests.get(url, timeout=5)
+        if response.status_code == 200:
+            return Image.open(BytesIO(response.content))
+    except:
+        pass
+    return None
 
 # Map exact column names from your spreadsheet
 brand_col = "Name"
@@ -60,10 +109,17 @@ gestalt_col = "Gestalt Principle"
 primary_color_col = "Primary Colour"
 color_family_col = "Color Family"
 
+# Sidebar Filters
+st.sidebar.header("🔍 Filter Options")
+
+if st.sidebar.button("🔄 Refresh Data", key="refresh_btn"):
+    st.cache_data.clear()
+    st.rerun()
+
 # Helper for sidebar options
 def get_options(col_name):
     if col_name in df.columns:
-        return sorted([str(x).strip() for x in df[col_name].dropna().unique() if str(x).strip() not in ["", "nan", "N/A"]])
+        return sorted([str(x).strip() for x in df[col_name].dropna().unique() if str(x).strip() not in ["", "nan", "N/A", "nan (nan)"]])
     return []
 
 # Sidebar Controls
@@ -109,42 +165,68 @@ if selected_complexity and complexity_col in df.columns:
     filtered_df = filtered_df[filtered_df[complexity_col].astype(str).isin(selected_complexity)]
 
 # Render Results
-st.markdown(f"**Showing {len(filtered_df)} of {len(df)} Logos**")
+col1, col2 = st.columns([3, 1])
+with col1:
+    st.markdown(f"### 🎯 Showing {len(filtered_df)} of {len(df)} Logos")
+with col2:
+    st.caption(f"📊 {len(df)} total in database")
+
 st.divider()
 
 if filtered_df.empty:
-    st.info("No logos match the selected filter criteria.")
+    st.info("No logos match the selected filter criteria. Try adjusting your filters.")
 else:
     cols_per_row = 4
-    cols = st.columns(cols_per_row)
+    cols = st.columns(cols_per_row, gap="medium")
     
     for idx, (_, row) in enumerate(filtered_df.iterrows()):
         col = cols[idx % cols_per_row]
         with col:
-            with st.container():
+            with st.container(border=True):
                 # Render Image
                 raw_img = str(row.get(img_col, "")).strip() if pd.notna(row.get(img_col, "")) else ""
                 img_url = transform_image_url(raw_img)
                 
-                if img_url and img_url.startswith("http"):
-                    st.image(img_url, use_container_width=True)
+                if img_url:
+                    img = load_image(img_url)
+                    if img:
+                        st.image(img, use_column_width=True)
+                    else:
+                        st.markdown('<div style="width:100%; height:200px; background:#f0f0f0; display:flex; align-items:center; justify-content:center; border-radius:8px; color:#999; font-size:0.9rem;">⚠️ Image unavailable</div>', unsafe_allow_html=True)
                 else:
-                    st.warning("📷 Image Link Missing")
+                    st.markdown('<div style="width:100%; height:200px; background:#f0f0f0; display:flex; align-items:center; justify-content:center; border-radius:8px; color:#999;">📷 No image</div>', unsafe_allow_html=True)
 
                 # Brand Name
                 b_name = str(row.get(brand_col, "")).strip()
                 if not b_name or b_name.lower() in ["nan", "n/a"]:
                     b_name = "Unnamed Brand"
-                st.subheader(b_name)
+                st.markdown(f"<div style='font-weight: 700; font-size: 1rem; margin: 1rem 0 0.75rem 0;'>{b_name}</div>", unsafe_allow_html=True)
 
-                # Metadata Cards
-                p_form = str(row.get(primary_form_col, "N/A")).strip()
-                v_form = str(row.get(visual_inclination_col, "N/A")).strip()
-                p_color = str(row.get(primary_color_col, "N/A")).strip()
-                sector_val = str(row.get(sector_col, "N/A")).strip()
-                country_val = str(row.get(country_col, "N/A")).strip()
+                # Metadata Badges
+                p_form = str(row.get(primary_form_col, "")).strip()
+                p_color = str(row.get(primary_color_col, "")).strip()
+                sector_val = str(row.get(sector_col, "")).strip()
+                country_val = str(row.get(country_col, "")).strip()
 
-                st.caption(f"**Primary Form:** {p_form} ({v_form})")
-                st.caption(f"**Color:** {p_color}")
-                st.caption(f"**Sector:** {sector_val} | **Country:** {country_val}")
-                st.divider()
+                badges = []
+                if p_form and p_form.lower() not in ["nan", "n/a"]:
+                    badges.append(f'<span style="background: #e3f2fd; color: #1976d2; padding: 0.3rem 0.6rem; border-radius: 12px; font-size: 0.7rem; font-weight: 600;">{p_form}</span>')
+                
+                if p_color and p_color.lower() not in ["nan", "n/a"]:
+                    badges.append(f'<span style="background: #f3e5f5; color: #7b1fa2; padding: 0.3rem 0.6rem; border-radius: 12px; font-size: 0.7rem; font-weight: 600;">{p_color}</span>')
+                
+                if sector_val and sector_val.lower() not in ["nan", "n/a"]:
+                    badges.append(f'<span style="background: #e8f5e9; color: #388e3c; padding: 0.3rem 0.6rem; border-radius: 12px; font-size: 0.7rem; font-weight: 600;">{sector_val}</span>')
+                
+                if country_val and country_val.lower() not in ["nan", "n/a"]:
+                    badges.append(f'<span style="background: #fff3e0; color: #f57c00; padding: 0.3rem 0.6rem; border-radius: 12px; font-size: 0.7rem; font-weight: 600;">{country_val}</span>')
+                
+                if badges:
+                    st.markdown(f'<div style="display: flex; flex-wrap: wrap; gap: 0.4rem;">{"".join(badges)}</div>', unsafe_allow_html=True)
+
+st.divider()
+st.markdown("""
+<div style='text-align: center; color: #999; font-size: 0.85rem; padding: 2rem 0;'>
+    <p>Logo Research Dashboard • Medical & Healthcare Logo Analysis • Real-time Google Sheets sync</p>
+</div>
+""", unsafe_allow_html=True)
