@@ -11,30 +11,127 @@ st.set_page_config(
     layout="wide"
 )
 
-# Inject Custom CSS matching your dark UI theme
+# 2. Inject Dark CSS based on your stylesheet structure
 st.markdown("""
 <style>
-    .main { background-color: #0f1117; }
-    .stApp { background-color: #0f1117; color: #e2e8f0; }
-    
-    /* Topbar & Hero Styling */
-    .eyebrow { font-size: 0.75rem; letter-spacing: 0.1em; color: #a0aec0; font-weight: 700; text-transform: uppercase; }
-    .kicker { font-size: 0.7rem; letter-spacing: 0.12em; color: #cbd5e0; font-weight: 700; }
-    .hero-title { font-size: 2.2rem; font-weight: 800; line-height: 1.2; margin-bottom: 0.5rem; }
-    .hero-title em { font-style: italic; color: #a3b8cc; }
-    .intro { color: #a0aec0; font-size: 0.95rem; margin-bottom: 1.5rem; }
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap');
 
-    /* Stat Cards */
-    .stat-box { background: #1a202c; border: 1px solid #2d3748; padding: 1rem; border-radius: 8px; text-align: center; }
-    .stat-number { font-size: 1.5rem; font-weight: 800; color: #ffffff; }
-    .stat-label { font-size: 0.75rem; color: #a0aec0; text-transform: uppercase; }
+:root {
+  --bg: #0f1117;
+  --ink: #f7fafc;
+  --muted: #a0aec0;
+  --line: #2d3748;
+  --card: #171923;
+  --card-hover: #1a202c;
+  --accent: #6366f1;
+}
 
-    /* Card Layout */
-    div[data-testid="stVerticalBlock"] > div[style*="background-color"] {
-        background-color: #1a202c !important;
-        border: 1px solid #2d3748 !important;
-        border-radius: 10px !important;
-    }
+/* Global Reset & Dark Canvas */
+.main { background-color: var(--bg); }
+.stApp { background-color: var(--bg); color: var(--ink); font-family: "DM Sans", sans-serif; }
+
+/* Top Header */
+.topbar-container {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 18px 0;
+    border-bottom: 1px solid var(--line);
+    margin-bottom: 30px;
+}
+.eyebrow, .kicker {
+    font-size: 11px;
+    letter-spacing: 0.16em;
+    font-weight: 700;
+    color: var(--muted);
+    text-transform: uppercase;
+}
+h1.app-title {
+    font-family: "Space Grotesk", sans-serif;
+    font-size: 26px;
+    margin: 4px 0 0 0;
+    color: var(--ink);
+    font-weight: 700;
+}
+.top-meta {
+    font-size: 13px;
+    color: var(--muted);
+}
+.top-meta span {
+    color: #ffffff;
+    font-weight: 700;
+}
+
+/* Hero Section & Stat Boxes */
+.hero-title {
+    font-family: "Space Grotesk", sans-serif;
+    font-size: clamp(32px, 4vw, 54px);
+    line-height: 1.05;
+    letter-spacing: -0.03em;
+    font-weight: 700;
+    color: #ffffff;
+    margin: 10px 0 16px 0;
+}
+.hero-title em {
+    font-style: normal;
+    color: #718096;
+}
+.intro {
+    color: var(--muted);
+    font-size: 15px;
+    line-height: 1.6;
+    max-width: 550px;
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1px;
+    background: var(--line);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    overflow: hidden;
+}
+.stat-item {
+    background: var(--card);
+    padding: 24px;
+    text-align: center;
+}
+.stat-item b {
+    display: block;
+    font-family: "Space Grotesk", sans-serif;
+    font-size: 34px;
+    color: #ffffff;
+}
+.stat-item span {
+    font-size: 11px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+}
+
+/* Detail Section Table Styling */
+.detail-table {
+    display: grid;
+    grid-template-columns: 1fr 1.4fr;
+    border-top: 1px solid var(--line);
+    margin-top: 10px;
+}
+.detail-row-label {
+    padding: 8px 0;
+    border-bottom: 1px solid var(--line);
+    font-size: 11px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+}
+.detail-row-val {
+    padding: 8px 0;
+    border-bottom: 1px solid var(--line);
+    font-size: 12px;
+    color: #ffffff;
+    font-weight: 500;
+}
 </style>
 """, unsafe_allow_html=True)
 
@@ -69,7 +166,7 @@ def load_data():
 try:
     df = load_data()
 except Exception as e:
-    st.error(f"Error loading live data: {e}")
+    st.error(f"Error loading data: {e}")
     st.stop()
 
 def transform_image_url(url_str):
@@ -82,30 +179,40 @@ def transform_image_url(url_str):
             return f"https://lh3.googleusercontent.com/d/{match.group(1)}"
     return url_str
 
-# ----------------- TOPBAR & HERO SECTION -----------------
-top_col1, top_col2 = st.columns([3, 1])
-with top_col1:
-    st.markdown('<div class="eyebrow">VISUAL IDENTITY RESEARCH</div>', unsafe_allow_html=True)
-    st.markdown('<h1 style="margin:0; font-size:2.5rem; font-weight:800;">Logo Landscape</h1>', unsafe_allow_html=True)
-with top_col2:
-    st.markdown(f'<div style="text-align:right; font-size:1.1rem; font-weight:700; padding-top:1rem; color:#a0aec0;"><strong>{len(df)}</strong> identities</div>', unsafe_allow_html=True)
+# ----------------- TOPBAR -----------------
+st.markdown(f"""
+<div class="topbar-container">
+  <div>
+    <div class="eyebrow">VISUAL IDENTITY RESEARCH</div>
+    <h1 class="app-title">Logo Landscape</h1>
+  </div>
+  <div class="top-meta"><span>{len(df)}</span> identities</div>
+</div>
+""", unsafe_allow_html=True)
 
-st.divider()
+# ----------------- HERO & STATS -----------------
+hero_col, stat_col = st.columns([1.5, 1])
 
-# Hero Banner & Dataset Stats
-hero_col1, hero_col2 = st.columns([2, 1])
-with hero_col1:
-    st.markdown('<p class="kicker">EXPLORE THE DATASET</p>', unsafe_allow_html=True)
-    st.markdown('<div class="hero-title">165+ visual identities.<br><em>One searchable research space.</em></div>', unsafe_allow_html=True)
-    st.markdown('<p class="intro">Filter, compare and inspect the visual characteristics captured during logo research.</p>', unsafe_allow_html=True)
+with hero_col:
+    st.markdown("""
+    <div>
+      <p class="kicker">EXPLORE THE DATASET</p>
+      <div class="hero-title">165+ visual identities.<br><em>One searchable research space.</em></div>
+      <p class="intro">Filter, compare and inspect the visual characteristics captured during logo research.</p>
+    </div>
+    """, unsafe_allow_html=True)
 
-with hero_col2:
-    s1, s2 = st.columns(2)
-    with s1:
-        st.markdown(f'<div class="stat-box"><div class="stat-number">{len(df)}</div><div class="stat-label">Total Logos</div></div>', unsafe_allow_html=True)
-    with s2:
-        govt_count = len(df[df['Sector'].astype(str).str.contains('Govt', case=False, na=False)]) if 'Sector' in df else 0
-        st.markdown(f'<div class="stat-box"><div class="stat-number">{govt_count}</div><div class="stat-label">Govt Institutions</div></div>', unsafe_allow_html=True)
+with stat_col:
+    govt_count = len(df[df['Sector'].astype(str).str.contains('Govt', case=False, na=False)]) if 'Sector' in df else 0
+    pvt_count = len(df[df['Sector'].astype(str).str.contains('Pvt', case=False, na=False)]) if 'Sector' in df else 0
+    st.markdown(f"""
+    <div class="stats-grid">
+      <div class="stat-item"><b>{govt_count}</b><span>Govt. Institutions</span></div>
+      <div class="stat-item"><b>{pvt_count}</b><span>Private Bodies</span></div>
+    </div>
+    """, unsafe_allow_html=True)
+
+st.write("")
 
 # ----------------- SIDEBAR FILTERS -----------------
 st.sidebar.markdown("### FILTERS")
@@ -116,14 +223,23 @@ if st.sidebar.button("Reset Filters"):
 
 brand_col = "Name"
 img_col = "Logo"
+type_of_logo_col = "Type of Logo"
 primary_form_col = "Primary form (Visually Dominating Form)"
 style_inclination_col = "Visual Form inclination (First form we visually notice)"
-color_col = "Primary Colour"
 color_family_col = "Color Family"
 sector_col = "Sector"
 org_type_col = "Type of Organization"
 country_col = "Country"
+complexity_col = "Complexity (Low/ Mid/ High) (Intrinsic Visual Load)"
+symmetry_col = "Symmetry"
 symbolism_col = "Symbolism"
+
+# Typography Columns
+font_type_col = "Font Type"
+font_weight_col = "Font Weight"
+case_type_col = "Case Type"
+type_class_col = "Type classification"
+letter_spacing_col = "Letter Spacing"
 
 def get_options(col_name):
     if col_name in df.columns:
@@ -132,12 +248,14 @@ def get_options(col_name):
 
 search_query = st.sidebar.text_input("⌕ Search organisation...", "")
 
+selected_logo_types = st.sidebar.multiselect("Type of Logo:", options=get_options(type_of_logo_col))
 selected_forms = st.sidebar.multiselect("Shape (Primary Form):", options=get_options(primary_form_col))
-selected_colors = st.sidebar.multiselect("Primary Color:", options=get_options(color_col))
 selected_families = st.sidebar.multiselect("Color Family:", options=get_options(color_family_col))
 selected_sectors = st.sidebar.multiselect("Sector:", options=get_options(sector_col))
 selected_org_types = st.sidebar.multiselect("Organization Type:", options=get_options(org_type_col))
 selected_countries = st.sidebar.multiselect("Country:", options=get_options(country_col))
+selected_complexity = st.sidebar.multiselect("Complexity:", options=get_options(complexity_col))
+selected_symmetry = st.sidebar.multiselect("Symmetry:", options=get_options(symmetry_col))
 
 # Filtering Logic
 filtered_df = df.copy()
@@ -145,11 +263,11 @@ filtered_df = df.copy()
 if search_query and brand_col in df.columns:
     filtered_df = filtered_df[filtered_df[brand_col].astype(str).str.contains(search_query, case=False, na=False)]
 
+if selected_logo_types and type_of_logo_col in df.columns:
+    filtered_df = filtered_df[filtered_df[type_of_logo_col].astype(str).isin(selected_logo_types)]
+
 if selected_forms and primary_form_col in df.columns:
     filtered_df = filtered_df[filtered_df[primary_form_col].astype(str).isin(selected_forms)]
-
-if selected_colors and color_col in df.columns:
-    filtered_df = filtered_df[filtered_df[color_col].astype(str).isin(selected_colors)]
 
 if selected_families and color_family_col in df.columns:
     filtered_df = filtered_df[filtered_df[color_family_col].astype(str).isin(selected_families)]
@@ -163,7 +281,13 @@ if selected_org_types and org_type_col in df.columns:
 if selected_countries and country_col in df.columns:
     filtered_df = filtered_df[filtered_df[country_col].astype(str).isin(selected_countries)]
 
-# ----------------- SORTING & RESULTS HEAD -----------------
+if selected_complexity and complexity_col in df.columns:
+    filtered_df = filtered_df[filtered_df[complexity_col].astype(str).isin(selected_complexity)]
+
+if selected_symmetry and symmetry_col in df.columns:
+    filtered_df = filtered_df[filtered_df[symmetry_col].astype(str).isin(selected_symmetry)]
+
+# ----------------- SORTING & RESULTS HEADER -----------------
 head_col1, head_col2 = st.columns([3, 1])
 with head_col1:
     st.markdown(f"**{len(filtered_df)}** results")
@@ -182,9 +306,9 @@ elif sort_option == "Name Z–A":
 elif sort_option == "Country" and country_col in filtered_df.columns:
     filtered_df = filtered_df.sort_values(by=country_col, ascending=True)
 
-# ----------------- GRID DISPLAY & DETAIL EXPANDER -----------------
+# ----------------- GRID DISPLAY -----------------
 if filtered_df.empty:
-    st.info("No logos match the selected criteria.")
+    st.info("No logos match the selected filter criteria.")
 else:
     cols_per_row = 4
     cols = st.columns(cols_per_row)
@@ -193,6 +317,7 @@ else:
         col = cols[idx % cols_per_row]
         with col:
             with st.container():
+                # Logo Image Box
                 raw_img = str(row.get(img_col, "")).strip() if pd.notna(row.get(img_col, "")) else ""
                 img_url = transform_image_url(raw_img)
                 
@@ -201,22 +326,54 @@ else:
                 else:
                     st.warning("📷 Image Link Missing")
 
+                # Name
                 b_name = str(row.get(brand_col, "")).strip()
                 st.subheader(b_name if b_name else "Unnamed Brand")
 
+                # Core Metadata Badges
+                logo_type = str(row.get(type_of_logo_col, "N/A")).strip()
                 p_form = str(row.get(primary_form_col, "N/A")).strip()
-                v_style = str(row.get(style_inclination_col, "N/A")).strip()
                 c_family = str(row.get(color_family_col, "N/A")).strip()
                 sector_val = str(row.get(sector_col, "N/A")).strip()
                 cnt_val = str(row.get(country_col, "N/A")).strip()
 
-                st.caption(f"**Shape:** {p_form} ({v_style})")
+                st.caption(f"**Type:** {logo_type} | **Shape:** {p_form}")
                 st.caption(f"**Color Family:** {c_family}")
                 st.caption(f"**Sector:** {sector_val} | **Country:** {cnt_val}")
                 
-                # Detail Modal Replacement (Expander)
-                with st.expander("Inspect Details"):
+                # Expandable Inspector Modal for Details & Typography & Symbolism
+                with st.expander("Inspect Full Identity Details"):
+                    st.markdown("**Visual & Geometric Properties**")
+                    complexity_val = str(row.get(complexity_col, "N/A")).strip()
+                    symmetry_val = str(row.get(symmetry_col, "N/A")).strip()
+                    v_style = str(row.get(style_inclination_col, "N/A")).strip()
+                    
+                    st.markdown(f"""
+                    <div class="detail-table">
+                      <div class="detail-row-label">Form Inclination</div><div class="detail-row-val">{v_style}</div>
+                      <div class="detail-row-label">Complexity</div><div class="detail-row-val">{complexity_val}</div>
+                      <div class="detail-row-label">Symmetry</div><div class="detail-row-val">{symmetry_val}</div>
+                    </div>
+                    """, unsafe_allow_html=True)
+                    
+                    st.write("")
+                    st.markdown("**Typography Attributes**")
+                    type_class = str(row.get(type_class_col, "N/A")).strip()
+                    font_weight = str(row.get(font_weight_col, "N/A")).strip()
+                    case_type = str(row.get(case_type_col, "N/A")).strip()
+                    letter_spacing = str(row.get(letter_spacing_col, "N/A")).strip()
+                    
+                    st.markdown(f"""
+                    <div class="detail-table">
+                      <div class="detail-row-label">Classification</div><div class="detail-row-val">{type_class}</div>
+                      <div class="detail-row-label">Weight & Case</div><div class="detail-row-val">{font_weight} ({case_type})</div>
+                      <div class="detail-row-label">Letter Spacing</div><div class="detail-row-val">{letter_spacing}</div>
+                    </div>
+                    """, unsafe_allow_html=True)
+
+                    st.write("")
+                    st.markdown("**Symbolism & Rationale**")
                     symbolism_text = str(row.get(symbolism_col, "No symbolism data recorded.")).strip()
-                    st.markdown(f"**Symbolism & Rationale:**\n\n{symbolism_text}")
-                
+                    st.info(symbolism_text)
+
                 st.divider()
