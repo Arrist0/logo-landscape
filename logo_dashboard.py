@@ -1,284 +1,113 @@
 import streamlit as st
 import pandas as pd
-import requests
-from datetime import datetime
-from PIL import Image
-from io import BytesIO
 
-# Page configuration
+# Page Configuration
 st.set_page_config(
-    page_title="Logo Research Dashboard",
+    page_title="Logo Research Explorer",
     page_icon="🎨",
-    layout="wide",
-    initial_sidebar_state="expanded"
+    layout="wide"
 )
 
-# Custom CSS
-st.markdown("""
-<style>
-    .main { padding: 0; }
-    
-    .header-container {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        padding: 2rem;
-        color: white;
-        margin: -1rem -1rem 2rem -1rem;
-        border-radius: 0 0 20px 20px;
-    }
-    
-    .header-container h1 {
-        margin: 0;
-        font-size: 2.5rem;
-        font-weight: 700;
-    }
-    
-    .header-container p {
-        margin: 0.5rem 0 0 0;
-        opacity: 0.9;
-        font-size: 1.1rem;
-    }
-    
-    .stat-box {
-        flex: 1;
-        min-width: 150px;
-        background: white;
-        padding: 1.5rem;
-        border-radius: 12px;
-        border-left: 4px solid #667eea;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-    }
-    
-    .stat-number {
-        font-size: 2rem;
-        font-weight: 700;
-        color: #667eea;
-    }
-    
-    .stat-label {
-        font-size: 0.85rem;
-        color: #666;
-        margin-top: 0.5rem;
-    }
-</style>
-""", unsafe_allow_html=True)
+# Title & Subheading
+st.title("🎨 Interactive Logo Research Gallery")
+st.markdown("Live dynamic visualization connected directly to Google Sheets.")
 
-# Configuration
-CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vT-qp8XmpX4c-mvFbIaB80DxAgVt7FELa1Bb5b1z5nZjBUu_r5f1GCC24A-2DmozwoRT-umwLhu9Iyz/pub?gid=609445256&single=true&output=csv"
+# Your Published Google Sheet CSV URL
+CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vT-qp8XmpX4c-mvFbIaB80DxAgVt7FELa1Bb5b1z5nZjBUu_r5f1GCC24A-2DmozwoRT-umwLhu9Iyz/pub?output=csv"
 
-@st.cache_data(ttl=3600)
-def fetch_data():
-    """Fetch CSV data from Google Sheets"""
-    try:
-        df = pd.read_csv(CSV_URL)
-        return df
-    except Exception as e:
-        st.error(f"Error fetching data: {e}")
-        return None
+# Function to load live data with cache controls
+@st.cache_data(ttl=5)  # Re-checks Google Sheet every 5 seconds
+def load_data():
+    df = pd.read_csv(CSV_URL)
+    # Clean up column names (trim whitespace)
+    df.columns = [str(c).strip() for c in df.columns]
+    return df
 
-@st.cache_data(ttl=3600)
-def load_image(url):
-    """Load image from URL"""
-    try:
-        if pd.isna(url) or url == '':
-            return None
-        response = requests.get(str(url), timeout=5)
-        if response.status_code == 200:
-            return Image.open(BytesIO(response.content))
-    except:
-        pass
-    return None
-
-# Header
-st.markdown("""
-<div class="header-container">
-    <h1>🎨 Logo Research Dashboard</h1>
-    <p>Interactive analysis of medical & healthcare logos across brands, countries, and design characteristics</p>
-</div>
-""", unsafe_allow_html=True)
-
-# Fetch data
-df = fetch_data()
-
-if df is None:
-    st.error("Failed to load data. Please check the CSV URL and try again.")
+try:
+    df = load_data()
+except Exception as e:
+    st.error("Failed to load live data from Google Sheets. Please verify connection.")
     st.stop()
 
-# Clean column names
-df.columns = df.columns.str.strip()
+# Helper function to find matching columns regardless of case
+def get_col_name(candidates):
+    for col in df.columns:
+        if col.lower() in [c.lower() for c in candidates]:
+            return col
+    return None
 
-# Refresh button
-col1, col2 = st.columns([3, 1])
-with col2:
-    if st.button("🔄 Refresh Data", key="refresh_btn"):
-        st.cache_data.clear()
-        st.rerun()
+brand_col = get_col_name(["brand", "brand name", "name", "organization", "company"])
+shape_col = get_col_name(["shape", "shapes"])
+color_col = get_col_name(["color", "colors", "primary color"])
+industry_col = get_col_name(["industry", "organization type", "org type", "category"])
+country_col = get_col_name(["country", "region", "location"])
+img_col = get_col_name(["image_url", "image url", "logo", "image", "url", "link"])
 
-with col1:
-    st.caption(f"📋 Total logos in dataset: {len(df)}")
+# Sidebar Navigation & Filters
+st.sidebar.header("🔍 Filter Options")
 
-# Sidebar filters
-with st.sidebar:
-    st.markdown("### 🔍 Filter Options")
-    
-    # Filter by Type of Logo (Shape)
-    if 'Type of Logo' in df.columns:
-        logo_types = sorted(df['Type of Logo'].dropna().unique().tolist())
-        selected_logo_types = st.multiselect(
-            "Logo Type (Shape)",
-            options=logo_types,
-            default=[],
-            key="logo_type_filter"
-        )
-    else:
-        selected_logo_types = []
-        st.warning("⚠️ Type of Logo column not found")
-    
-    # Filter by Primary Colour
-    if 'Primary Colour' in df.columns:
-        primary_colors = sorted(df['Primary Colour'].dropna().unique().tolist())
-        selected_primary_colors = st.multiselect(
-            "Primary Colour",
-            options=primary_colors,
-            default=[],
-            key="primary_color_filter"
-        )
-    else:
-        selected_primary_colors = []
-        st.warning("⚠️ Primary Colour column not found")
-    
-    # Filter by Sector
-    if 'Sector' in df.columns:
-        sectors = sorted(df['Sector'].dropna().unique().tolist())
-        selected_sectors = st.multiselect(
-            "Sector",
-            options=sectors,
-            default=[],
-            key="sector_filter"
-        )
-    else:
-        selected_sectors = []
-        st.warning("⚠️ Sector column not found")
-    
-    # Filter by Country
-    if 'Country' in df.columns:
-        countries = sorted(df['Country'].dropna().unique().tolist())
-        selected_countries = st.multiselect(
-            "Country",
-            options=countries,
-            default=[],
-            key="country_filter"
-        )
-    else:
-        selected_countries = []
-        st.warning("⚠️ Country column not found")
-    
-    st.markdown("---")
-    st.markdown(f"**Last updated:** {datetime.now().strftime('%Y-%m-%d %H:%M')}")
+if st.sidebar.button("🔄 Sync Live Data"):
+    st.cache_data.clear()
+    st.rerun()
 
-# Apply filters
+search_query = st.sidebar.text_input("Search Brand Name:", "")
+
+def get_options(column):
+    if column and column in df.columns:
+        return sorted([str(x) for x in df[column].dropna().unique()])
+    return []
+
+selected_shapes = st.sidebar.multiselect("Select Shape(s):", options=get_options(shape_col))
+selected_colors = st.sidebar.multiselect("Select Color(s):", options=get_options(color_col))
+selected_industries = st.sidebar.multiselect("Select Industry:", options=get_options(industry_col))
+selected_countries = st.sidebar.multiselect("Select Country:", options=get_options(country_col))
+
+# Filtering Logic
 filtered_df = df.copy()
 
-if selected_logo_types:
-    filtered_df = filtered_df[filtered_df['Type of Logo'].isin(selected_logo_types)]
-if selected_primary_colors:
-    filtered_df = filtered_df[filtered_df['Primary Colour'].isin(selected_primary_colors)]
-if selected_sectors:
-    filtered_df = filtered_df[filtered_df['Sector'].isin(selected_sectors)]
-if selected_countries:
-    filtered_df = filtered_df[filtered_df['Country'].isin(selected_countries)]
+if search_query and brand_col:
+    filtered_df = filtered_df[filtered_df[brand_col].astype(str).str.contains(search_query, case=False, na=False)]
 
-# Stats
-col1, col2, col3, col4 = st.columns(4)
+if selected_shapes and shape_col:
+    filtered_df = filtered_df[filtered_df[shape_col].astype(str).isin(selected_shapes)]
 
-with col1:
-    st.markdown(f"""
-    <div class="stat-box">
-        <div class="stat-number">{len(filtered_df)}</div>
-        <div class="stat-label">Logos Displayed</div>
-    </div>
-    """, unsafe_allow_html=True)
+if selected_colors and color_col:
+    filtered_df = filtered_df[filtered_df[color_col].astype(str).isin(selected_colors)]
 
-with col2:
-    sector_count = filtered_df['Sector'].nunique() if 'Sector' in filtered_df.columns else 0
-    st.markdown(f"""
-    <div class="stat-box">
-        <div class="stat-number">{sector_count}</div>
-        <div class="stat-label">Sectors</div>
-    </div>
-    """, unsafe_allow_html=True)
+if selected_industries and industry_col:
+    filtered_df = filtered_df[filtered_df[industry_col].astype(str).isin(selected_industries)]
 
-with col3:
-    country_count = filtered_df['Country'].nunique() if 'Country' in filtered_df.columns else 0
-    st.markdown(f"""
-    <div class="stat-box">
-        <div class="stat-number">{country_count}</div>
-        <div class="stat-label">Countries</div>
-    </div>
-    """, unsafe_allow_html=True)
+if selected_countries and country_col:
+    filtered_df = filtered_df[filtered_df[country_col].astype(str).isin(selected_countries)]
 
-with col4:
-    color_count = filtered_df['Primary Colour'].nunique() if 'Primary Colour' in filtered_df.columns else 0
-    st.markdown(f"""
-    <div class="stat-box">
-        <div class="stat-number">{color_count}</div>
-        <div class="stat-label">Primary Colors</div>
-    </div>
-    """, unsafe_allow_html=True)
+# Display Results Count
+st.markdown(f"**Showing {len(filtered_df)} of {len(df)} Logos**")
+st.divider()
 
-st.markdown("---")
-
-# Display logos in grid
-if len(filtered_df) > 0:
-    st.markdown(f"### 🎯 Showing {len(filtered_df)} logos")
-    
-    cols = st.columns(4, gap="medium")
-    
-    for idx, (_, row) in enumerate(filtered_df.iterrows()):
-        col = cols[idx % 4]
-        
-        with col:
-            with st.container(border=True):
-                # Image
-                if 'Logo' in row and pd.notna(row['Logo']):
-                    try:
-                        img = load_image(row['Logo'])
-                        if img:
-                            st.image(img, use_column_width=True)
-                        else:
-                            st.markdown('<div style="width:100%; height:200px; background:#f0f0f0; display:flex; align-items:center; justify-content:center; border-radius:8px; color:#999; font-size:0.9rem;">Image not available</div>', unsafe_allow_html=True)
-                    except:
-                        st.markdown('<div style="width:100%; height:200px; background:#f0f0f0; display:flex; align-items:center; justify-content:center; border-radius:8px; color:#999;">Error loading image</div>', unsafe_allow_html=True)
-                else:
-                    st.markdown('<div style="width:100%; height:200px; background:#f0f0f0; display:flex; align-items:center; justify-content:center; border-radius:8px; color:#999;">No image</div>', unsafe_allow_html=True)
-                
-                # Brand name
-                brand_name = row['Name'] if 'Name' in row else "Unknown Brand"
-                st.markdown(f"<div style='font-weight: 700; font-size: 1rem; margin: 1rem 0 0.75rem 0; word-wrap: break-word;'>{brand_name}</div>", unsafe_allow_html=True)
-                
-                # Badges
-                badges_html = "<div style='display: flex; flex-wrap: wrap; gap: 0.4rem;'>"
-                
-                if 'Type of Logo' in row and pd.notna(row['Type of Logo']):
-                    badges_html += f"<span style='background: #e3f2fd; color: #1976d2; padding: 0.25rem 0.6rem; border-radius: 12px; font-size: 0.7rem; font-weight: 600;'>{str(row['Type of Logo']).strip()}</span>"
-                
-                if 'Primary Colour' in row and pd.notna(row['Primary Colour']):
-                    badges_html += f"<span style='background: #f3e5f5; color: #7b1fa2; padding: 0.25rem 0.6rem; border-radius: 12px; font-size: 0.7rem; font-weight: 600;'>{str(row['Primary Colour']).strip()}</span>"
-                
-                if 'Sector' in row and pd.notna(row['Sector']):
-                    badges_html += f"<span style='background: #e8f5e9; color: #388e3c; padding: 0.25rem 0.6rem; border-radius: 12px; font-size: 0.7rem; font-weight: 600;'>{str(row['Sector']).strip()}</span>"
-                
-                if 'Country' in row and pd.notna(row['Country']):
-                    badges_html += f"<span style='background: #fff3e0; color: #f57c00; padding: 0.25rem 0.6rem; border-radius: 12px; font-size: 0.7rem; font-weight: 600;'>{str(row['Country']).strip()}</span>"
-                
-                badges_html += "</div>"
-                st.markdown(badges_html, unsafe_allow_html=True)
+if filtered_df.empty:
+    st.info("No logos found matching your selected criteria.")
 else:
-    st.info("No logos match your filter criteria. Try adjusting your selections.")
+    # 4-Column Grid
+    cols = st.columns(4)
+    for idx, (_, row) in enumerate(filtered_df.iterrows()):
+        with cols[idx % 4]:
+            with st.container():
+                # Render Image
+                img_url = str(row[img_col]) if img_col and pd.notna(row[img_col]) else ""
+                if img_url:
+                    st.image(img_url, use_container_width=True)
+                else:
+                    st.caption("📷 Image Link Missing")
 
-# Footer
-st.markdown("---")
-st.markdown("""
-<div style='text-align: center; color: #999; font-size: 0.9rem; padding: 2rem 0;'>
-    <p>Logo Research Dashboard • Medical & Healthcare Logo Analysis</p>
-</div>
-""", unsafe_allow_html=True)
+                # Brand Title
+                brand_name = str(row[brand_col]) if brand_col and pd.notna(row[brand_col]) else "Unnamed Brand"
+                st.subheader(brand_name)
+
+                # Metadata Badges
+                s_val = str(row[shape_col]) if shape_col and pd.notna(row[shape_col]) else "N/A"
+                c_val = str(row[color_col]) if color_col and pd.notna(row[color_col]) else "N/A"
+                i_val = str(row[industry_col]) if industry_col and pd.notna(row[industry_col]) else "N/A"
+                
+                st.caption(f"**Shape:** {s_val} | **Color:** {c_val}")
+                st.caption(f"**Industry:** {i_val}")
+                st.divider()
