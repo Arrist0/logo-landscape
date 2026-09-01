@@ -459,7 +459,7 @@ st.markdown(f"""
 # HERO SECTION (From Reference Image)
 st.markdown("""
 <div class="hero-kicker">Visual Identity Research</div>
-<div class="hero-title">How Medical Institutions Communicate.</div>
+<div class="hero-title">The Language Of Healthcare Logos.</div>
 <div class="hero-intro">
   A curated research database analyzing logo design patterns, color psychology, and brand characteristics across 82 medical institutions in 6 countries.
 </div>
