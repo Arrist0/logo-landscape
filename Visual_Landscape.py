@@ -12,327 +12,183 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# 2. Theme Detection & Custom CSS
+# 2. Light Theme Custom CSS
 st.markdown("""
 <style>
-@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap');
 
-/* CSS Variables for Light/Dark Theme */
 :root {
-  --bg-light: #ffffff;
-  --bg-dark: #0f1117;
-  --card-light: #f8f9fa;
-  --card-dark: #171923;
-  --ink-light: #1a1a1a;
-  --ink-dark: #f7fafc;
-  --muted-light: #666666;
-  --muted-dark: #a0aec0;
-  --line-light: #e0e0e0;
-  --line-dark: #2d3748;
-  --accent: #6366f1;
+  --bg-light: #f6f5f0;
+  --card-bg: #ffffff;
+  --ink: #171717;
+  --muted: #66635b;
+  --line: #e2dfd7;
+  --box-sub: #f8f7f4;
+  --accent: #2563eb;
 }
 
-/* Global Reset & Dark Canvas by default */
-* {
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+/* Force Light Canvas */
+.main, .stApp { 
+  background-color: var(--bg-light) !important; 
+  color: var(--ink) !important;
+  font-family: "DM Sans", sans-serif !important; 
 }
 
-.main { 
-  background-color: var(--bg-dark);
-}
-
-.stApp { 
-  background-color: var(--bg-dark);
-  color: var(--ink-dark);
-  font-family: "DM Sans", sans-serif; 
-}
-
-/* Light Theme Detection */
-@media (prefers-color-scheme: light) {
-  .main { background-color: var(--bg-light); }
-  .stApp { 
-    background-color: var(--bg-light);
-    color: var(--ink-light);
-  }
-  .topbar-container { border-bottom-color: var(--line-light); }
-  h1.app-title { color: var(--ink-light); }
-  .hero-intro { color: var(--muted-light); }
-  .top-meta { color: var(--muted-light); }
-  .eyebrow, .hero-kicker { color: var(--muted-light); }
-  .results-count { color: var(--ink-light); }
-  .card-title { color: var(--ink-light); }
-  .card-meta { color: var(--muted-light); }
-  .logo-card-wrapper {
-    background-color: var(--card-light) !important;
-    border-color: var(--line-light) !important;
-  }
-  .logo-card-wrapper:hover {
-    background-color: #f0f0f0 !important;
-  }
-  [data-testid="stSidebar"] { background-color: var(--bg-light) !important; }
-  [data-testid="stSidebar"] div.stButton > button {
-    background-color: var(--card-light) !important;
-    border-color: var(--line-light) !important;
-    color: var(--ink-light) !important;
-  }
-  [data-testid="stSidebar"] div.stButton > button:hover {
-    background-color: #e0e0e0 !important;
-    border-color: var(--accent) !important;
-  }
-  .stMultiSelect > div { background-color: var(--card-light) !important; }
-  .stSelectbox > div { background-color: var(--card-light) !important; }
-  .stTextInput > div > div > input {
-    background-color: var(--card-light) !important;
-    color: var(--ink-light) !important;
-    border-color: var(--line-light) !important;
-  }
-}
-
-/* Dark Theme (Default) */
-.main { background-color: var(--bg-dark); }
-.stApp { background-color: var(--bg-dark); color: var(--ink-dark); }
-
-/* Top Header */
+/* Header & Hero */
 .topbar-container {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 10px 0 20px 0;
-    border-bottom: 1px solid var(--line-dark);
+    padding: 12px 0 18px 0;
+    border-bottom: 1px solid var(--line);
     margin-bottom: 25px;
 }
 
 h1.app-title {
     font-family: "Space Grotesk", sans-serif;
     font-size: 28px;
-    margin: 2px 0 0 0;
-    color: var(--ink-dark);
+    margin: 0;
+    color: var(--ink);
     font-weight: 700;
 }
 
-.top-meta {
-    font-size: 13px;
-    color: var(--muted-dark);
-}
-
-/* Hero Section */
 .hero-kicker {
-    font-size: 12px;
-    letter-spacing: 0.14em;
+    font-size: 11px;
+    letter-spacing: 0.16em;
     font-weight: 700;
-    color: var(--muted-dark);
+    color: var(--muted);
     text-transform: uppercase;
     margin-bottom: 6px;
 }
 
 .hero-title {
     font-family: "Space Grotesk", sans-serif;
-    font-size: clamp(32px, 4vw, 50px);
+    font-size: clamp(32px, 4vw, 48px);
     line-height: 1.05;
     letter-spacing: -0.03em;
     font-weight: 700;
-    color: var(--ink-dark);
-    margin: 0 0 14px 0;
+    color: var(--ink);
+    margin: 0 0 12px 0;
 }
 
 .hero-intro {
-    color: var(--muted-dark);
+    color: var(--muted);
     font-size: 15px;
     line-height: 1.6;
     max-width: 650px;
     margin-bottom: 25px;
 }
 
-/* SYNC BUTTON */
+/* Sidebar Styling */
+[data-testid="stSidebar"] {
+    background-color: #faf9f6 !important;
+    border-right: 1px solid var(--line) !important;
+}
+
 [data-testid="stSidebar"] div.stButton > button {
     width: 100% !important;
-    height: 48px !important;
+    height: 44px !important;
     border-radius: 8px !important;
-    background-color: var(--card-dark) !important;
-    border: 1px solid var(--line-dark) !important;
-    color: #ffffff !important;
-    font-size: 16px !important;
+    background-color: #ffffff !important;
+    border: 1px solid var(--line) !important;
+    color: var(--ink) !important;
+    font-size: 14px !important;
     font-weight: 600 !important;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2) !important;
+    transition: all 0.2s ease !important;
 }
 
 [data-testid="stSidebar"] div.stButton > button:hover {
-    background-color: #2d3748 !important;
     border-color: var(--accent) !important;
-    box-shadow: 0 8px 24px rgba(99, 102, 241, 0.3) !important;
-    transform: translateY(-2px);
+    color: var(--accent) !important;
+    background-color: #f0f4ff !important;
 }
 
-/* FILTER DROPDOWNS - Styled Multiselect & Selectbox */
-.stMultiSelect > div {
-    background-color: var(--card-dark) !important;
-    border: 1.5px solid var(--line-dark) !important;
-    border-radius: 10px !important;
-    padding: 8px 12px !important;
-    transition: all 0.3s ease !important;
-}
-
-.stMultiSelect > div:hover {
-    border-color: var(--accent) !important;
-    box-shadow: 0 0 12px rgba(99, 102, 241, 0.2) !important;
-}
-
-.stSelectbox > div {
-    background-color: var(--card-dark) !important;
-    border: 1.5px solid var(--line-dark) !important;
-    border-radius: 10px !important;
-    padding: 8px 12px !important;
-    transition: all 0.3s ease !important;
-}
-
-.stSelectbox > div:hover {
-    border-color: var(--accent) !important;
-    box-shadow: 0 0 12px rgba(99, 102, 241, 0.2) !important;
-}
-
-.stTextInput > div > div > input {
-    background-color: var(--card-dark) !important;
-    border: 1.5px solid var(--line-dark) !important;
-    border-radius: 10px !important;
-    color: var(--ink-dark) !important;
-    padding: 10px 12px !important;
-    transition: all 0.3s ease !important;
-}
-
-.stTextInput > div > div > input:focus {
-    border-color: var(--accent) !important;
-    box-shadow: 0 0 12px rgba(99, 102, 241, 0.2) !important;
-}
-
-/* UNIFORM CARD CONTAINER - NO EXTRA SPACE */
+/* Tight Uniform Card Layout */
 .logo-card-wrapper {
-    background-color: var(--card-dark) !important;
-    border: 1.5px solid var(--line-dark) !important;
+    background-color: var(--card-bg) !important;
+    border: 1px solid var(--line) !important;
     border-radius: 12px !important;
     overflow: hidden !important;
-    height: 380px !important;
     display: flex !important;
     flex-direction: column !important;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3) !important;
-    transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04) !important;
+    transition: transform 0.25s ease, box-shadow 0.25s ease !important;
+    margin-bottom: 20px !important;
 }
 
 .logo-card-wrapper:hover {
-    transform: translateY(-8px) scale(1.02) !important;
-    box-shadow: 0 20px 40px rgba(99, 102, 241, 0.25) !important;
-    border-color: var(--accent) !important;
-    background-color: #1f2937 !important;
+    transform: translateY(-4px) !important;
+    box-shadow: 0 12px 24px rgba(0,0,0,0.08) !important;
+    border-color: #b0ad9e !important;
 }
 
-/* Image Container - Uniform Height */
+/* Image Box */
 .logo-image-box {
-    height: 180px;
+    height: 170px;
     background-color: #ffffff;
     display: flex;
     align-items: center;
     justify-content: center;
     padding: 16px;
-    border-bottom: 1.5px solid var(--line-dark);
-    overflow: hidden;
-    position: relative;
+    border-bottom: 1px solid var(--line);
 }
 
 .logo-image-box img {
-    max-height: 140px;
+    max-height: 135px;
     max-width: 90%;
     object-fit: contain;
-    transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.logo-card-wrapper:hover .logo-image-box img {
-    transform: scale(1.08);
-}
-
-/* Card Content - NO PADDING BLOAT */
+/* Card Content & Bigger Typography */
 .card-content {
-    padding: 12px;
-    flex-grow: 1;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
+    padding: 16px;
 }
 
 .card-title {
     font-family: "Space Grotesk", sans-serif;
-    font-size: 13px;
+    font-size: 15px; /* Larger Title */
     font-weight: 700;
-    color: var(--ink-dark);
-    margin: 0 0 6px 0;
+    color: var(--ink);
+    margin: 0 0 12px 0;
     line-height: 1.3;
 }
 
-.card-meta {
-    font-size: 11px;
-    color: var(--muted-dark);
-    line-height: 1.4;
-    margin-bottom: 0;
+/* Two Separate Attribute Boxes */
+.meta-box {
+    background-color: var(--box-sub);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 10px 12px;
+    margin-bottom: 8px;
 }
 
-/* Details Button - Compact */
-.details-btn {
-    font-size: 11px;
-    padding: 6px 8px !important;
-    margin-top: 8px !important;
-    border-radius: 6px !important;
-    background-color: rgba(99, 102, 241, 0.1) !important;
-    border: 1px solid var(--accent) !important;
-    color: var(--accent) !important;
-    transition: all 0.2s ease !important;
+.meta-box-header {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--muted);
+    margin-bottom: 4px;
 }
 
-.details-btn:hover {
-    background-color: rgba(99, 102, 241, 0.2) !important;
-}
-
-/* Results Header */
-.results-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 20px;
-    padding-bottom: 16px;
-    border-bottom: 1px solid var(--line-dark);
+.meta-box-text {
+    font-size: 12px; /* Larger Metadata Font */
+    color: var(--ink);
+    line-height: 1.45;
 }
 
 .results-count {
     font-family: "Space Grotesk", sans-serif;
     font-size: 18px;
     font-weight: 700;
-    color: var(--ink-dark);
-}
-
-/* Sidebar */
-[data-testid="stSidebar"] {
-    background-color: var(--bg-dark);
-}
-
-/* Smooth Fade In */
-@keyframes fadeIn {
-    from {
-        opacity: 0;
-        transform: translateY(10px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-.fade-in {
-    animation: fadeIn 0.5s ease-out;
+    color: var(--ink);
 }
 </style>
 """, unsafe_allow_html=True)
 
 CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vT-qp8XmpX4c-mvFbIaB80DxAgVt7FELa1Bb5b1z5nZjBUu_r5f1GCC24A-2DmozwoRT-umwLhu9Iyz/pub?gid=609445256&single=true&output=csv"
 
-@st.cache_data(ttl=3600)
+@st.cache_data(ttl=2)
 def load_data():
     response = requests.get(CSV_URL)
     response.encoding = 'utf-8'
@@ -350,6 +206,7 @@ def load_data():
     else:
         df = pd.read_csv(CSV_URL)
 
+    # Clean whitespace in column headers
     df.columns = [re.sub(r'\s+', ' ', str(c)).strip() for c in df.columns]
 
     if "Name" in df.columns:
@@ -364,6 +221,7 @@ except Exception as e:
     st.error(f"Error loading live dataset: {e}")
     st.stop()
 
+# Transform Google Drive links directly to image URLs
 def transform_image_url(url_str):
     url_str = str(url_str).strip()
     if not url_str or url_str.lower() in ["nan", "n/a", "none"]:
@@ -371,20 +229,23 @@ def transform_image_url(url_str):
     if "drive.google.com" in url_str:
         match = re.search(r'(?:file/d/|id=)([a-zA-Z0-9_-]+)', url_str)
         if match:
-            return f"https://drive.google.com/uc?export=view&id={match.group(1)}"
+            return f"https://lh3.googleusercontent.com/d/{match.group(1)}"
     return url_str
 
-# SIDEBAR
+# Clean strings for robust matching (Fixes Education & Research Center match issue)
+def normalize_text(text):
+    return re.sub(r'\s+', ' ', str(text)).replace('&', 'and').strip().lower()
+
+# ----------------- SIDEBAR -----------------
 with st.sidebar:
     st.markdown("### Sync Data")
-    if st.button("🔄 Refresh Google Sheets", help="Click to sync latest data from Google Sheets"):
+    if st.button("🔄 Refresh Google Sheets", help="Click to sync latest data"):
         st.cache_data.clear()
         st.rerun()
     
     st.markdown("---")
     st.markdown("### Filters")
 
-    # Column mappings
     brand_col = "Name"
     img_col = "Logo"
     type_of_logo_col = "Type of Logo"
@@ -396,9 +257,6 @@ with st.sidebar:
     complexity_col = "Complexity (Low/ Mid/ High) (Intrinsic Visual Load)"
     symmetry_col = "Symmetry"
     symbolism_col = "Symbolism"
-    font_type_col = "Font Type"
-    font_weight_col = "Font Weight"
-    type_class_col = "Type classification"
 
     def get_options(col_name):
         if col_name in df.columns:
@@ -407,16 +265,16 @@ with st.sidebar:
 
     search_query = st.text_input("⌕ Search organisation...", "")
 
-    selected_logo_types = st.multiselect("Type of Logo:", options=get_options(type_of_logo_col), default=[])
-    selected_forms = st.multiselect("Shape (Primary Form):", options=get_options(primary_form_col), default=[])
-    selected_families = st.multiselect("Color Family:", options=get_options(color_family_col), default=[])
-    selected_sectors = st.multiselect("Sector:", options=get_options(sector_col), default=[])
-    selected_org_types = st.multiselect("Organization Type:", options=get_options(org_type_col), default=[])
-    selected_countries = st.multiselect("Country:", options=get_options(country_col), default=[])
-    selected_complexity = st.multiselect("Complexity:", options=get_options(complexity_col), default=[])
-    selected_symmetry = st.multiselect("Symmetry:", options=get_options(symmetry_col), default=[])
+    selected_logo_types = st.multiselect("Type of Logo:", options=get_options(type_of_logo_col))
+    selected_forms = st.multiselect("Shape (Primary Form):", options=get_options(primary_form_col))
+    selected_families = st.multiselect("Color Family:", options=get_options(color_family_col))
+    selected_sectors = st.multiselect("Sector:", options=get_options(sector_col))
+    selected_org_types = st.multiselect("Organization Type:", options=get_options(org_type_col))
+    selected_countries = st.multiselect("Country:", options=get_options(country_col))
+    selected_complexity = st.multiselect("Complexity:", options=get_options(complexity_col))
+    selected_symmetry = st.multiselect("Symmetry:", options=get_options(symmetry_col))
 
-# Apply Filters
+# Filtering Logic
 filtered_df = df.copy()
 
 if search_query and brand_col in df.columns:
@@ -434,8 +292,10 @@ if selected_families and color_family_col in df.columns:
 if selected_sectors and sector_col in df.columns:
     filtered_df = filtered_df[filtered_df[sector_col].astype(str).isin(selected_sectors)]
 
+# Robust matching for Organization Type (handles & vs and & trailing spaces)
 if selected_org_types and org_type_col in df.columns:
-    filtered_df = filtered_df[filtered_df[org_type_col].astype(str).isin(selected_org_types)]
+    norm_selected = [normalize_text(x) for x in selected_org_types]
+    filtered_df = filtered_df[filtered_df[org_type_col].apply(lambda val: normalize_text(val) in norm_selected)]
 
 if selected_countries and country_col in df.columns:
     filtered_df = filtered_df[filtered_df[country_col].astype(str).isin(selected_countries)]
@@ -446,26 +306,25 @@ if selected_complexity and complexity_col in df.columns:
 if selected_symmetry and symmetry_col in df.columns:
     filtered_df = filtered_df[filtered_df[symmetry_col].astype(str).isin(selected_symmetry)]
 
-# MAIN CONTENT
+# ----------------- MAIN LAYOUT -----------------
 st.markdown(f"""
 <div class="topbar-container">
   <div>
     <h1 class="app-title">Logo Landscape</h1>
   </div>
-  <div class="top-meta"><strong>{len(df)}</strong> Identities</div>
+  <div style="color: var(--muted); font-size: 13px;"><strong>{len(df)}</strong> Identities</div>
 </div>
 """, unsafe_allow_html=True)
 
-# HERO SECTION (From Reference Image)
 st.markdown("""
 <div class="hero-kicker">Visual Identity Research</div>
 <div class="hero-title">The Language Of Healthcare Logos.</div>
 <div class="hero-intro">
-  A curated research database analyzing logo design patterns, color psychology, and brand characteristics across 82 medical institutions in 6 countries.
+  A curated research database analyzing logo design patterns, color psychology, and brand characteristics across medical institutions.
 </div>
 """, unsafe_allow_html=True)
 
-# RESULTS HEADER WITH SORT
+# Results Header with Sort Options
 col1, col2 = st.columns([3, 1])
 with col1:
     st.markdown(f"<div class='results-count'>{len(filtered_df)} Results</div>", unsafe_allow_html=True)
@@ -486,7 +345,7 @@ elif sort_option == "Country" and country_col in filtered_df.columns:
 
 st.write("")
 
-# UNIFORM CARD GRID (3 COLUMNS) - NO EXTRA SPACE
+# UNIFORM TIGHT CARD GRID (3 COLUMNS)
 if filtered_df.empty:
     st.info("No logos match the selected criteria.")
 else:
@@ -498,39 +357,48 @@ else:
         
         with col:
             b_name = str(row.get(brand_col, "Unknown Brand")).strip()
-            
-            # Image handling
             raw_img = str(row.get(img_col, "")).strip() if pd.notna(row.get(img_col, "")) else ""
             img_url = transform_image_url(raw_img)
             
-            img_html = ""
             if img_url and img_url.startswith("http"):
                 img_html = f'<img src="{img_url}" alt="{b_name}" />'
             else:
                 img_html = '<div style="color: #a0aec0; font-size: 12px;">📷 Image unavailable</div>'
             
-            # Metadata
             p_form = str(row.get(primary_form_col, "—")).strip()
             c_family = str(row.get(color_family_col, "—")).strip()
             sector_val = str(row.get(sector_col, "—")).strip()
+            org_type_val = str(row.get(org_type_col, "—")).strip()
             cnt_val = str(row.get(country_col, "—")).strip()
+            logo_type_val = str(row.get(type_of_logo_col, "—")).strip()
             complexity_val = str(row.get(complexity_col, "—")).strip()
             symmetry_val = str(row.get(symmetry_col, "—")).strip()
-            type_class = str(row.get(type_class_col, "—")).strip()
             symbolism_text = str(row.get(symbolism_col, "No symbolism recorded.")).strip()
             
-            # Card HTML - COMPACT, NO EXTRA SPACE
+            # Card HTML with 2 Primary Sub-Boxes
             card_html = f"""
-            <div class="logo-card-wrapper fade-in">
+            <div class="logo-card-wrapper">
                 <div class="logo-image-box">
                     {img_html}
                 </div>
                 <div class="card-content">
-                    <div>
-                        <div class="card-title">{b_name}</div>
-                        <div class="card-meta">
-                            <strong>Shape:</strong> {p_form} | <strong>Color:</strong> {c_family}<br>
+                    <div class="card-title">{b_name}</div>
+                    
+                    <!-- BOX 1: Organization & Sector -->
+                    <div class="meta-box">
+                        <div class="meta-box-header">Organization & Sector</div>
+                        <div class="meta-box-text">
+                            <strong>Org:</strong> {org_type_val}<br>
                             <strong>Sector:</strong> {sector_val} | <strong>Country:</strong> {cnt_val}
+                        </div>
+                    </div>
+
+                    <!-- BOX 2: Visual & Form Details -->
+                    <div class="meta-box">
+                        <div class="meta-box-header">Visual Analysis</div>
+                        <div class="meta-box-text">
+                            <strong>Type:</strong> {logo_type_val} | <strong>Shape:</strong> {p_form}<br>
+                            <strong>Color:</strong> {c_family} | <strong>Complexity:</strong> {complexity_val}
                         </div>
                     </div>
                 </div>
@@ -539,13 +407,6 @@ else:
             
             st.markdown(card_html, unsafe_allow_html=True)
             
-            # Expandable details
-            with st.expander("📋 Details"):
-                st.markdown(f"""
-                **Complexity:** {complexity_val}  
-                **Symmetry:** {symmetry_val}  
-                **Type:** {type_class}  
-                
-                **Symbolism:**  
-                {symbolism_text}
-                """)
+            # Expandable Details for Symbolism
+            with st.expander("📋 View Symbolism & Rationale"):
+                st.markdown(f"**Symbolism:**\n\n{symbolism_text}")
