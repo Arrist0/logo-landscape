@@ -8,30 +8,89 @@ import streamlit as st
 st.set_page_config(
     page_title="Logo Landscape — Visual Identity Research",
     page_icon="🎨",
-    layout="wide"
+    layout="wide",
+    initial_sidebar_state="expanded"
 )
 
-# 2. Custom CSS (Uniform Card Sizes, Dark Theme & Smooth Animations)
+# 2. Theme Detection & Custom CSS
 st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap');
 
+/* CSS Variables for Light/Dark Theme */
 :root {
-  --bg: #0f1117;
-  --ink: #f7fafc;
-  --muted: #a0aec0;
-  --line: #2d3748;
-  --card: #171923;
+  --bg-light: #ffffff;
+  --bg-dark: #0f1117;
+  --card-light: #f8f9fa;
+  --card-dark: #171923;
+  --ink-light: #1a1a1a;
+  --ink-dark: #f7fafc;
+  --muted-light: #666666;
+  --muted-dark: #a0aec0;
+  --line-light: #e0e0e0;
+  --line-dark: #2d3748;
   --accent: #6366f1;
 }
 
-/* Global Reset & Dark Canvas */
+/* Global Reset & Dark Canvas by default */
 * {
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.main { background-color: var(--bg); }
-.stApp { background-color: var(--bg); color: var(--ink); font-family: "DM Sans", sans-serif; }
+.main { 
+  background-color: var(--bg-dark);
+}
+
+.stApp { 
+  background-color: var(--bg-dark);
+  color: var(--ink-dark);
+  font-family: "DM Sans", sans-serif; 
+}
+
+/* Light Theme Detection */
+@media (prefers-color-scheme: light) {
+  .main { background-color: var(--bg-light); }
+  .stApp { 
+    background-color: var(--bg-light);
+    color: var(--ink-light);
+  }
+  .topbar-container { border-bottom-color: var(--line-light); }
+  h1.app-title { color: var(--ink-light); }
+  .hero-intro { color: var(--muted-light); }
+  .top-meta { color: var(--muted-light); }
+  .eyebrow, .hero-kicker { color: var(--muted-light); }
+  .results-count { color: var(--ink-light); }
+  .card-title { color: var(--ink-light); }
+  .card-meta { color: var(--muted-light); }
+  .logo-card-wrapper {
+    background-color: var(--card-light) !important;
+    border-color: var(--line-light) !important;
+  }
+  .logo-card-wrapper:hover {
+    background-color: #f0f0f0 !important;
+  }
+  [data-testid="stSidebar"] { background-color: var(--bg-light) !important; }
+  [data-testid="stSidebar"] div.stButton > button {
+    background-color: var(--card-light) !important;
+    border-color: var(--line-light) !important;
+    color: var(--ink-light) !important;
+  }
+  [data-testid="stSidebar"] div.stButton > button:hover {
+    background-color: #e0e0e0 !important;
+    border-color: var(--accent) !important;
+  }
+  .stMultiSelect > div { background-color: var(--card-light) !important; }
+  .stSelectbox > div { background-color: var(--card-light) !important; }
+  .stTextInput > div > div > input {
+    background-color: var(--card-light) !important;
+    color: var(--ink-light) !important;
+    border-color: var(--line-light) !important;
+  }
+}
+
+/* Dark Theme (Default) */
+.main { background-color: var(--bg-dark); }
+.stApp { background-color: var(--bg-dark); color: var(--ink-dark); }
 
 /* Top Header */
 .topbar-container {
@@ -39,26 +98,21 @@ st.markdown("""
     align-items: center;
     justify-content: space-between;
     padding: 10px 0 20px 0;
-    border-bottom: 1px solid var(--line);
+    border-bottom: 1px solid var(--line-dark);
     margin-bottom: 25px;
 }
-.eyebrow {
-    font-size: 11px;
-    letter-spacing: 0.16em;
-    font-weight: 700;
-    color: var(--muted);
-    text-transform: uppercase;
-}
+
 h1.app-title {
     font-family: "Space Grotesk", sans-serif;
     font-size: 28px;
     margin: 2px 0 0 0;
-    color: var(--ink);
+    color: var(--ink-dark);
     font-weight: 700;
 }
+
 .top-meta {
     font-size: 13px;
-    color: var(--muted);
+    color: var(--muted-dark);
 }
 
 /* Hero Section */
@@ -66,34 +120,36 @@ h1.app-title {
     font-size: 12px;
     letter-spacing: 0.14em;
     font-weight: 700;
-    color: var(--muted);
+    color: var(--muted-dark);
     text-transform: uppercase;
     margin-bottom: 6px;
 }
+
 .hero-title {
     font-family: "Space Grotesk", sans-serif;
     font-size: clamp(32px, 4vw, 50px);
     line-height: 1.05;
     letter-spacing: -0.03em;
     font-weight: 700;
-    color: #ffffff;
+    color: var(--ink-dark);
     margin: 0 0 14px 0;
 }
+
 .hero-intro {
-    color: var(--muted);
+    color: var(--muted-dark);
     font-size: 15px;
     line-height: 1.6;
     max-width: 650px;
     margin-bottom: 25px;
 }
 
-/* SYNC BUTTON - Square, Top Left, Premium Feel */
+/* SYNC BUTTON */
 [data-testid="stSidebar"] div.stButton > button {
     width: 100% !important;
     height: 48px !important;
     border-radius: 8px !important;
-    background-color: var(--card) !important;
-    border: 1px solid var(--line) !important;
+    background-color: var(--card-dark) !important;
+    border: 1px solid var(--line-dark) !important;
     color: #ffffff !important;
     font-size: 16px !important;
     font-weight: 600 !important;
@@ -108,21 +164,56 @@ h1.app-title {
     transform: translateY(-2px);
 }
 
-[data-testid="stSidebar"] div.stButton > button:active {
-    transform: translateY(0px);
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3) !important;
+/* FILTER DROPDOWNS - Styled Multiselect & Selectbox */
+.stMultiSelect > div {
+    background-color: var(--card-dark) !important;
+    border: 1.5px solid var(--line-dark) !important;
+    border-radius: 10px !important;
+    padding: 8px 12px !important;
+    transition: all 0.3s ease !important;
 }
 
-/* UNIFORM CARD CONTAINER - Fixed Size Grid */
+.stMultiSelect > div:hover {
+    border-color: var(--accent) !important;
+    box-shadow: 0 0 12px rgba(99, 102, 241, 0.2) !important;
+}
+
+.stSelectbox > div {
+    background-color: var(--card-dark) !important;
+    border: 1.5px solid var(--line-dark) !important;
+    border-radius: 10px !important;
+    padding: 8px 12px !important;
+    transition: all 0.3s ease !important;
+}
+
+.stSelectbox > div:hover {
+    border-color: var(--accent) !important;
+    box-shadow: 0 0 12px rgba(99, 102, 241, 0.2) !important;
+}
+
+.stTextInput > div > div > input {
+    background-color: var(--card-dark) !important;
+    border: 1.5px solid var(--line-dark) !important;
+    border-radius: 10px !important;
+    color: var(--ink-dark) !important;
+    padding: 10px 12px !important;
+    transition: all 0.3s ease !important;
+}
+
+.stTextInput > div > div > input:focus {
+    border-color: var(--accent) !important;
+    box-shadow: 0 0 12px rgba(99, 102, 241, 0.2) !important;
+}
+
+/* UNIFORM CARD CONTAINER - NO EXTRA SPACE */
 .logo-card-wrapper {
-    background-color: var(--card) !important;
-    border: 1.5px solid var(--line) !important;
+    background-color: var(--card-dark) !important;
+    border: 1.5px solid var(--line-dark) !important;
     border-radius: 12px !important;
     overflow: hidden !important;
-    height: 420px !important;
+    height: 380px !important;
     display: flex !important;
     flex-direction: column !important;
-    justify-content: space-between !important;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3) !important;
     transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1) !important;
 }
@@ -136,19 +227,19 @@ h1.app-title {
 
 /* Image Container - Uniform Height */
 .logo-image-box {
-    height: 200px;
+    height: 180px;
     background-color: #ffffff;
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 20px;
-    border-bottom: 1.5px solid var(--line);
+    padding: 16px;
+    border-bottom: 1.5px solid var(--line-dark);
     overflow: hidden;
     position: relative;
 }
 
 .logo-image-box img {
-    max-height: 160px;
+    max-height: 140px;
     max-width: 90%;
     object-fit: contain;
     transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
@@ -158,9 +249,9 @@ h1.app-title {
     transform: scale(1.08);
 }
 
-/* Card Content Area */
+/* Card Content - NO PADDING BLOAT */
 .card-content {
-    padding: 16px;
+    padding: 12px;
     flex-grow: 1;
     display: flex;
     flex-direction: column;
@@ -169,64 +260,34 @@ h1.app-title {
 
 .card-title {
     font-family: "Space Grotesk", sans-serif;
-    font-size: 14px;
+    font-size: 13px;
     font-weight: 700;
-    color: #ffffff;
-    margin: 0 0 12px 0;
+    color: var(--ink-dark);
+    margin: 0 0 6px 0;
     line-height: 1.3;
 }
 
 .card-meta {
-    font-size: 12px;
-    color: var(--muted);
-    line-height: 1.5;
-    margin-bottom: 8px;
-}
-
-.card-badges {
-    display: flex;
-    gap: 8px;
-    flex-wrap: wrap;
-    margin-top: 10px;
-}
-
-.card-badge {
-    font-size: 10px;
-    padding: 4px 10px;
-    border-radius: 4px;
-    background-color: rgba(99, 102, 241, 0.15);
-    color: var(--accent);
-    font-weight: 600;
-    letter-spacing: 0.02em;
-    text-transform: uppercase;
-}
-
-/* Inspector/Details Expander */
-.details-expander {
-    border-top: 1px solid var(--line);
-    padding-top: 12px;
-    margin-top: 12px;
     font-size: 11px;
+    color: var(--muted-dark);
+    line-height: 1.4;
+    margin-bottom: 0;
 }
 
-.detail-row {
-    display: grid;
-    grid-template-columns: 1fr 1.2fr;
-    padding: 6px 0;
-    border-bottom: 1px solid rgba(160, 174, 192, 0.1);
+/* Details Button - Compact */
+.details-btn {
+    font-size: 11px;
+    padding: 6px 8px !important;
+    margin-top: 8px !important;
+    border-radius: 6px !important;
+    background-color: rgba(99, 102, 241, 0.1) !important;
+    border: 1px solid var(--accent) !important;
+    color: var(--accent) !important;
+    transition: all 0.2s ease !important;
 }
 
-.detail-label {
-    color: var(--muted);
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    font-size: 9px;
-}
-
-.detail-value {
-    color: #ffffff;
-    font-weight: 500;
+.details-btn:hover {
+    background-color: rgba(99, 102, 241, 0.2) !important;
 }
 
 /* Results Header */
@@ -236,55 +297,19 @@ h1.app-title {
     align-items: center;
     margin-bottom: 20px;
     padding-bottom: 16px;
-    border-bottom: 1px solid var(--line);
+    border-bottom: 1px solid var(--line-dark);
 }
 
 .results-count {
     font-family: "Space Grotesk", sans-serif;
     font-size: 18px;
     font-weight: 700;
-    color: #ffffff;
+    color: var(--ink-dark);
 }
 
-/* Sort Selector */
-.stSelectbox {
-    transition: all 0.3s ease;
-}
-
-.stSelectbox:hover {
-    opacity: 0.8;
-}
-
-/* Sidebar Styling */
+/* Sidebar */
 [data-testid="stSidebar"] {
-    background-color: var(--bg);
-}
-
-[data-testid="stSidebar"] .sidebar-title {
-    font-family: "Space Grotesk", sans-serif;
-    font-weight: 700;
-    color: var(--ink);
-    font-size: 14px;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    margin: 16px 0 12px 0;
-}
-
-/* Loading Animation */
-@keyframes shimmer {
-    0% {
-        opacity: 0.6;
-    }
-    50% {
-        opacity: 1;
-    }
-    100% {
-        opacity: 0.6;
-    }
-}
-
-.loading {
-    animation: shimmer 2s infinite;
+    background-color: var(--bg-dark);
 }
 
 /* Smooth Fade In */
@@ -349,7 +374,7 @@ def transform_image_url(url_str):
             return f"https://drive.google.com/uc?export=view&id={match.group(1)}"
     return url_str
 
-# SIDEBAR WITH SYNC BUTTON
+# SIDEBAR
 with st.sidebar:
     st.markdown("### Sync Data")
     if st.button("🔄 Refresh Google Sheets", help="Click to sync latest data from Google Sheets"):
@@ -382,14 +407,14 @@ with st.sidebar:
 
     search_query = st.text_input("⌕ Search organisation...", "")
 
-    selected_logo_types = st.multiselect("Type of Logo:", options=get_options(type_of_logo_col))
-    selected_forms = st.multiselect("Shape (Primary Form):", options=get_options(primary_form_col))
-    selected_families = st.multiselect("Color Family:", options=get_options(color_family_col))
-    selected_sectors = st.multiselect("Sector:", options=get_options(sector_col))
-    selected_org_types = st.multiselect("Organization Type:", options=get_options(org_type_col))
-    selected_countries = st.multiselect("Country:", options=get_options(country_col))
-    selected_complexity = st.multiselect("Complexity:", options=get_options(complexity_col))
-    selected_symmetry = st.multiselect("Symmetry:", options=get_options(symmetry_col))
+    selected_logo_types = st.multiselect("Type of Logo:", options=get_options(type_of_logo_col), default=[])
+    selected_forms = st.multiselect("Shape (Primary Form):", options=get_options(primary_form_col), default=[])
+    selected_families = st.multiselect("Color Family:", options=get_options(color_family_col), default=[])
+    selected_sectors = st.multiselect("Sector:", options=get_options(sector_col), default=[])
+    selected_org_types = st.multiselect("Organization Type:", options=get_options(org_type_col), default=[])
+    selected_countries = st.multiselect("Country:", options=get_options(country_col), default=[])
+    selected_complexity = st.multiselect("Complexity:", options=get_options(complexity_col), default=[])
+    selected_symmetry = st.multiselect("Symmetry:", options=get_options(symmetry_col), default=[])
 
 # Apply Filters
 filtered_df = df.copy()
@@ -431,12 +456,12 @@ st.markdown(f"""
 </div>
 """, unsafe_allow_html=True)
 
-# HERO SECTION
+# HERO SECTION (From Reference Image)
 st.markdown("""
 <div class="hero-kicker">Visual Identity Research</div>
-<div class="hero-title">The Design of Care & Innovation.</div>
+<div class="hero-title">How Medical Institutions Communicate.</div>
 <div class="hero-intro">
-  Explore 165+ visual identities across the medical ecosystem: hospitals delivering care, research centers advancing knowledge, educational institutes training leaders, and tech companies solving problems—all through design.
+  A curated research database analyzing logo design patterns, color psychology, and brand characteristics across 82 medical institutions in 6 countries.
 </div>
 """, unsafe_allow_html=True)
 
@@ -461,7 +486,7 @@ elif sort_option == "Country" and country_col in filtered_df.columns:
 
 st.write("")
 
-# UNIFORM CARD GRID (3 COLUMNS)
+# UNIFORM CARD GRID (3 COLUMNS) - NO EXTRA SPACE
 if filtered_df.empty:
     st.info("No logos match the selected criteria.")
 else:
@@ -472,7 +497,6 @@ else:
         col = cols[idx % cols_per_row]
         
         with col:
-            # Build card HTML
             b_name = str(row.get(brand_col, "Unknown Brand")).strip()
             
             # Image handling
@@ -495,7 +519,7 @@ else:
             type_class = str(row.get(type_class_col, "—")).strip()
             symbolism_text = str(row.get(symbolism_col, "No symbolism recorded.")).strip()
             
-            # Card HTML
+            # Card HTML - COMPACT, NO EXTRA SPACE
             card_html = f"""
             <div class="logo-card-wrapper fade-in">
                 <div class="logo-image-box">
@@ -518,20 +542,10 @@ else:
             # Expandable details
             with st.expander("📋 Details"):
                 st.markdown(f"""
-                <div class="details-expander">
-                    <div class="detail-row">
-                        <div class="detail-label">Complexity</div>
-                        <div class="detail-value">{complexity_val}</div>
-                    </div>
-                    <div class="detail-row">
-                        <div class="detail-label">Symmetry</div>
-                        <div class="detail-value">{symmetry_val}</div>
-                    </div>
-                    <div class="detail-row">
-                        <div class="detail-label">Type</div>
-                        <div class="detail-value">{type_class}</div>
-                    </div>
-                </div>
-                """, unsafe_allow_html=True)
+                **Complexity:** {complexity_val}  
+                **Symmetry:** {symmetry_val}  
+                **Type:** {type_class}  
                 
-                st.markdown(f"**Symbolism:**\n\n{symbolism_text}")
+                **Symbolism:**  
+                {symbolism_text}
+                """)
