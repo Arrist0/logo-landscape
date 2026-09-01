@@ -26,6 +26,10 @@ st.markdown("""
 }
 
 /* Global Reset & Dark Canvas */
+* {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
 .main { background-color: var(--bg); }
 .stApp { background-color: var(--bg); color: var(--ink); font-family: "DM Sans", sans-serif; }
 
@@ -83,91 +87,227 @@ h1.app-title {
     margin-bottom: 25px;
 }
 
-/* Square Top-Left Sync Button Styling */
+/* SYNC BUTTON - Square, Top Left, Premium Feel */
 [data-testid="stSidebar"] div.stButton > button {
     width: 100% !important;
-    height: 54px !important;
-    border-radius: 10px !important;
+    height: 48px !important;
+    border-radius: 8px !important;
     background-color: var(--card) !important;
     border: 1px solid var(--line) !important;
     color: #ffffff !important;
-    font-size: 18px !important;
-    transition: all 0.2s ease !important;
+    font-size: 16px !important;
+    font-weight: 600 !important;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2) !important;
 }
+
 [data-testid="stSidebar"] div.stButton > button:hover {
     background-color: #2d3748 !important;
     border-color: var(--accent) !important;
-    transform: scale(1.02);
+    box-shadow: 0 8px 24px rgba(99, 102, 241, 0.3) !important;
+    transform: translateY(-2px);
 }
 
-/* Uniform Card Structure & Smooth Hover Transitions */
-div[data-testid="stVerticalBlock"] > div[style*="background-color"] {
+[data-testid="stSidebar"] div.stButton > button:active {
+    transform: translateY(0px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3) !important;
+}
+
+/* UNIFORM CARD CONTAINER - Fixed Size Grid */
+.logo-card-wrapper {
     background-color: var(--card) !important;
-    border: 1px solid var(--line) !important;
+    border: 1.5px solid var(--line) !important;
     border-radius: 12px !important;
     overflow: hidden !important;
-    height: 380px !important; /* Fixed Uniform Height */
+    height: 420px !important;
     display: flex !important;
     flex-direction: column !important;
     justify-content: space-between !important;
-    transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.25s ease, border-color 0.25s ease !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3) !important;
+    transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1) !important;
 }
 
-div[data-testid="stVerticalBlock"] > div[style*="background-color"]:hover {
-    transform: translateY(-6px) scale(1.015) !important;
-    box-shadow: 0 16px 32px rgba(0, 0, 0, 0.5) !important;
+.logo-card-wrapper:hover {
+    transform: translateY(-8px) scale(1.02) !important;
+    box-shadow: 0 20px 40px rgba(99, 102, 241, 0.25) !important;
     border-color: var(--accent) !important;
+    background-color: #1f2937 !important;
 }
 
-/* Image Frame Inside Card */
-.img-container {
-    height: 170px;
+/* Image Container - Uniform Height */
+.logo-image-box {
+    height: 200px;
     background-color: #ffffff;
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 16px;
-    border-bottom: 1px solid var(--line);
+    padding: 20px;
+    border-bottom: 1.5px solid var(--line);
     overflow: hidden;
-}
-.img-container img {
-    max-height: 130px;
-    max-width: 85%;
-    object-fit: contain;
-    transition: transform 0.3s ease;
-}
-div[data-testid="stVerticalBlock"] > div[style*="background-color"]:hover .img-container img {
-    transform: scale(1.06);
+    position: relative;
 }
 
-/* Inspector Table Styling */
-.detail-table {
-    display: grid;
-    grid-template-columns: 1fr 1.4fr;
-    border-top: 1px solid var(--line);
-    margin-top: 8px;
+.logo-image-box img {
+    max-height: 160px;
+    max-width: 90%;
+    object-fit: contain;
+    transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
-.detail-row-label {
-    padding: 6px 0;
-    border-bottom: 1px solid var(--line);
-    font-size: 10px;
+
+.logo-card-wrapper:hover .logo-image-box img {
+    transform: scale(1.08);
+}
+
+/* Card Content Area */
+.card-content {
+    padding: 16px;
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.card-title {
+    font-family: "Space Grotesk", sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    color: #ffffff;
+    margin: 0 0 12px 0;
+    line-height: 1.3;
+}
+
+.card-meta {
+    font-size: 12px;
     color: var(--muted);
+    line-height: 1.5;
+    margin-bottom: 8px;
+}
+
+.card-badges {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-top: 10px;
+}
+
+.card-badge {
+    font-size: 10px;
+    padding: 4px 10px;
+    border-radius: 4px;
+    background-color: rgba(99, 102, 241, 0.15);
+    color: var(--accent);
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+}
+
+/* Inspector/Details Expander */
+.details-expander {
+    border-top: 1px solid var(--line);
+    padding-top: 12px;
+    margin-top: 12px;
+    font-size: 11px;
+}
+
+.detail-row {
+    display: grid;
+    grid-template-columns: 1fr 1.2fr;
+    padding: 6px 0;
+    border-bottom: 1px solid rgba(160, 174, 192, 0.1);
+}
+
+.detail-label {
+    color: var(--muted);
+    font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.05em;
+    font-size: 9px;
 }
-.detail-row-val {
-    padding: 6px 0;
-    border-bottom: 1px solid var(--line);
-    font-size: 11px;
+
+.detail-value {
     color: #ffffff;
     font-weight: 500;
+}
+
+/* Results Header */
+.results-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--line);
+}
+
+.results-count {
+    font-family: "Space Grotesk", sans-serif;
+    font-size: 18px;
+    font-weight: 700;
+    color: #ffffff;
+}
+
+/* Sort Selector */
+.stSelectbox {
+    transition: all 0.3s ease;
+}
+
+.stSelectbox:hover {
+    opacity: 0.8;
+}
+
+/* Sidebar Styling */
+[data-testid="stSidebar"] {
+    background-color: var(--bg);
+}
+
+[data-testid="stSidebar"] .sidebar-title {
+    font-family: "Space Grotesk", sans-serif;
+    font-weight: 700;
+    color: var(--ink);
+    font-size: 14px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin: 16px 0 12px 0;
+}
+
+/* Loading Animation */
+@keyframes shimmer {
+    0% {
+        opacity: 0.6;
+    }
+    50% {
+        opacity: 1;
+    }
+    100% {
+        opacity: 0.6;
+    }
+}
+
+.loading {
+    animation: shimmer 2s infinite;
+}
+
+/* Smooth Fade In */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.fade-in {
+    animation: fadeIn 0.5s ease-out;
 }
 </style>
 """, unsafe_allow_html=True)
 
 CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vT-qp8XmpX4c-mvFbIaB80DxAgVt7FELa1Bb5b1z5nZjBUu_r5f1GCC24A-2DmozwoRT-umwLhu9Iyz/pub?gid=609445256&single=true&output=csv"
 
-@st.cache_data(ttl=2)
+@st.cache_data(ttl=3600)
 def load_data():
     response = requests.get(CSV_URL)
     response.encoding = 'utf-8'
@@ -206,54 +346,52 @@ def transform_image_url(url_str):
     if "drive.google.com" in url_str:
         match = re.search(r'(?:file/d/|id=)([a-zA-Z0-9_-]+)', url_str)
         if match:
-            return f"https://lh3.googleusercontent.com/d/{match.group(1)}"
+            return f"https://drive.google.com/uc?export=view&id={match.group(1)}"
     return url_str
 
-# ----------------- SIDEBAR (SQUARE SYNC BUTTON + FILTERS) -----------------
-# Top-Left Square Sync Button matching wireframe
-if st.sidebar.button("🔄  Sync Sheet Data", help="Click to refresh live data from Google Sheets"):
-    st.cache_data.clear()
-    st.rerun()
+# SIDEBAR WITH SYNC BUTTON
+with st.sidebar:
+    st.markdown("### Sync Data")
+    if st.button("🔄 Refresh Google Sheets", help="Click to sync latest data from Google Sheets"):
+        st.cache_data.clear()
+        st.rerun()
+    
+    st.markdown("---")
+    st.markdown("### Filters")
 
-st.sidebar.markdown("---")
-st.sidebar.markdown("### FILTERS")
+    # Column mappings
+    brand_col = "Name"
+    img_col = "Logo"
+    type_of_logo_col = "Type of Logo"
+    primary_form_col = "Primary form (Visually Dominating Form)"
+    color_family_col = "Color Family"
+    sector_col = "Sector"
+    org_type_col = "Type of Organization"
+    country_col = "Country"
+    complexity_col = "Complexity (Low/ Mid/ High) (Intrinsic Visual Load)"
+    symmetry_col = "Symmetry"
+    symbolism_col = "Symbolism"
+    font_type_col = "Font Type"
+    font_weight_col = "Font Weight"
+    type_class_col = "Type classification"
 
-brand_col = "Name"
-img_col = "Logo"
-type_of_logo_col = "Type of Logo"
-primary_form_col = "Primary form (Visually Dominating Form)"
-style_inclination_col = "Visual Form inclination (First form we visually notice)"
-color_family_col = "Color Family"
-sector_col = "Sector"
-org_type_col = "Type of Organization"
-country_col = "Country"
-complexity_col = "Complexity (Low/ Mid/ High) (Intrinsic Visual Load)"
-symmetry_col = "Symmetry"
-symbolism_col = "Symbolism"
+    def get_options(col_name):
+        if col_name in df.columns:
+            return sorted([str(x).strip() for x in df[col_name].dropna().unique() if str(x).strip() not in ["", "nan", "N/A"]])
+        return []
 
-font_type_col = "Font Type"
-font_weight_col = "Font Weight"
-case_type_col = "Case Type"
-type_class_col = "Type classification"
-letter_spacing_col = "Letter Spacing"
+    search_query = st.text_input("⌕ Search organisation...", "")
 
-def get_options(col_name):
-    if col_name in df.columns:
-        return sorted([str(x).strip() for x in df[col_name].dropna().unique() if str(x).strip() not in ["", "nan", "N/A"]])
-    return []
+    selected_logo_types = st.multiselect("Type of Logo:", options=get_options(type_of_logo_col))
+    selected_forms = st.multiselect("Shape (Primary Form):", options=get_options(primary_form_col))
+    selected_families = st.multiselect("Color Family:", options=get_options(color_family_col))
+    selected_sectors = st.multiselect("Sector:", options=get_options(sector_col))
+    selected_org_types = st.multiselect("Organization Type:", options=get_options(org_type_col))
+    selected_countries = st.multiselect("Country:", options=get_options(country_col))
+    selected_complexity = st.multiselect("Complexity:", options=get_options(complexity_col))
+    selected_symmetry = st.multiselect("Symmetry:", options=get_options(symmetry_col))
 
-search_query = st.sidebar.text_input("⌕ Search organisation...", "")
-
-selected_logo_types = st.sidebar.multiselect("Type of Logo:", options=get_options(type_of_logo_col))
-selected_forms = st.sidebar.multiselect("Shape (Primary Form):", options=get_options(primary_form_col))
-selected_families = st.sidebar.multiselect("Color Family:", options=get_options(color_family_col))
-selected_sectors = st.sidebar.multiselect("Sector:", options=get_options(sector_col))
-selected_org_types = st.sidebar.multiselect("Organization Type:", options=get_options(org_type_col))
-selected_countries = st.sidebar.multiselect("Country:", options=get_options(country_col))
-selected_complexity = st.sidebar.multiselect("Complexity:", options=get_options(complexity_col))
-selected_symmetry = st.sidebar.multiselect("Symmetry:", options=get_options(symmetry_col))
-
-# Apply Filter Criteria
+# Apply Filters
 filtered_df = df.copy()
 
 if search_query and brand_col in df.columns:
@@ -283,7 +421,7 @@ if selected_complexity and complexity_col in df.columns:
 if selected_symmetry and symmetry_col in df.columns:
     filtered_df = filtered_df[filtered_df[symmetry_col].astype(str).isin(selected_symmetry)]
 
-# ----------------- TOPBAR -----------------
+# MAIN CONTENT
 st.markdown(f"""
 <div class="topbar-container">
   <div>
@@ -293,21 +431,21 @@ st.markdown(f"""
 </div>
 """, unsafe_allow_html=True)
 
-# ----------------- HERO SECTION -----------------
+# HERO SECTION
 st.markdown("""
 <div class="hero-kicker">Visual Identity Research</div>
-<div class="hero-title">How Medical Institutions Communicate.</div>
+<div class="hero-title">The Design of Care & Innovation.</div>
 <div class="hero-intro">
-  A curated research database analyzing logo design patterns, color psychology, and brand characteristics across medical institutions.
+  Explore 165+ visual identities across the medical ecosystem: hospitals delivering care, research centers advancing knowledge, educational institutes training leaders, and tech companies solving problems—all through design.
 </div>
 """, unsafe_allow_html=True)
 
-# ----------------- RESULTS HEAD & SORTING -----------------
-head_col1, head_col2 = st.columns([3, 1])
-with head_col1:
-    st.markdown(f"**{len(filtered_df)}** Results")
+# RESULTS HEADER WITH SORT
+col1, col2 = st.columns([3, 1])
+with col1:
+    st.markdown(f"<div class='results-count'>{len(filtered_df)} Results</div>", unsafe_allow_html=True)
 
-with head_col2:
+with col2:
     sort_option = st.selectbox(
         "Sort Order",
         ["Original Order", "Name A–Z", "Name Z–A", "Country"],
@@ -323,53 +461,77 @@ elif sort_option == "Country" and country_col in filtered_df.columns:
 
 st.write("")
 
-# ----------------- UNIFORM CARD GRID DISPLAY -----------------
+# UNIFORM CARD GRID (3 COLUMNS)
 if filtered_df.empty:
     st.info("No logos match the selected criteria.")
 else:
-    cols_per_row = 3  # 3 columns layout matching your wireframe grid
-    cols = st.columns(cols_per_row)
+    cols_per_row = 3
+    cols = st.columns(cols_per_row, gap="large")
     
     for idx, (_, row) in enumerate(filtered_df.iterrows()):
         col = cols[idx % cols_per_row]
+        
         with col:
-            with st.container():
-                # Logo Image Box
-                raw_img = str(row.get(img_col, "")).strip() if pd.notna(row.get(img_col, "")) else ""
-                img_url = transform_image_url(raw_img)
-                
-                if img_url and img_url.startswith("http"):
-                    st.markdown(f'<div class="img-container"><img src="{img_url}" alt="Logo" /></div>', unsafe_allow_html=True)
-                else:
-                    st.markdown('<div class="img-container" style="background:#1a202c; color:#a0aec0; font-size:12px;">📷 Image Link Missing</div>', unsafe_allow_html=True)
-
-                # Brand Title
-                b_name = str(row.get(brand_col, "")).strip()
-                st.subheader(b_name if b_name else "Unnamed Brand")
-
-                # Core Metadata Badges
-                p_form = str(row.get(primary_form_col, "N/A")).strip()
-                c_family = str(row.get(color_family_col, "N/A")).strip()
-                sector_val = str(row.get(sector_col, "N/A")).strip()
-                cnt_val = str(row.get(country_col, "N/A")).strip()
-
-                st.caption(f"**Shape:** {p_form} | **Color:** {c_family}")
-                st.caption(f"**Sector:** {sector_val} | **Country:** {cnt_val}")
-                
-                # Dropdown Inspector for Full Identity Details
-                with st.expander("Inspect Details"):
-                    complexity_val = str(row.get(complexity_col, "N/A")).strip()
-                    symmetry_val = str(row.get(symmetry_col, "N/A")).strip()
-                    type_class = str(row.get(type_class_col, "N/A")).strip()
-                    font_weight = str(row.get(font_weight_col, "N/A")).strip()
-                    symbolism_text = str(row.get(symbolism_col, "No symbolism recorded.")).strip()
-
-                    st.markdown(f"""
-                    <div class="detail-table">
-                      <div class="detail-row-label">Complexity</div><div class="detail-row-val">{complexity_val}</div>
-                      <div class="detail-row-label">Symmetry</div><div class="detail-row-val">{symmetry_val}</div>
-                      <div class="detail-row-label">Type Class</div><div class="detail-row-val">{type_class} ({font_weight})</div>
+            # Build card HTML
+            b_name = str(row.get(brand_col, "Unknown Brand")).strip()
+            
+            # Image handling
+            raw_img = str(row.get(img_col, "")).strip() if pd.notna(row.get(img_col, "")) else ""
+            img_url = transform_image_url(raw_img)
+            
+            img_html = ""
+            if img_url and img_url.startswith("http"):
+                img_html = f'<img src="{img_url}" alt="{b_name}" />'
+            else:
+                img_html = '<div style="color: #a0aec0; font-size: 12px;">📷 Image unavailable</div>'
+            
+            # Metadata
+            p_form = str(row.get(primary_form_col, "—")).strip()
+            c_family = str(row.get(color_family_col, "—")).strip()
+            sector_val = str(row.get(sector_col, "—")).strip()
+            cnt_val = str(row.get(country_col, "—")).strip()
+            complexity_val = str(row.get(complexity_col, "—")).strip()
+            symmetry_val = str(row.get(symmetry_col, "—")).strip()
+            type_class = str(row.get(type_class_col, "—")).strip()
+            symbolism_text = str(row.get(symbolism_col, "No symbolism recorded.")).strip()
+            
+            # Card HTML
+            card_html = f"""
+            <div class="logo-card-wrapper fade-in">
+                <div class="logo-image-box">
+                    {img_html}
+                </div>
+                <div class="card-content">
+                    <div>
+                        <div class="card-title">{b_name}</div>
+                        <div class="card-meta">
+                            <strong>Shape:</strong> {p_form} | <strong>Color:</strong> {c_family}<br>
+                            <strong>Sector:</strong> {sector_val} | <strong>Country:</strong> {cnt_val}
+                        </div>
                     </div>
-                    """, unsafe_allow_html=True)
-                    st.write("")
-                    st.markdown(f"**Symbolism:**\n\n{symbolism_text}")
+                </div>
+            </div>
+            """
+            
+            st.markdown(card_html, unsafe_allow_html=True)
+            
+            # Expandable details
+            with st.expander("📋 Details"):
+                st.markdown(f"""
+                <div class="details-expander">
+                    <div class="detail-row">
+                        <div class="detail-label">Complexity</div>
+                        <div class="detail-value">{complexity_val}</div>
+                    </div>
+                    <div class="detail-row">
+                        <div class="detail-label">Symmetry</div>
+                        <div class="detail-value">{symmetry_val}</div>
+                    </div>
+                    <div class="detail-row">
+                        <div class="detail-label">Type</div>
+                        <div class="detail-value">{type_class}</div>
+                    </div>
+                </div>
+                """, unsafe_allow_html=True)
+                
+                st.markdown(f"**Symbolism:**\n\n{symbolism_text}")
