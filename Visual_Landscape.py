@@ -378,7 +378,7 @@ with st.sidebar:
 
     # FIRST SECTION - Organization & Location
     st.markdown('<div class="filter-section">', unsafe_allow_html=True)
-    st.markdown('<div class="filter-section-title">🏢 Organization & Location</div>', unsafe_allow_html=True)
+    st.markdown('<div class="filter-section-title"> Organization & Location</div>', unsafe_allow_html=True)
     
     selected_sectors = st.multiselect("Sector:", options=get_options(sector_col), default=[], key="sectors")
     selected_org_types = st.multiselect("Organization Type:", options=get_options(org_type_col), default=[], key="org_types")
@@ -388,7 +388,7 @@ with st.sidebar:
 
     # SECOND SECTION - Logo Details & Design
     st.markdown('<div class="filter-section">', unsafe_allow_html=True)
-    st.markdown('<div class="filter-section-title">📐 Logo Details & Design</div>', unsafe_allow_html=True)
+    st.markdown('<div class="filter-section-title"> Logo Details & Design</div>', unsafe_allow_html=True)
     
     selected_logo_types = st.multiselect("Type of Logo:", options=get_options(type_of_logo_col), default=[], key="type_logo")
     selected_forms = st.multiselect("Shape (Primary Form):", options=get_options(primary_form_col), default=[], key="shapes")
@@ -400,7 +400,7 @@ with st.sidebar:
 
     # THIRD SECTION - Type Style
     st.markdown('<div class="filter-section">', unsafe_allow_html=True)
-    st.markdown('<div class="filter-section-title">✍️ Type Style</div>', unsafe_allow_html=True)
+    st.markdown('<div class="filter-section-title"> Type Style</div>', unsafe_allow_html=True)
     
     selected_case_types = st.multiselect("Case Type:", options=get_options(case_type_col), default=[], key="case_types")
     selected_type_class = st.multiselect("Type Classification:", options=get_options(type_class_col), default=[], key="type_class")
@@ -539,7 +539,7 @@ else:
             st.markdown(card_html, unsafe_allow_html=True)
             
             # Expandable details
-            with st.expander("📋 Details"):
+            with st.expander("Details"):
                 st.write(f"**Complexity:** {complexity_val}")
                 st.write(f"**Symmetry:** {symmetry_val}")
                 st.write(f"**Case Type:** {case_type_val}")
