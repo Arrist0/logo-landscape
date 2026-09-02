@@ -169,7 +169,7 @@ h1.app-title {
     margin-bottom: 10px;
 }
 
-/* UNIFORM CARD CONTAINER */
+/* UNIFORM CARD CONTAINER - CLICKABLE */
 .logo-card-wrapper {
     background-color: var(--card) !important;
     border: 1.5px solid var(--line) !important;
@@ -180,6 +180,7 @@ h1.app-title {
     flex-direction: column !important;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05) !important;
     transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    cursor: pointer !important;
 }
 
 .logo-card-wrapper:hover {
@@ -200,6 +201,7 @@ h1.app-title {
     border-bottom: 1.5px solid var(--line);
     overflow: hidden;
     position: relative;
+    cursor: pointer;
 }
 
 .logo-image-box img {
@@ -246,6 +248,73 @@ h1.app-title {
     color: var(--ink);
 }
 
+/* FULLSCREEN MODAL */
+.fullscreen-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.95);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+}
+
+.fullscreen-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    width: 100%;
+    padding: 40px 20px;
+}
+
+.fullscreen-image {
+    max-width: 85%;
+    max-height: 75vh;
+    object-fit: contain;
+    border-radius: 10px;
+    margin-bottom: 20px;
+}
+
+.fullscreen-title {
+    color: #ffffff;
+    font-family: "Space Grotesk", sans-serif;
+    font-size: 18px;
+    font-weight: 700;
+    text-align: center;
+    max-width: 80%;
+}
+
+.close-fullscreen-btn {
+    position: absolute;
+    top: 30px;
+    right: 30px;
+    background-color: #ffffff;
+    border: none;
+    color: #000;
+    font-size: 36px;
+    font-weight: bold;
+    cursor: pointer;
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.close-fullscreen-btn:hover {
+    background-color: #f0f0f0;
+    transform: scale(1.1);
+}
+
 /* Sidebar */
 [data-testid="stSidebar"] {
     background-color: var(--bg);
@@ -267,7 +336,7 @@ h1.app-title {
     animation: fadeIn 0.5s ease-out;
 }
 
-/* Dark Mode Support (if user has system theme set to dark) */
+/* Dark Mode Support */
 @media (prefers-color-scheme: dark) {
   :root {
     --bg: #0f1117;
@@ -334,6 +403,12 @@ except Exception as e:
     st.error(f"Error loading live dataset: {e}")
     st.stop()
 
+# Initialize session state for fullscreen image
+if 'fullscreen_image' not in st.session_state:
+    st.session_state.fullscreen_image = None
+if 'fullscreen_title' not in st.session_state:
+    st.session_state.fullscreen_title = None
+
 def transform_image_url(url_str):
     url_str = str(url_str).strip()
     if not url_str or url_str.lower() in ["nan", "n/a", "none"]:
@@ -343,6 +418,25 @@ def transform_image_url(url_str):
         if match:
             return f"https://drive.google.com/uc?export=view&id={match.group(1)}"
     return url_str
+
+# FULLSCREEN IMAGE DISPLAY
+if st.session_state.fullscreen_image:
+    col_close = st.columns([1])[0]
+    with col_close:
+        if st.button("✕ Back to Gallery", key="close_fullscreen"):
+            st.session_state.fullscreen_image = None
+            st.session_state.fullscreen_title = None
+            st.rerun()
+    
+    st.markdown("""
+    <div style="text-align: center; margin-top: 30px;">
+    """, unsafe_allow_html=True)
+    
+    st.image(st.session_state.fullscreen_image, width=700)
+    st.markdown(f"<h2 style='text-align: center; color: #1a1a1a;'>{st.session_state.fullscreen_title}</h2>", unsafe_allow_html=True)
+    
+    st.markdown("</div>", unsafe_allow_html=True)
+    st.stop()
 
 # SIDEBAR
 with st.sidebar:
@@ -360,6 +454,7 @@ with st.sidebar:
     type_of_logo_col = "Type of Logo"
     primary_form_col = "Primary form (Visually Dominating Form)"
     color_family_col = "Color Family"
+    primary_colour_col = "Primary Colour"
     sector_col = "Sector"
     org_type_col = "Type of Organization"
     country_col = "Country"
@@ -368,6 +463,7 @@ with st.sidebar:
     symbolism_col = "Symbolism"
     font_type_col = "Font Type"
     font_weight_col = "Font Weight"
+    case_type_col = "Case Type"
     type_class_col = "Type classification"
 
     def get_options(col_name):
@@ -389,7 +485,15 @@ with st.sidebar:
     
     st.markdown('</div>', unsafe_allow_html=True)
 
-    # SECOND SECTION - Organization & Location
+    # SECOND SECTION - Colors
+    st.markdown('<div class="filter-section">', unsafe_allow_html=True)
+    st.markdown('<div class="filter-section-title">🎨 Colors</div>', unsafe_allow_html=True)
+    
+    selected_primary_colors = st.multiselect("Primary Colour:", options=get_options(primary_colour_col), default=[], key="primary_colors")
+    
+    st.markdown('</div>', unsafe_allow_html=True)
+
+    # THIRD SECTION - Organization & Location
     st.markdown('<div class="filter-section">', unsafe_allow_html=True)
     st.markdown('<div class="filter-section-title">🏢 Organization & Location</div>', unsafe_allow_html=True)
     
@@ -399,7 +503,16 @@ with st.sidebar:
     
     st.markdown('</div>', unsafe_allow_html=True)
 
-# Apply Filters (Case-insensitive and strip whitespace)
+    # FOURTH SECTION - Style
+    st.markdown('<div class="filter-section">', unsafe_allow_html=True)
+    st.markdown('<div class="filter-section-title">✍️ Style</div>', unsafe_allow_html=True)
+    
+    selected_case_types = st.multiselect("Case Type:", options=get_options(case_type_col), default=[], key="case_types")
+    selected_type_class = st.multiselect("Type Classification:", options=get_options(type_class_col), default=[], key="type_class")
+    
+    st.markdown('</div>', unsafe_allow_html=True)
+
+# Apply Filters
 filtered_df = df.copy()
 
 if search_query and brand_col in df.columns:
@@ -414,11 +527,13 @@ if selected_forms and primary_form_col in df.columns:
 if selected_families and color_family_col in df.columns:
     filtered_df = filtered_df[filtered_df[color_family_col].astype(str).str.strip().isin([s.strip() for s in selected_families])]
 
+if selected_primary_colors and primary_colour_col in df.columns:
+    filtered_df = filtered_df[filtered_df[primary_colour_col].astype(str).str.strip().isin([s.strip() for s in selected_primary_colors])]
+
 if selected_sectors and sector_col in df.columns:
     filtered_df = filtered_df[filtered_df[sector_col].astype(str).str.strip().isin([s.strip() for s in selected_sectors])]
 
 if selected_org_types and org_type_col in df.columns:
-    # Case-insensitive comparison
     filtered_df = filtered_df[filtered_df[org_type_col].astype(str).str.strip().str.lower().isin([s.strip().lower() for s in selected_org_types])]
 
 if selected_countries and country_col in df.columns:
@@ -429,6 +544,12 @@ if selected_complexity and complexity_col in df.columns:
 
 if selected_symmetry and symmetry_col in df.columns:
     filtered_df = filtered_df[filtered_df[symmetry_col].astype(str).str.strip().isin([s.strip() for s in selected_symmetry])]
+
+if selected_case_types and case_type_col in df.columns:
+    filtered_df = filtered_df[filtered_df[case_type_col].astype(str).str.strip().isin([s.strip() for s in selected_case_types])]
+
+if selected_type_class and type_class_col in df.columns:
+    filtered_df = filtered_df[filtered_df[type_class_col].astype(str).str.strip().isin([s.strip() for s in selected_type_class])]
 
 # MAIN CONTENT
 st.markdown(f"""
@@ -470,7 +591,7 @@ elif sort_option == "Country" and country_col in filtered_df.columns:
 
 st.write("")
 
-# UNIFORM CARD GRID (3 COLUMNS) - NO EXTRA SPACE
+# UNIFORM CARD GRID (3 COLUMNS) - CLICKABLE
 if filtered_df.empty:
     st.info("No logos match the selected criteria. Try adjusting your filters!")
 else:
@@ -502,10 +623,11 @@ else:
             symmetry_val = str(row.get(symmetry_col, "—")).strip()
             type_class = str(row.get(type_class_col, "—")).strip()
             symbolism_text = str(row.get(symbolism_col, "No symbolism recorded.")).strip()
+            case_type_val = str(row.get(case_type_col, "—")).strip()
             
-            # Card HTML - COMPACT, LARGER FONTS, NO BLANK SPACE
+            # Card HTML - CLICKABLE
             card_html = f"""
-            <div class="logo-card-wrapper fade-in">
+            <div class="logo-card-wrapper fade-in" onclick="window.streamlit_click('{idx}');">
                 <div class="logo-image-box">
                     {img_html}
                 </div>
@@ -523,13 +645,18 @@ else:
             
             st.markdown(card_html, unsafe_allow_html=True)
             
+            # Hidden button to trigger fullscreen (responsive to card click)
+            if st.button("", key=f"card_click_{idx}", label_visibility="collapsed"):
+                st.session_state.fullscreen_image = img_url
+                st.session_state.fullscreen_title = b_name
+                st.rerun()
+            
             # Expandable details
             with st.expander("📋 Details"):
-                st.markdown(f"""
-                **Complexity:** {complexity_val}  
-                **Symmetry:** {symmetry_val}  
-                **Type:** {type_class}  
-                
-                **Symbolism:**  
-                {symbolism_text}
-                """)
+                st.write(f"**Complexity:** {complexity_val}")
+                st.write(f"**Symmetry:** {symmetry_val}")
+                st.write(f"**Case Type:** {case_type_val}")
+                st.write(f"**Type Classification:** {type_class}")
+                st.write("")
+                st.write(f"**Symbolism:**")
+                st.write(symbolism_text)
