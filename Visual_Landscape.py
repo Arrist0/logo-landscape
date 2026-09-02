@@ -12,85 +12,31 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# 2. Theme Detection & Custom CSS
+# 2. Light Theme Default + Custom CSS
 st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap');
 
-/* CSS Variables for Light/Dark Theme */
+/* Light Theme DEFAULT */
 :root {
-  --bg-light: #ffffff;
-  --bg-dark: #0f1117;
-  --card-light: #f8f9fa;
-  --card-dark: #171923;
-  --ink-light: #1a1a1a;
-  --ink-dark: #f7fafc;
-  --muted-light: #666666;
-  --muted-dark: #a0aec0;
-  --line-light: #e0e0e0;
-  --line-dark: #2d3748;
+  --bg: #ffffff;
+  --card: #f8f9fa;
+  --ink: #1a1a1a;
+  --muted: #666666;
+  --line: #e0e0e0;
   --accent: #6366f1;
 }
 
-/* Global Reset & Dark Canvas by default */
 * {
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.main { 
-  background-color: var(--bg-dark);
-}
-
+.main { background-color: var(--bg); }
 .stApp { 
-  background-color: var(--bg-dark);
-  color: var(--ink-dark);
+  background-color: var(--bg);
+  color: var(--ink);
   font-family: "DM Sans", sans-serif; 
 }
-
-/* Light Theme Detection */
-@media (prefers-color-scheme: light) {
-  .main { background-color: var(--bg-light); }
-  .stApp { 
-    background-color: var(--bg-light);
-    color: var(--ink-light);
-  }
-  .topbar-container { border-bottom-color: var(--line-light); }
-  h1.app-title { color: var(--ink-light); }
-  .hero-intro { color: var(--muted-light); }
-  .top-meta { color: var(--muted-light); }
-  .eyebrow, .hero-kicker { color: var(--muted-light); }
-  .results-count { color: var(--ink-light); }
-  .card-title { color: var(--ink-light); }
-  .card-meta { color: var(--muted-light); }
-  .logo-card-wrapper {
-    background-color: var(--card-light) !important;
-    border-color: var(--line-light) !important;
-  }
-  .logo-card-wrapper:hover {
-    background-color: #f0f0f0 !important;
-  }
-  [data-testid="stSidebar"] { background-color: var(--bg-light) !important; }
-  [data-testid="stSidebar"] div.stButton > button {
-    background-color: var(--card-light) !important;
-    border-color: var(--line-light) !important;
-    color: var(--ink-light) !important;
-  }
-  [data-testid="stSidebar"] div.stButton > button:hover {
-    background-color: #e0e0e0 !important;
-    border-color: var(--accent) !important;
-  }
-  .stMultiSelect > div { background-color: var(--card-light) !important; }
-  .stSelectbox > div { background-color: var(--card-light) !important; }
-  .stTextInput > div > div > input {
-    background-color: var(--card-light) !important;
-    color: var(--ink-light) !important;
-    border-color: var(--line-light) !important;
-  }
-}
-
-/* Dark Theme (Default) */
-.main { background-color: var(--bg-dark); }
-.stApp { background-color: var(--bg-dark); color: var(--ink-dark); }
 
 /* Top Header */
 .topbar-container {
@@ -98,7 +44,7 @@ st.markdown("""
     align-items: center;
     justify-content: space-between;
     padding: 10px 0 20px 0;
-    border-bottom: 1px solid var(--line-dark);
+    border-bottom: 1px solid var(--line);
     margin-bottom: 25px;
 }
 
@@ -106,13 +52,13 @@ h1.app-title {
     font-family: "Space Grotesk", sans-serif;
     font-size: 28px;
     margin: 2px 0 0 0;
-    color: var(--ink-dark);
+    color: var(--ink);
     font-weight: 700;
 }
 
 .top-meta {
     font-size: 13px;
-    color: var(--muted-dark);
+    color: var(--muted);
 }
 
 /* Hero Section */
@@ -120,7 +66,7 @@ h1.app-title {
     font-size: 12px;
     letter-spacing: 0.14em;
     font-weight: 700;
-    color: var(--muted-dark);
+    color: var(--muted);
     text-transform: uppercase;
     margin-bottom: 6px;
 }
@@ -131,12 +77,12 @@ h1.app-title {
     line-height: 1.05;
     letter-spacing: -0.03em;
     font-weight: 700;
-    color: var(--ink-dark);
+    color: var(--ink);
     margin: 0 0 14px 0;
 }
 
 .hero-intro {
-    color: var(--muted-dark);
+    color: var(--muted);
     font-size: 15px;
     line-height: 1.6;
     max-width: 650px;
@@ -148,26 +94,26 @@ h1.app-title {
     width: 100% !important;
     height: 48px !important;
     border-radius: 8px !important;
-    background-color: var(--card-dark) !important;
-    border: 1px solid var(--line-dark) !important;
-    color: #ffffff !important;
+    background-color: var(--card) !important;
+    border: 1.5px solid var(--line) !important;
+    color: var(--ink) !important;
     font-size: 16px !important;
     font-weight: 600 !important;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2) !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05) !important;
 }
 
 [data-testid="stSidebar"] div.stButton > button:hover {
-    background-color: #2d3748 !important;
+    background-color: #f0f0f0 !important;
     border-color: var(--accent) !important;
-    box-shadow: 0 8px 24px rgba(99, 102, 241, 0.3) !important;
+    box-shadow: 0 8px 24px rgba(99, 102, 241, 0.2) !important;
     transform: translateY(-2px);
 }
 
-/* FILTER DROPDOWNS - Styled Multiselect & Selectbox */
+/* FILTER BOXES - Rounded */
 .stMultiSelect > div {
-    background-color: var(--card-dark) !important;
-    border: 1.5px solid var(--line-dark) !important;
+    background-color: var(--card) !important;
+    border: 1.5px solid var(--line) !important;
     border-radius: 10px !important;
     padding: 8px 12px !important;
     transition: all 0.3s ease !important;
@@ -175,12 +121,12 @@ h1.app-title {
 
 .stMultiSelect > div:hover {
     border-color: var(--accent) !important;
-    box-shadow: 0 0 12px rgba(99, 102, 241, 0.2) !important;
+    box-shadow: 0 0 12px rgba(99, 102, 241, 0.15) !important;
 }
 
 .stSelectbox > div {
-    background-color: var(--card-dark) !important;
-    border: 1.5px solid var(--line-dark) !important;
+    background-color: var(--card) !important;
+    border: 1.5px solid var(--line) !important;
     border-radius: 10px !important;
     padding: 8px 12px !important;
     transition: all 0.3s ease !important;
@@ -188,58 +134,76 @@ h1.app-title {
 
 .stSelectbox > div:hover {
     border-color: var(--accent) !important;
-    box-shadow: 0 0 12px rgba(99, 102, 241, 0.2) !important;
+    box-shadow: 0 0 12px rgba(99, 102, 241, 0.15) !important;
 }
 
 .stTextInput > div > div > input {
-    background-color: var(--card-dark) !important;
-    border: 1.5px solid var(--line-dark) !important;
+    background-color: var(--card) !important;
+    border: 1.5px solid var(--line) !important;
     border-radius: 10px !important;
-    color: var(--ink-dark) !important;
+    color: var(--ink) !important;
     padding: 10px 12px !important;
     transition: all 0.3s ease !important;
 }
 
 .stTextInput > div > div > input:focus {
     border-color: var(--accent) !important;
-    box-shadow: 0 0 12px rgba(99, 102, 241, 0.2) !important;
+    box-shadow: 0 0 12px rgba(99, 102, 241, 0.15) !important;
 }
 
-/* UNIFORM CARD CONTAINER - NO EXTRA SPACE */
+/* FILTER SECTION BOXES */
+.filter-section {
+    background-color: #fafbfc;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 12px;
+    margin-bottom: 14px;
+}
+
+.filter-section-title {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--accent);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: 10px;
+}
+
+/* UNIFORM CARD CONTAINER */
 .logo-card-wrapper {
-    background-color: var(--card-dark) !important;
-    border: 1.5px solid var(--line-dark) !important;
+    background-color: var(--card) !important;
+    border: 1.5px solid var(--line) !important;
     border-radius: 12px !important;
     overflow: hidden !important;
-    height: 380px !important;
+    height: 350px !important;
     display: flex !important;
     flex-direction: column !important;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3) !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05) !important;
     transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1) !important;
 }
 
 .logo-card-wrapper:hover {
     transform: translateY(-8px) scale(1.02) !important;
-    box-shadow: 0 20px 40px rgba(99, 102, 241, 0.25) !important;
+    box-shadow: 0 20px 40px rgba(99, 102, 241, 0.15) !important;
     border-color: var(--accent) !important;
-    background-color: #1f2937 !important;
+    background-color: #f0f4ff !important;
 }
 
-/* Image Container - Uniform Height */
+/* Image Container */
 .logo-image-box {
-    height: 180px;
+    height: 160px;
     background-color: #ffffff;
     display: flex;
     align-items: center;
     justify-content: center;
     padding: 16px;
-    border-bottom: 1.5px solid var(--line-dark);
+    border-bottom: 1.5px solid var(--line);
     overflow: hidden;
     position: relative;
 }
 
 .logo-image-box img {
-    max-height: 140px;
+    max-height: 130px;
     max-width: 90%;
     object-fit: contain;
     transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
@@ -249,67 +213,42 @@ h1.app-title {
     transform: scale(1.08);
 }
 
-/* Card Content - NO PADDING BLOAT */
+/* Card Content - TIGHTER, NO BLANK SPACE */
 .card-content {
-    padding: 12px;
+    padding: 10px;
     flex-grow: 1;
     display: flex;
     flex-direction: column;
-    justify-content: space-between;
+    justify-content: flex-start;
 }
 
 .card-title {
     font-family: "Space Grotesk", sans-serif;
-    font-size: 13px;
+    font-size: 15px;
     font-weight: 700;
-    color: var(--ink-dark);
+    color: var(--ink);
     margin: 0 0 6px 0;
     line-height: 1.3;
 }
 
 .card-meta {
-    font-size: 11px;
-    color: var(--muted-dark);
-    line-height: 1.4;
-    margin-bottom: 0;
-}
-
-/* Details Button - Compact */
-.details-btn {
-    font-size: 11px;
-    padding: 6px 8px !important;
-    margin-top: 8px !important;
-    border-radius: 6px !important;
-    background-color: rgba(99, 102, 241, 0.1) !important;
-    border: 1px solid var(--accent) !important;
-    color: var(--accent) !important;
-    transition: all 0.2s ease !important;
-}
-
-.details-btn:hover {
-    background-color: rgba(99, 102, 241, 0.2) !important;
+    font-size: 13px;
+    color: var(--muted);
+    line-height: 1.5;
+    margin: 0;
 }
 
 /* Results Header */
-.results-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 20px;
-    padding-bottom: 16px;
-    border-bottom: 1px solid var(--line-dark);
-}
-
 .results-count {
     font-family: "Space Grotesk", sans-serif;
     font-size: 18px;
     font-weight: 700;
-    color: var(--ink-dark);
+    color: var(--ink);
 }
 
 /* Sidebar */
 [data-testid="stSidebar"] {
-    background-color: var(--bg-dark);
+    background-color: var(--bg);
 }
 
 /* Smooth Fade In */
@@ -326,6 +265,37 @@ h1.app-title {
 
 .fade-in {
     animation: fadeIn 0.5s ease-out;
+}
+
+/* Dark Mode Support (if user has system theme set to dark) */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0f1117;
+    --card: #171923;
+    --ink: #f7fafc;
+    --muted: #a0aec0;
+    --line: #2d3748;
+  }
+  
+  .main { background-color: var(--bg); }
+  .stApp { background-color: var(--bg); color: var(--ink); }
+  
+  .filter-section {
+    background-color: #1a202c;
+    border-color: var(--line);
+  }
+  
+  [data-testid="stSidebar"] div.stButton > button {
+    background-color: var(--card) !important;
+    border-color: var(--line) !important;
+    color: var(--ink) !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2) !important;
+  }
+  
+  [data-testid="stSidebar"] div.stButton > button:hover {
+    background-color: #2d3748 !important;
+    box-shadow: 0 8px 24px rgba(99, 102, 241, 0.3) !important;
+  }
 }
 </style>
 """, unsafe_allow_html=True)
@@ -407,44 +377,58 @@ with st.sidebar:
 
     search_query = st.text_input("⌕ Search organisation...", "")
 
-    selected_logo_types = st.multiselect("Type of Logo:", options=get_options(type_of_logo_col), default=[])
-    selected_forms = st.multiselect("Shape (Primary Form):", options=get_options(primary_form_col), default=[])
-    selected_families = st.multiselect("Color Family:", options=get_options(color_family_col), default=[])
-    selected_sectors = st.multiselect("Sector:", options=get_options(sector_col), default=[])
-    selected_org_types = st.multiselect("Organization Type:", options=get_options(org_type_col), default=[])
-    selected_countries = st.multiselect("Country:", options=get_options(country_col), default=[])
-    selected_complexity = st.multiselect("Complexity:", options=get_options(complexity_col), default=[])
-    selected_symmetry = st.multiselect("Symmetry:", options=get_options(symmetry_col), default=[])
+    # FIRST SECTION - Logo Details & Design
+    st.markdown('<div class="filter-section">', unsafe_allow_html=True)
+    st.markdown('<div class="filter-section-title">📐 Logo Details & Design</div>', unsafe_allow_html=True)
+    
+    selected_logo_types = st.multiselect("Type of Logo:", options=get_options(type_of_logo_col), default=[], key="type_logo")
+    selected_forms = st.multiselect("Shape (Primary Form):", options=get_options(primary_form_col), default=[], key="shapes")
+    selected_families = st.multiselect("Color Family:", options=get_options(color_family_col), default=[], key="colors")
+    selected_complexity = st.multiselect("Complexity:", options=get_options(complexity_col), default=[], key="complexity")
+    selected_symmetry = st.multiselect("Symmetry:", options=get_options(symmetry_col), default=[], key="symmetry")
+    
+    st.markdown('</div>', unsafe_allow_html=True)
 
-# Apply Filters
+    # SECOND SECTION - Organization & Location
+    st.markdown('<div class="filter-section">', unsafe_allow_html=True)
+    st.markdown('<div class="filter-section-title">🏢 Organization & Location</div>', unsafe_allow_html=True)
+    
+    selected_sectors = st.multiselect("Sector:", options=get_options(sector_col), default=[], key="sectors")
+    selected_org_types = st.multiselect("Organization Type:", options=get_options(org_type_col), default=[], key="org_types")
+    selected_countries = st.multiselect("Country:", options=get_options(country_col), default=[], key="countries")
+    
+    st.markdown('</div>', unsafe_allow_html=True)
+
+# Apply Filters (Case-insensitive and strip whitespace)
 filtered_df = df.copy()
 
 if search_query and brand_col in df.columns:
     filtered_df = filtered_df[filtered_df[brand_col].astype(str).str.contains(search_query, case=False, na=False)]
 
 if selected_logo_types and type_of_logo_col in df.columns:
-    filtered_df = filtered_df[filtered_df[type_of_logo_col].astype(str).isin(selected_logo_types)]
+    filtered_df = filtered_df[filtered_df[type_of_logo_col].astype(str).str.strip().isin([s.strip() for s in selected_logo_types])]
 
 if selected_forms and primary_form_col in df.columns:
-    filtered_df = filtered_df[filtered_df[primary_form_col].astype(str).isin(selected_forms)]
+    filtered_df = filtered_df[filtered_df[primary_form_col].astype(str).str.strip().isin([s.strip() for s in selected_forms])]
 
 if selected_families and color_family_col in df.columns:
-    filtered_df = filtered_df[filtered_df[color_family_col].astype(str).isin(selected_families)]
+    filtered_df = filtered_df[filtered_df[color_family_col].astype(str).str.strip().isin([s.strip() for s in selected_families])]
 
 if selected_sectors and sector_col in df.columns:
-    filtered_df = filtered_df[filtered_df[sector_col].astype(str).isin(selected_sectors)]
+    filtered_df = filtered_df[filtered_df[sector_col].astype(str).str.strip().isin([s.strip() for s in selected_sectors])]
 
 if selected_org_types and org_type_col in df.columns:
-    filtered_df = filtered_df[filtered_df[org_type_col].astype(str).isin(selected_org_types)]
+    # Case-insensitive comparison
+    filtered_df = filtered_df[filtered_df[org_type_col].astype(str).str.strip().str.lower().isin([s.strip().lower() for s in selected_org_types])]
 
 if selected_countries and country_col in df.columns:
-    filtered_df = filtered_df[filtered_df[country_col].astype(str).isin(selected_countries)]
+    filtered_df = filtered_df[filtered_df[country_col].astype(str).str.strip().isin([s.strip() for s in selected_countries])]
 
 if selected_complexity and complexity_col in df.columns:
-    filtered_df = filtered_df[filtered_df[complexity_col].astype(str).isin(selected_complexity)]
+    filtered_df = filtered_df[filtered_df[complexity_col].astype(str).str.strip().isin([s.strip() for s in selected_complexity])]
 
 if selected_symmetry and symmetry_col in df.columns:
-    filtered_df = filtered_df[filtered_df[symmetry_col].astype(str).isin(selected_symmetry)]
+    filtered_df = filtered_df[filtered_df[symmetry_col].astype(str).str.strip().isin([s.strip() for s in selected_symmetry])]
 
 # MAIN CONTENT
 st.markdown(f"""
@@ -456,7 +440,7 @@ st.markdown(f"""
 </div>
 """, unsafe_allow_html=True)
 
-# HERO SECTION (From Reference Image)
+# HERO SECTION
 st.markdown("""
 <div class="hero-kicker">Visual Identity Research</div>
 <div class="hero-title">How Medical Institutions Communicate.</div>
@@ -488,7 +472,7 @@ st.write("")
 
 # UNIFORM CARD GRID (3 COLUMNS) - NO EXTRA SPACE
 if filtered_df.empty:
-    st.info("No logos match the selected criteria.")
+    st.info("No logos match the selected criteria. Try adjusting your filters!")
 else:
     cols_per_row = 3
     cols = st.columns(cols_per_row, gap="large")
@@ -519,19 +503,19 @@ else:
             type_class = str(row.get(type_class_col, "—")).strip()
             symbolism_text = str(row.get(symbolism_col, "No symbolism recorded.")).strip()
             
-            # Card HTML - COMPACT, NO EXTRA SPACE
+            # Card HTML - COMPACT, LARGER FONTS, NO BLANK SPACE
             card_html = f"""
             <div class="logo-card-wrapper fade-in">
                 <div class="logo-image-box">
                     {img_html}
                 </div>
                 <div class="card-content">
-                    <div>
-                        <div class="card-title">{b_name}</div>
-                        <div class="card-meta">
-                            <strong>Shape:</strong> {p_form} | <strong>Color:</strong> {c_family}<br>
-                            <strong>Sector:</strong> {sector_val} | <strong>Country:</strong> {cnt_val}
-                        </div>
+                    <div class="card-title">{b_name}</div>
+                    <div class="card-meta">
+                        <strong>Shape:</strong> {p_form}<br>
+                        <strong>Color:</strong> {c_family}<br>
+                        <strong>Sector:</strong> {sector_val}<br>
+                        <strong>Country:</strong> {cnt_val}
                     </div>
                 </div>
             </div>
