@@ -169,7 +169,7 @@ h1.app-title {
     margin-bottom: 10px;
 }
 
-/* UNIFORM CARD CONTAINER - CLICKABLE */
+/* UNIFORM CARD CONTAINER */
 .logo-card-wrapper {
     background-color: var(--card) !important;
     border: 1.5px solid var(--line) !important;
@@ -180,7 +180,6 @@ h1.app-title {
     flex-direction: column !important;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05) !important;
     transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1) !important;
-    cursor: pointer !important;
 }
 
 .logo-card-wrapper:hover {
@@ -201,7 +200,6 @@ h1.app-title {
     border-bottom: 1.5px solid var(--line);
     overflow: hidden;
     position: relative;
-    cursor: pointer;
 }
 
 .logo-image-box img {
@@ -215,7 +213,7 @@ h1.app-title {
     transform: scale(1.08);
 }
 
-/* Card Content - TIGHTER, NO BLANK SPACE */
+/* Card Content */
 .card-content {
     padding: 10px;
     flex-grow: 1;
@@ -336,12 +334,6 @@ except Exception as e:
     st.error(f"Error loading live dataset: {e}")
     st.stop()
 
-# Initialize session state for fullscreen image
-if 'fullscreen_image' not in st.session_state:
-    st.session_state.fullscreen_image = None
-if 'fullscreen_title' not in st.session_state:
-    st.session_state.fullscreen_title = None
-
 def transform_image_url(url_str):
     url_str = str(url_str).strip()
     if not url_str or url_str.lower() in ["nan", "n/a", "none"]:
@@ -351,23 +343,6 @@ def transform_image_url(url_str):
         if match:
             return f"https://drive.google.com/uc?export=view&id={match.group(1)}"
     return url_str
-
-# FULLSCREEN IMAGE DISPLAY
-if st.session_state.fullscreen_image:
-    if st.button("✕ Back to Gallery", key="close_fullscreen"):
-        st.session_state.fullscreen_image = None
-        st.session_state.fullscreen_title = None
-        st.rerun()
-    
-    st.markdown("""
-    <div style="text-align: center; margin-top: 30px;">
-    """, unsafe_allow_html=True)
-    
-    st.image(st.session_state.fullscreen_image, width=700)
-    st.markdown(f"<h2 style='text-align: center; color: #1a1a1a;'>{st.session_state.fullscreen_title}</h2>", unsafe_allow_html=True)
-    
-    st.markdown("</div>", unsafe_allow_html=True)
-    st.stop()
 
 # SIDEBAR
 with st.sidebar:
@@ -392,8 +367,6 @@ with st.sidebar:
     complexity_col = "Complexity (Low/ Mid/ High) (Intrinsic Visual Load)"
     symmetry_col = "Symmetry"
     symbolism_col = "Symbolism"
-    font_type_col = "Font Type"
-    font_weight_col = "Font Weight"
     case_type_col = "Case Type"
     type_class_col = "Type classification"
 
@@ -522,7 +495,7 @@ elif sort_option == "Country" and country_col in filtered_df.columns:
 
 st.write("")
 
-# UNIFORM CARD GRID (3 COLUMNS) - CLICKABLE
+# UNIFORM CARD GRID (3 COLUMNS)
 if filtered_df.empty:
     st.info("No logos match the selected criteria. Try adjusting your filters!")
 else:
@@ -574,11 +547,7 @@ else:
             </div>
             """
             
-            # Clickable card button
-            if st.button(card_html, key=f"card_{idx}", use_container_width=True):
-                st.session_state.fullscreen_image = img_url
-                st.session_state.fullscreen_title = b_name
-                st.rerun()
+            st.markdown(card_html, unsafe_allow_html=True)
             
             # Expandable details
             with st.expander("📋 Details"):
