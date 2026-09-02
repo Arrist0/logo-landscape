@@ -248,73 +248,6 @@ h1.app-title {
     color: var(--ink);
 }
 
-/* FULLSCREEN MODAL */
-.fullscreen-container {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.95);
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    z-index: 9999;
-}
-
-.fullscreen-content {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    height: 100%;
-    width: 100%;
-    padding: 40px 20px;
-}
-
-.fullscreen-image {
-    max-width: 85%;
-    max-height: 75vh;
-    object-fit: contain;
-    border-radius: 10px;
-    margin-bottom: 20px;
-}
-
-.fullscreen-title {
-    color: #ffffff;
-    font-family: "Space Grotesk", sans-serif;
-    font-size: 18px;
-    font-weight: 700;
-    text-align: center;
-    max-width: 80%;
-}
-
-.close-fullscreen-btn {
-    position: absolute;
-    top: 30px;
-    right: 30px;
-    background-color: #ffffff;
-    border: none;
-    color: #000;
-    font-size: 36px;
-    font-weight: bold;
-    cursor: pointer;
-    width: 60px;
-    height: 60px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: all 0.3s ease;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-}
-
-.close-fullscreen-btn:hover {
-    background-color: #f0f0f0;
-    transform: scale(1.1);
-}
-
 /* Sidebar */
 [data-testid="stSidebar"] {
     background-color: var(--bg);
@@ -421,12 +354,10 @@ def transform_image_url(url_str):
 
 # FULLSCREEN IMAGE DISPLAY
 if st.session_state.fullscreen_image:
-    col_close = st.columns([1])[0]
-    with col_close:
-        if st.button("✕ Back to Gallery", key="close_fullscreen"):
-            st.session_state.fullscreen_image = None
-            st.session_state.fullscreen_title = None
-            st.rerun()
+    if st.button("✕ Back to Gallery", key="close_fullscreen"):
+        st.session_state.fullscreen_image = None
+        st.session_state.fullscreen_title = None
+        st.rerun()
     
     st.markdown("""
     <div style="text-align: center; margin-top: 30px;">
@@ -625,9 +556,9 @@ else:
             symbolism_text = str(row.get(symbolism_col, "No symbolism recorded.")).strip()
             case_type_val = str(row.get(case_type_col, "—")).strip()
             
-            # Card HTML - CLICKABLE
+            # Card HTML
             card_html = f"""
-            <div class="logo-card-wrapper fade-in" onclick="window.streamlit_click('{idx}');">
+            <div class="logo-card-wrapper fade-in">
                 <div class="logo-image-box">
                     {img_html}
                 </div>
@@ -643,10 +574,8 @@ else:
             </div>
             """
             
-            st.markdown(card_html, unsafe_allow_html=True)
-            
-            # Hidden button to trigger fullscreen (responsive to card click)
-            if st.button("", key=f"card_click_{idx}", label_visibility="collapsed"):
+            # Clickable card button
+            if st.button(card_html, key=f"card_{idx}", use_container_width=True):
                 st.session_state.fullscreen_image = img_url
                 st.session_state.fullscreen_title = b_name
                 st.rerun()
