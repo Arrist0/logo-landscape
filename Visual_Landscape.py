@@ -169,7 +169,7 @@ h1.app-title {
     margin-bottom: 10px;
 }
 
-/* UNIFORM CARD CONTAINER */
+/* UNIFORM CARD CONTAINER - CLICKABLE */
 .logo-card-wrapper {
     background-color: var(--card) !important;
     border: 1.5px solid var(--line) !important;
@@ -249,7 +249,7 @@ h1.app-title {
 }
 
 /* FULLSCREEN MODAL */
-.fullscreen-overlay {
+.fullscreen-container {
     position: fixed;
     top: 0;
     left: 0;
@@ -257,48 +257,49 @@ h1.app-title {
     height: 100%;
     background-color: rgba(0, 0, 0, 0.95);
     display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
     z-index: 9999;
-    animation: fadeInOverlay 0.3s ease-out;
 }
 
-@keyframes fadeInOverlay {
-    from {
-        opacity: 0;
-    }
-    to {
-        opacity: 1;
-    }
-}
-
-.fullscreen-modal {
-    position: relative;
-    max-width: 90%;
-    max-height: 90vh;
+.fullscreen-content {
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
+    height: 100%;
+    width: 100%;
+    padding: 40px 20px;
 }
 
-.fullscreen-modal img {
-    max-width: 100%;
-    max-height: 80vh;
+.fullscreen-image {
+    max-width: 85%;
+    max-height: 75vh;
     object-fit: contain;
     border-radius: 10px;
+    margin-bottom: 20px;
 }
 
-.close-btn {
+.fullscreen-title {
+    color: #ffffff;
+    font-family: "Space Grotesk", sans-serif;
+    font-size: 18px;
+    font-weight: 700;
+    text-align: center;
+    max-width: 80%;
+}
+
+.close-fullscreen-btn {
     position: absolute;
-    top: 20px;
+    top: 30px;
     right: 30px;
-    background: #ffffff;
+    background-color: #ffffff;
     border: none;
-    font-size: 40px;
+    color: #000;
+    font-size: 36px;
     font-weight: bold;
     cursor: pointer;
-    color: #000;
     width: 60px;
     height: 60px;
     border-radius: 50%;
@@ -309,18 +310,9 @@ h1.app-title {
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
 }
 
-.close-btn:hover {
-    background: #f0f0f0;
+.close-fullscreen-btn:hover {
+    background-color: #f0f0f0;
     transform: scale(1.1);
-}
-
-.modal-title {
-    color: white;
-    font-family: "Space Grotesk", sans-serif;
-    font-size: 18px;
-    font-weight: 700;
-    margin-top: 20px;
-    text-align: center;
 }
 
 /* Sidebar */
@@ -427,6 +419,25 @@ def transform_image_url(url_str):
             return f"https://drive.google.com/uc?export=view&id={match.group(1)}"
     return url_str
 
+# FULLSCREEN IMAGE DISPLAY
+if st.session_state.fullscreen_image:
+    col_close = st.columns([1])[0]
+    with col_close:
+        if st.button("✕ Back to Gallery", key="close_fullscreen"):
+            st.session_state.fullscreen_image = None
+            st.session_state.fullscreen_title = None
+            st.rerun()
+    
+    st.markdown("""
+    <div style="text-align: center; margin-top: 30px;">
+    """, unsafe_allow_html=True)
+    
+    st.image(st.session_state.fullscreen_image, width=700)
+    st.markdown(f"<h2 style='text-align: center; color: #1a1a1a;'>{st.session_state.fullscreen_title}</h2>", unsafe_allow_html=True)
+    
+    st.markdown("</div>", unsafe_allow_html=True)
+    st.stop()
+
 # SIDEBAR
 with st.sidebar:
     st.markdown("### Sync Data")
@@ -501,7 +512,7 @@ with st.sidebar:
     
     st.markdown('</div>', unsafe_allow_html=True)
 
-# Apply Filters (Case-insensitive and strip whitespace)
+# Apply Filters
 filtered_df = df.copy()
 
 if search_query and brand_col in df.columns:
@@ -539,18 +550,6 @@ if selected_case_types and case_type_col in df.columns:
 
 if selected_type_class and type_class_col in df.columns:
     filtered_df = filtered_df[filtered_df[type_class_col].astype(str).str.strip().isin([s.strip() for s in selected_type_class])]
-
-# FULLSCREEN IMAGE MODAL
-if st.session_state.fullscreen_image:
-    st.markdown(f"""
-    <div class="fullscreen-overlay" onclick="if(event.target === this) window.location.reload();">
-        <div class="fullscreen-modal">
-            <button class="close-btn" onclick="window.location.reload();">✕</button>
-            <img src="{st.session_state.fullscreen_image}" alt="Logo Fullscreen" />
-            <div class="modal-title">{st.session_state.fullscreen_title}</div>
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
 
 # MAIN CONTENT
 st.markdown(f"""
@@ -592,7 +591,7 @@ elif sort_option == "Country" and country_col in filtered_df.columns:
 
 st.write("")
 
-# UNIFORM CARD GRID (3 COLUMNS) - NO EXTRA SPACE
+# UNIFORM CARD GRID (3 COLUMNS) - CLICKABLE
 if filtered_df.empty:
     st.info("No logos match the selected criteria. Try adjusting your filters!")
 else:
@@ -626,15 +625,9 @@ else:
             symbolism_text = str(row.get(symbolism_col, "No symbolism recorded.")).strip()
             case_type_val = str(row.get(case_type_col, "—")).strip()
             
-            # Clickable Card with Session State
-            if st.button(f"View {b_name}", key=f"view_btn_{idx}", use_container_width=True):
-                st.session_state.fullscreen_image = img_url
-                st.session_state.fullscreen_title = b_name
-                st.rerun()
-            
-            # Card HTML - COMPACT, LARGER FONTS, NO BLANK SPACE
+            # Card HTML - CLICKABLE
             card_html = f"""
-            <div class="logo-card-wrapper fade-in">
+            <div class="logo-card-wrapper fade-in" onclick="window.streamlit_click('{idx}');">
                 <div class="logo-image-box">
                     {img_html}
                 </div>
@@ -652,14 +645,18 @@ else:
             
             st.markdown(card_html, unsafe_allow_html=True)
             
+            # Hidden button to trigger fullscreen (responsive to card click)
+            if st.button("", key=f"card_click_{idx}", label_visibility="collapsed"):
+                st.session_state.fullscreen_image = img_url
+                st.session_state.fullscreen_title = b_name
+                st.rerun()
+            
             # Expandable details
             with st.expander("📋 Details"):
-                st.markdown(f"""
-                **Complexity:** {complexity_val}  
-                **Symmetry:** {symmetry_val}  
-                **Case Type:** {case_type_val}  
-                **Type Classification:** {type_class}  
-                
-                **Symbolism:**  
-                {symbolism_text}
-                """)
+                st.write(f"**Complexity:** {complexity_val}")
+                st.write(f"**Symmetry:** {symmetry_val}")
+                st.write(f"**Case Type:** {case_type_val}")
+                st.write(f"**Type Classification:** {type_class}")
+                st.write("")
+                st.write(f"**Symbolism:**")
+                st.write(symbolism_text)
