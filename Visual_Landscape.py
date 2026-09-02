@@ -360,7 +360,6 @@ with st.sidebar:
     type_of_logo_col = "Type of Logo"
     primary_form_col = "Primary form (Visually Dominating Form)"
     color_family_col = "Color Family"
-    primary_colour_col = "Primary Colour"
     sector_col = "Sector"
     org_type_col = "Type of Organization"
     country_col = "Country"
@@ -377,7 +376,17 @@ with st.sidebar:
 
     search_query = st.text_input("⌕ Search organisation...", "")
 
-    # FIRST SECTION - Logo Details & Design
+    # FIRST SECTION - Organization & Location
+    st.markdown('<div class="filter-section">', unsafe_allow_html=True)
+    st.markdown('<div class="filter-section-title">🏢 Organization & Location</div>', unsafe_allow_html=True)
+    
+    selected_sectors = st.multiselect("Sector:", options=get_options(sector_col), default=[], key="sectors")
+    selected_org_types = st.multiselect("Organization Type:", options=get_options(org_type_col), default=[], key="org_types")
+    selected_countries = st.multiselect("Country:", options=get_options(country_col), default=[], key="countries")
+    
+    st.markdown('</div>', unsafe_allow_html=True)
+
+    # SECOND SECTION - Logo Details & Design
     st.markdown('<div class="filter-section">', unsafe_allow_html=True)
     st.markdown('<div class="filter-section-title">📐 Logo Details & Design</div>', unsafe_allow_html=True)
     
@@ -389,27 +398,9 @@ with st.sidebar:
     
     st.markdown('</div>', unsafe_allow_html=True)
 
-    # SECOND SECTION - Colors
+    # THIRD SECTION - Type Style
     st.markdown('<div class="filter-section">', unsafe_allow_html=True)
-    st.markdown('<div class="filter-section-title">🎨 Colors</div>', unsafe_allow_html=True)
-    
-    selected_primary_colors = st.multiselect("Primary Colour:", options=get_options(primary_colour_col), default=[], key="primary_colors")
-    
-    st.markdown('</div>', unsafe_allow_html=True)
-
-    # THIRD SECTION - Organization & Location
-    st.markdown('<div class="filter-section">', unsafe_allow_html=True)
-    st.markdown('<div class="filter-section-title">🏢 Organization & Location</div>', unsafe_allow_html=True)
-    
-    selected_sectors = st.multiselect("Sector:", options=get_options(sector_col), default=[], key="sectors")
-    selected_org_types = st.multiselect("Organization Type:", options=get_options(org_type_col), default=[], key="org_types")
-    selected_countries = st.multiselect("Country:", options=get_options(country_col), default=[], key="countries")
-    
-    st.markdown('</div>', unsafe_allow_html=True)
-
-    # FOURTH SECTION - Style
-    st.markdown('<div class="filter-section">', unsafe_allow_html=True)
-    st.markdown('<div class="filter-section-title">✍️ Style</div>', unsafe_allow_html=True)
+    st.markdown('<div class="filter-section-title">✍️ Type Style</div>', unsafe_allow_html=True)
     
     selected_case_types = st.multiselect("Case Type:", options=get_options(case_type_col), default=[], key="case_types")
     selected_type_class = st.multiselect("Type Classification:", options=get_options(type_class_col), default=[], key="type_class")
@@ -430,9 +421,6 @@ if selected_forms and primary_form_col in df.columns:
 
 if selected_families and color_family_col in df.columns:
     filtered_df = filtered_df[filtered_df[color_family_col].astype(str).str.strip().isin([s.strip() for s in selected_families])]
-
-if selected_primary_colors and primary_colour_col in df.columns:
-    filtered_df = filtered_df[filtered_df[primary_colour_col].astype(str).str.strip().isin([s.strip() for s in selected_primary_colors])]
 
 if selected_sectors and sector_col in df.columns:
     filtered_df = filtered_df[filtered_df[sector_col].astype(str).str.strip().isin([s.strip() for s in selected_sectors])]
