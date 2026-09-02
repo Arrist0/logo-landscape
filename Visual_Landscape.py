@@ -180,6 +180,7 @@ h1.app-title {
     flex-direction: column !important;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05) !important;
     transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    cursor: pointer !important;
 }
 
 .logo-card-wrapper:hover {
@@ -200,6 +201,7 @@ h1.app-title {
     border-bottom: 1.5px solid var(--line);
     overflow: hidden;
     position: relative;
+    cursor: pointer;
 }
 
 .logo-image-box img {
@@ -224,7 +226,7 @@ h1.app-title {
 
 .card-title {
     font-family: "Space Grotesk", sans-serif;
-    font-size: 18px;
+    font-size: 15px;
     font-weight: 700;
     color: var(--ink);
     margin: 0 0 6px 0;
@@ -244,6 +246,81 @@ h1.app-title {
     font-size: 18px;
     font-weight: 700;
     color: var(--ink);
+}
+
+/* FULLSCREEN MODAL */
+.fullscreen-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.95);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    animation: fadeInOverlay 0.3s ease-out;
+}
+
+@keyframes fadeInOverlay {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+.fullscreen-modal {
+    position: relative;
+    max-width: 90%;
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.fullscreen-modal img {
+    max-width: 100%;
+    max-height: 80vh;
+    object-fit: contain;
+    border-radius: 10px;
+}
+
+.close-btn {
+    position: absolute;
+    top: 20px;
+    right: 30px;
+    background: #ffffff;
+    border: none;
+    font-size: 40px;
+    font-weight: bold;
+    cursor: pointer;
+    color: #000;
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.close-btn:hover {
+    background: #f0f0f0;
+    transform: scale(1.1);
+}
+
+.modal-title {
+    color: white;
+    font-family: "Space Grotesk", sans-serif;
+    font-size: 18px;
+    font-weight: 700;
+    margin-top: 20px;
+    text-align: center;
 }
 
 /* Sidebar */
@@ -267,7 +344,7 @@ h1.app-title {
     animation: fadeIn 0.5s ease-out;
 }
 
-/* Dark Mode Support (if user has system theme set to dark) */
+/* Dark Mode Support */
 @media (prefers-color-scheme: dark) {
   :root {
     --bg: #0f1117;
@@ -334,6 +411,12 @@ except Exception as e:
     st.error(f"Error loading live dataset: {e}")
     st.stop()
 
+# Initialize session state for fullscreen image
+if 'fullscreen_image' not in st.session_state:
+    st.session_state.fullscreen_image = None
+if 'fullscreen_title' not in st.session_state:
+    st.session_state.fullscreen_title = None
+
 def transform_image_url(url_str):
     url_str = str(url_str).strip()
     if not url_str or url_str.lower() in ["nan", "n/a", "none"]:
@@ -360,6 +443,7 @@ with st.sidebar:
     type_of_logo_col = "Type of Logo"
     primary_form_col = "Primary form (Visually Dominating Form)"
     color_family_col = "Color Family"
+    primary_colour_col = "Primary Colour"
     sector_col = "Sector"
     org_type_col = "Type of Organization"
     country_col = "Country"
@@ -368,6 +452,7 @@ with st.sidebar:
     symbolism_col = "Symbolism"
     font_type_col = "Font Type"
     font_weight_col = "Font Weight"
+    case_type_col = "Case Type"
     type_class_col = "Type classification"
 
     def get_options(col_name):
@@ -389,13 +474,30 @@ with st.sidebar:
     
     st.markdown('</div>', unsafe_allow_html=True)
 
-    # SECOND SECTION - Organization & Location
+    # SECOND SECTION - Colors
+    st.markdown('<div class="filter-section">', unsafe_allow_html=True)
+    st.markdown('<div class="filter-section-title">🎨 Colors</div>', unsafe_allow_html=True)
+    
+    selected_primary_colors = st.multiselect("Primary Colour:", options=get_options(primary_colour_col), default=[], key="primary_colors")
+    
+    st.markdown('</div>', unsafe_allow_html=True)
+
+    # THIRD SECTION - Organization & Location
     st.markdown('<div class="filter-section">', unsafe_allow_html=True)
     st.markdown('<div class="filter-section-title">🏢 Organization & Location</div>', unsafe_allow_html=True)
     
     selected_sectors = st.multiselect("Sector:", options=get_options(sector_col), default=[], key="sectors")
     selected_org_types = st.multiselect("Organization Type:", options=get_options(org_type_col), default=[], key="org_types")
     selected_countries = st.multiselect("Country:", options=get_options(country_col), default=[], key="countries")
+    
+    st.markdown('</div>', unsafe_allow_html=True)
+
+    # FOURTH SECTION - Style
+    st.markdown('<div class="filter-section">', unsafe_allow_html=True)
+    st.markdown('<div class="filter-section-title">✍️ Style</div>', unsafe_allow_html=True)
+    
+    selected_case_types = st.multiselect("Case Type:", options=get_options(case_type_col), default=[], key="case_types")
+    selected_type_class = st.multiselect("Type Classification:", options=get_options(type_class_col), default=[], key="type_class")
     
     st.markdown('</div>', unsafe_allow_html=True)
 
@@ -414,11 +516,13 @@ if selected_forms and primary_form_col in df.columns:
 if selected_families and color_family_col in df.columns:
     filtered_df = filtered_df[filtered_df[color_family_col].astype(str).str.strip().isin([s.strip() for s in selected_families])]
 
+if selected_primary_colors and primary_colour_col in df.columns:
+    filtered_df = filtered_df[filtered_df[primary_colour_col].astype(str).str.strip().isin([s.strip() for s in selected_primary_colors])]
+
 if selected_sectors and sector_col in df.columns:
     filtered_df = filtered_df[filtered_df[sector_col].astype(str).str.strip().isin([s.strip() for s in selected_sectors])]
 
 if selected_org_types and org_type_col in df.columns:
-    # Case-insensitive comparison
     filtered_df = filtered_df[filtered_df[org_type_col].astype(str).str.strip().str.lower().isin([s.strip().lower() for s in selected_org_types])]
 
 if selected_countries and country_col in df.columns:
@@ -429,6 +533,24 @@ if selected_complexity and complexity_col in df.columns:
 
 if selected_symmetry and symmetry_col in df.columns:
     filtered_df = filtered_df[filtered_df[symmetry_col].astype(str).str.strip().isin([s.strip() for s in selected_symmetry])]
+
+if selected_case_types and case_type_col in df.columns:
+    filtered_df = filtered_df[filtered_df[case_type_col].astype(str).str.strip().isin([s.strip() for s in selected_case_types])]
+
+if selected_type_class and type_class_col in df.columns:
+    filtered_df = filtered_df[filtered_df[type_class_col].astype(str).str.strip().isin([s.strip() for s in selected_type_class])]
+
+# FULLSCREEN IMAGE MODAL
+if st.session_state.fullscreen_image:
+    st.markdown(f"""
+    <div class="fullscreen-overlay" onclick="if(event.target === this) window.location.reload();">
+        <div class="fullscreen-modal">
+            <button class="close-btn" onclick="window.location.reload();">✕</button>
+            <img src="{st.session_state.fullscreen_image}" alt="Logo Fullscreen" />
+            <div class="modal-title">{st.session_state.fullscreen_title}</div>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
 
 # MAIN CONTENT
 st.markdown(f"""
@@ -443,7 +565,7 @@ st.markdown(f"""
 # HERO SECTION
 st.markdown("""
 <div class="hero-kicker">Visual Identity Research</div>
-<div class="hero-title">The Language of Healthcare Logos</div>
+<div class="hero-title">How Medical Institutions Communicate.</div>
 <div class="hero-intro">
   A curated research database analyzing logo design patterns, color psychology, and brand characteristics across 82 medical institutions in 6 countries.
 </div>
@@ -502,6 +624,13 @@ else:
             symmetry_val = str(row.get(symmetry_col, "—")).strip()
             type_class = str(row.get(type_class_col, "—")).strip()
             symbolism_text = str(row.get(symbolism_col, "No symbolism recorded.")).strip()
+            case_type_val = str(row.get(case_type_col, "—")).strip()
+            
+            # Clickable Card with Session State
+            if st.button(f"View {b_name}", key=f"view_btn_{idx}", use_container_width=True):
+                st.session_state.fullscreen_image = img_url
+                st.session_state.fullscreen_title = b_name
+                st.rerun()
             
             # Card HTML - COMPACT, LARGER FONTS, NO BLANK SPACE
             card_html = f"""
@@ -528,7 +657,8 @@ else:
                 st.markdown(f"""
                 **Complexity:** {complexity_val}  
                 **Symmetry:** {symmetry_val}  
-                **Type:** {type_class}  
+                **Case Type:** {case_type_val}  
+                **Type Classification:** {type_class}  
                 
                 **Symbolism:**  
                 {symbolism_text}
