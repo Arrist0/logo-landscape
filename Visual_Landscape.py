@@ -323,6 +323,25 @@ def load_data():
     df.columns = [re.sub(r'\s+', ' ', str(c)).strip() for c in df.columns]
 
     if "Name" in df.columns:
+        # Some rows carry extra data (e.g. colors) on a "continuation" row directly
+        # below the main entry, where Name is blank. Fold any such values up into
+        # the parent row before dropping blank-Name rows, so nothing gets lost.
+        name_series = df["Name"].astype(str).str.strip()
+        is_continuation = name_series.eq("") | name_series.eq("nan")
+
+        for i in range(1, len(df)):
+            if is_continuation.iloc[i]:
+                parent_idx = df.index[i - 1]
+                this_idx = df.index[i]
+                for col in df.columns:
+                    if col == "Name":
+                        continue
+                    val = df.at[this_idx, col]
+                    if pd.notna(val) and str(val).strip() not in ["", "nan"]:
+                        parent_val = df.at[parent_idx, col]
+                        if pd.isna(parent_val) or str(parent_val).strip() in ["", "nan"]:
+                            df.at[parent_idx, col] = val
+
         df = df.dropna(subset=["Name"]).copy()
         df = df[df["Name"].astype(str).str.strip().ne("")].copy()
 
@@ -368,17 +387,30 @@ with st.sidebar:
     symbolism_col = "Symbolism"
     case_type_col = "Case Type"
     type_class_col = "Type classification"
+    color_cols = ["Primary Colour", "Secondary Colour", "Colour", "Colour3", "Colour4", "Colour5"]
+    undertone_col = "Color Undertone"  # rename here if your sheet header differs
 
     def get_options(col_name):
         if col_name in df.columns:
             return sorted([str(x).strip() for x in df[col_name].dropna().unique() if str(x).strip() not in ["", "nan", "N/A"]])
         return []
 
+    def get_options_multi(col_names):
+        """Combine unique values across several columns into one option list."""
+        values = set()
+        for col_name in col_names:
+            if col_name in df.columns:
+                for x in df[col_name].dropna().unique():
+                    x = str(x).strip()
+                    if x and x.lower() not in ["nan", "n/a"]:
+                        values.add(x)
+        return sorted(values)
+
     search_query = st.text_input("⌕ Search organisation...", "")
 
     # FIRST SECTION - Organization & Location
     st.markdown('<div class="filter-section">', unsafe_allow_html=True)
-    st.markdown('<div class="filter-section-title"> Organization & Location</div>', unsafe_allow_html=True)
+    st.markdown('<div class="filter-section-title">🏢 Organization & Location</div>', unsafe_allow_html=True)
     
     selected_sectors = st.multiselect("Sector:", options=get_options(sector_col), default=[], key="sectors")
     selected_org_types = st.multiselect("Organization Type:", options=get_options(org_type_col), default=[], key="org_types")
@@ -388,7 +420,7 @@ with st.sidebar:
 
     # SECOND SECTION - Logo Details & Design
     st.markdown('<div class="filter-section">', unsafe_allow_html=True)
-    st.markdown('<div class="filter-section-title"> Logo Details & Design</div>', unsafe_allow_html=True)
+    st.markdown('<div class="filter-section-title">📐 Logo Details & Design</div>', unsafe_allow_html=True)
     
     selected_logo_types = st.multiselect("Type of Logo:", options=get_options(type_of_logo_col), default=[], key="type_logo")
     selected_forms = st.multiselect("Shape (Primary Form):", options=get_options(primary_form_col), default=[], key="shapes")
@@ -398,9 +430,18 @@ with st.sidebar:
     
     st.markdown('</div>', unsafe_allow_html=True)
 
-    # THIRD SECTION - Type Style
+    # THIRD SECTION - Colors
     st.markdown('<div class="filter-section">', unsafe_allow_html=True)
-    st.markdown('<div class="filter-section-title"> Type Style</div>', unsafe_allow_html=True)
+    st.markdown('<div class="filter-section-title">🎨 Colors</div>', unsafe_allow_html=True)
+
+    selected_colors = st.multiselect("Color:", options=get_options_multi(color_cols), default=[], key="colors_combined")
+    selected_undertones = st.multiselect("Color Undertone:", options=get_options(undertone_col), default=[], key="undertones")
+
+    st.markdown('</div>', unsafe_allow_html=True)
+
+    # FOURTH SECTION - Type Style
+    st.markdown('<div class="filter-section">', unsafe_allow_html=True)
+    st.markdown('<div class="filter-section-title">✍️ Type Style</div>', unsafe_allow_html=True)
     
     selected_case_types = st.multiselect("Case Type:", options=get_options(case_type_col), default=[], key="case_types")
     selected_type_class = st.multiselect("Type Classification:", options=get_options(type_class_col), default=[], key="type_class")
@@ -437,6 +478,17 @@ if selected_complexity and complexity_col in df.columns:
 if selected_symmetry and symmetry_col in df.columns:
     filtered_df = filtered_df[filtered_df[symmetry_col].astype(str).str.strip().isin([s.strip() for s in selected_symmetry])]
 
+if selected_colors:
+    present_color_cols = [c for c in color_cols if c in df.columns]
+    if present_color_cols:
+        mask = pd.Series(False, index=filtered_df.index)
+        for c in present_color_cols:
+            mask = mask | filtered_df[c].astype(str).str.strip().isin([s.strip() for s in selected_colors])
+        filtered_df = filtered_df[mask]
+
+if selected_undertones and undertone_col in df.columns:
+    filtered_df = filtered_df[filtered_df[undertone_col].astype(str).str.strip().isin([s.strip() for s in selected_undertones])]
+
 if selected_case_types and case_type_col in df.columns:
     filtered_df = filtered_df[filtered_df[case_type_col].astype(str).str.strip().isin([s.strip() for s in selected_case_types])]
 
@@ -456,7 +508,7 @@ st.markdown(f"""
 # HERO SECTION
 st.markdown("""
 <div class="hero-kicker">Visual Identity Research</div>
-<div class="hero-title">The Language of Healthcare Logos.</div>
+<div class="hero-title">How Medical Institutions Communicate.</div>
 <div class="hero-intro">
   A curated research database analyzing logo design patterns, color psychology, and brand characteristics across 82 medical institutions in 6 countries.
 </div>
@@ -539,7 +591,7 @@ else:
             st.markdown(card_html, unsafe_allow_html=True)
             
             # Expandable details
-            with st.expander("Details"):
+            with st.expander("📋 Details"):
                 st.write(f"**Complexity:** {complexity_val}")
                 st.write(f"**Symmetry:** {symmetry_val}")
                 st.write(f"**Case Type:** {case_type_val}")
