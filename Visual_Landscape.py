@@ -434,8 +434,9 @@ with st.sidebar:
     st.markdown('<div class="filter-section">', unsafe_allow_html=True)
     st.markdown('<div class="filter-section-title">🎨 Colors</div>', unsafe_allow_html=True)
 
-    selected_colors = st.multiselect("Color:", options=get_options_multi(color_cols), default=[], key="colors_combined")
     selected_undertones = st.multiselect("Color Undertone:", options=get_options(undertone_col), default=[], key="undertones")
+    selected_colors = st.multiselect("Color:", options=get_options_multi(color_cols), default=[], key="colors_combined")
+    exact_color_match = st.checkbox("Exact match only (no extra colors)", value=False, key="exact_color_match")
 
     st.markdown('</div>', unsafe_allow_html=True)
 
@@ -481,10 +482,24 @@ if selected_symmetry and symmetry_col in df.columns:
 if selected_colors:
     present_color_cols = [c for c in color_cols if c in df.columns]
     if present_color_cols:
-        mask = pd.Series(False, index=filtered_df.index)
-        for c in present_color_cols:
-            mask = mask | filtered_df[c].astype(str).str.strip().isin([s.strip() for s in selected_colors])
-        filtered_df = filtered_df[mask]
+        selected_set = set(s.strip() for s in selected_colors)
+
+        def row_color_set(row):
+            vals = set()
+            for c in present_color_cols:
+                v = str(row.get(c, "")).strip()
+                if v and v.lower() not in ["nan", "n/a"]:
+                    vals.add(v)
+            return vals
+
+        if exact_color_match:
+            # Logo's full color set must match the selection exactly - no extra colors allowed
+            keep_mask = filtered_df.apply(lambda r: row_color_set(r) == selected_set, axis=1)
+        else:
+            # Logo must contain all selected colors, but may have others too
+            keep_mask = filtered_df.apply(lambda r: selected_set.issubset(row_color_set(r)), axis=1)
+
+        filtered_df = filtered_df[keep_mask]
 
 if selected_undertones and undertone_col in df.columns:
     filtered_df = filtered_df[filtered_df[undertone_col].astype(str).str.strip().isin([s.strip() for s in selected_undertones])]
