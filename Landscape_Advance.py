@@ -297,6 +297,126 @@ h1.app-title {
     box-shadow: 0 8px 24px rgba(99, 102, 241, 0.3) !important;
   }
 }
+
+/* ===== Editorial summary (main content, above the grid) ===== */
+.editorial-wrap {
+    display: grid;
+    grid-template-columns: 1fr 1.3fr;
+    gap: 36px;
+    align-items: start;
+    border: 1.5px solid var(--line);
+    border-radius: 14px;
+    padding: 26px 28px;
+    margin-bottom: 26px;
+    background: var(--card);
+}
+
+.editorial-hero {
+    border-right: 1px solid var(--line);
+    padding-right: 32px;
+}
+
+.editorial-eyebrow {
+    font-size: 12px;
+    color: var(--muted);
+    margin-bottom: 8px;
+}
+
+.editorial-number {
+    font-family: "Space Grotesk", sans-serif;
+    font-size: 52px;
+    line-height: 1.0;
+    font-weight: 700;
+    color: var(--accent);
+    letter-spacing: -0.02em;
+}
+
+.editorial-desc {
+    font-size: 13px;
+    color: var(--muted);
+    line-height: 1.6;
+    margin-top: 10px;
+    max-width: 260px;
+}
+
+.editorial-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    padding: 11px 0;
+    border-bottom: 1px solid var(--line);
+}
+
+.editorial-row:last-child { border-bottom: none; padding-bottom: 0; }
+.editorial-row:first-child { padding-top: 0; }
+
+.editorial-row-label { font-size: 13.5px; color: var(--ink); }
+.editorial-sub { color: var(--muted); font-size: 11.5px; display: block; margin-top: 2px; }
+.editorial-row-value {
+    font-family: "Space Grotesk", sans-serif;
+    font-size: 17px;
+    font-weight: 700;
+    white-space: nowrap;
+    margin-left: 12px;
+}
+
+@media (prefers-color-scheme: dark) {
+    .editorial-wrap { background: #171923; border-color: #2d3748; }
+    .editorial-hero { border-color: #2d3748; }
+    .editorial-row { border-color: #2d3748; }
+}
+
+/* ===== Sidebar summary rail ===== */
+.sidebar-rail {
+    background: #fafbfc;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 12px;
+    margin-top: 4px;
+}
+
+.sidebar-rail-title {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--accent);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: 10px;
+}
+
+.ring-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.ring-row:last-child { margin-bottom: 0; }
+
+.ring {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.ring-inner {
+    width: 21px;
+    height: 21px;
+    border-radius: 50%;
+    background: var(--bg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 8px;
+    font-weight: 700;
+    color: var(--ink);
+}
+
+.ring-name { font-size: 12px; color: var(--ink); }
 </style>
 """, unsafe_allow_html=True)
 
@@ -362,6 +482,43 @@ def transform_image_url(url_str):
         if match:
             return f"https://drive.google.com/uc?export=view&id={match.group(1)}"
     return url_str
+
+# Rough name -> swatch color, for the summary rings. Falls back to the app accent color
+# for any name not in this list (hex-only entries in the sheet, unusual color names, etc.)
+COLOR_HEX_MAP = {
+    "black": "#1a1a1a", "white": "#e8e8e8", "blue": "#2451c9", "red": "#c0392b",
+    "green": "#1e9e5a", "yellow": "#e8b923", "orange": "#e07b39", "purple": "#8e44ad",
+    "pink": "#e75f95", "teal": "#159e96", "grey": "#9aa0a6", "gray": "#9aa0a6",
+    "brown": "#8a5a3c", "navy": "#1f2a5e", "maroon": "#6e1f2a", "gold": "#c9a227",
+    "silver": "#b8bcc2", "cyan": "#22b6c9", "magenta": "#c23aa0",
+}
+
+def color_to_hex(name):
+    return COLOR_HEX_MAP.get(str(name).strip().lower(), "#6366f1")
+
+def top_value_pct(dataframe, col_name):
+    """Most common value in a column, and what % of the (non-empty) dataframe it covers."""
+    if col_name not in dataframe.columns or dataframe.empty:
+        return None, 0
+    vals = dataframe[col_name].astype(str).str.strip()
+    vals = vals[~vals.str.lower().isin(["", "nan", "n/a"])]
+    if vals.empty:
+        return None, 0
+    counts = vals.value_counts()
+    return counts.index[0], round(100 * counts.iloc[0] / len(dataframe))
+
+def top_colors(dataframe, color_cols_list, max_n=4):
+    """Ranked (name, pct) pairs combining values across several color columns."""
+    counts = {}
+    for c in color_cols_list:
+        if c in dataframe.columns:
+            for v in dataframe[c].dropna():
+                v = str(v).strip()
+                if v and v.lower() not in ["", "nan", "n/a"]:
+                    counts[v] = counts.get(v, 0) + 1
+    total = len(dataframe) if len(dataframe) > 0 else 1
+    ranked = sorted(counts.items(), key=lambda x: x[1], reverse=True)[:max_n]
+    return [(name, round(100 * count / total)) for name, count in ranked]
 
 # SIDEBAR
 with st.sidebar:
@@ -510,6 +667,29 @@ if selected_case_types and case_type_col in df.columns:
 if selected_type_class and type_class_col in df.columns:
     filtered_df = filtered_df[filtered_df[type_class_col].astype(str).str.strip().isin([s.strip() for s in selected_type_class])]
 
+# SIDEBAR SUMMARY RAIL — appended after filtered_df is known, so it lands
+# below the filter widgets and reflects whatever is currently selected.
+rail_colors = top_colors(filtered_df, color_cols, max_n=4)
+
+st.sidebar.markdown("---")
+rail_html = '<div class="sidebar-rail">'
+rail_html += '<div class="sidebar-rail-title">In This View</div>'
+if rail_colors:
+    for name, pct in rail_colors:
+        hexval = color_to_hex(name)
+        rail_html += f"""
+        <div class="ring-row">
+            <div class="ring" style="background: conic-gradient({hexval} 0% {pct}%, #eeeeee {pct}% 100%);">
+                <div class="ring-inner">{pct}%</div>
+            </div>
+            <div class="ring-name">{name}</div>
+        </div>
+        """
+else:
+    rail_html += '<div style="font-size:12px; color:var(--muted);">No color data in this selection.</div>'
+rail_html += '</div>'
+st.sidebar.markdown(rail_html, unsafe_allow_html=True)
+
 # MAIN CONTENT
 st.markdown(f"""
 <div class="topbar-container">
@@ -526,6 +706,87 @@ st.markdown("""
 <div class="hero-title">How Medical Institutions Communicate.</div>
 <div class="hero-intro">
   A curated research database analyzing logo design patterns, color psychology, and brand characteristics across 82 medical institutions in 6 countries.
+</div>
+""", unsafe_allow_html=True)
+
+# EDITORIAL SUMMARY — headline adapts to whichever dimension the user hasn't
+# already filtered on, so it doesn't just restate a filter they picked themselves.
+headline_label = None
+headline_value = None
+headline_pct = None
+
+if not selected_colors:
+    top = top_colors(filtered_df, color_cols, max_n=1)
+    if top:
+        headline_value, headline_pct = top[0]
+        headline_label = "Most common color"
+
+if headline_value is None and not selected_sectors:
+    val, pct = top_value_pct(filtered_df, sector_col)
+    if val:
+        headline_value, headline_pct = val, pct
+        headline_label = "Most common sector"
+
+if headline_value is None and not selected_families:
+    val, pct = top_value_pct(filtered_df, color_family_col)
+    if val:
+        headline_value, headline_pct = val, pct
+        headline_label = "Most common color family"
+
+if headline_value is None and not selected_countries:
+    val, pct = top_value_pct(filtered_df, country_col)
+    if val:
+        headline_value, headline_pct = val, pct
+        headline_label = "Most common country"
+
+if headline_value is None:
+    headline_label = "Logos in view"
+    headline_value = str(len(filtered_df))
+    headline_pct = None
+
+headline_desc = (
+    f"{headline_pct}% of the {len(filtered_df)} logos currently shown share this."
+    if headline_pct is not None else
+    f"out of {len(df)} logos total in the dataset."
+)
+
+sector_top, sector_pct = top_value_pct(filtered_df, sector_col)
+family_top, family_pct = top_value_pct(filtered_df, color_family_col)
+complexity_top, complexity_pct = top_value_pct(filtered_df, complexity_col)
+country_nunique = (
+    filtered_df[country_col].astype(str).str.strip().replace("", pd.NA).dropna().nunique()
+    if country_col in filtered_df.columns else 0
+)
+
+st.markdown(f"""
+<div class="editorial-wrap">
+    <div class="editorial-hero">
+        <div class="editorial-eyebrow">{headline_label}</div>
+        <div class="editorial-number">{headline_value}</div>
+        <div class="editorial-desc">{headline_desc}</div>
+    </div>
+    <div class="editorial-list">
+        <div class="editorial-row">
+            <div class="editorial-row-label">Results in view<span class="editorial-sub">of {len(df)} total logos</span></div>
+            <div class="editorial-row-value">{len(filtered_df)}</div>
+        </div>
+        <div class="editorial-row">
+            <div class="editorial-row-label">Leading sector<span class="editorial-sub">{sector_top or "—"}</span></div>
+            <div class="editorial-row-value">{sector_pct}%</div>
+        </div>
+        <div class="editorial-row">
+            <div class="editorial-row-label">Leading color family<span class="editorial-sub">{family_top or "—"}</span></div>
+            <div class="editorial-row-value">{family_pct}%</div>
+        </div>
+        <div class="editorial-row">
+            <div class="editorial-row-label">Countries represented</div>
+            <div class="editorial-row-value">{country_nunique}</div>
+        </div>
+        <div class="editorial-row">
+            <div class="editorial-row-label">Typical complexity<span class="editorial-sub">{complexity_top or "—"}</span></div>
+            <div class="editorial-row-value">{complexity_pct}%</div>
+        </div>
+    </div>
 </div>
 """, unsafe_allow_html=True)
 
