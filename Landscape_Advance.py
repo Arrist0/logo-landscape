@@ -417,6 +417,174 @@ h1.app-title {
 }
 
 .ring-name { font-size: 12px; color: var(--ink); }
+
+/* ===== Color Mix (inside the Editorial box on the Gallery page) ===== */
+.editorial-colormix {
+    grid-column: 1 / -1;
+    border-top: 1px solid var(--line);
+    margin-top: 6px;
+    padding-top: 18px;
+}
+
+.editorial-colormix-title {
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--accent);
+    margin-bottom: 12px;
+}
+
+.editorial-colormix-rings {
+    display: flex;
+    gap: 22px;
+    flex-wrap: wrap;
+}
+
+@media (prefers-color-scheme: dark) {
+    .editorial-colormix { border-color: #2d3748; }
+}
+
+/* ===== Analytics page ===== */
+.swatch {
+    width: 14px;
+    height: 14px;
+    border-radius: 4px;
+    border: 1px solid rgba(0,0,0,0.08);
+    display: inline-block;
+    margin-right: 7px;
+    vertical-align: middle;
+}
+
+.rr-kpis {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    margin-bottom: 20px;
+}
+
+.kpi {
+    background: var(--card);
+    border: 1.5px solid var(--line);
+    border-radius: 10px;
+    padding: 14px 16px;
+}
+
+.kpi-label {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--accent);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 6px;
+}
+
+.kpi-value {
+    font-family: "Space Grotesk", sans-serif;
+    font-size: 22px;
+    font-weight: 700;
+}
+
+.kpi-sub { font-size: 12px; color: var(--muted); margin-top: 2px; }
+
+.rr-charts {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+}
+
+.chart-card {
+    background: var(--card);
+    border: 1.5px solid var(--line);
+    border-radius: 12px;
+    padding: 18px 20px;
+}
+
+.chart-title {
+    font-family: "Space Grotesk", sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    margin-bottom: 14px;
+}
+
+.bar-row {
+    display: grid;
+    grid-template-columns: 110px 1fr 40px;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+    font-size: 12.5px;
+}
+
+.bar-row:last-child { margin-bottom: 0; }
+
+.bar-label {
+    display: flex;
+    align-items: center;
+    color: var(--ink);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.bar-track {
+    background: #ffffff;
+    border: 1px solid var(--line);
+    border-radius: 5px;
+    height: 14px;
+    overflow: hidden;
+}
+
+.bar-fill {
+    height: 100%;
+    border-radius: 5px 0 0 5px;
+    background: var(--accent);
+}
+
+.bar-pct { text-align: right; color: var(--muted); font-weight: 600; }
+
+.full-width-card { grid-column: 1 / -1; }
+
+.crosstab {
+    display: grid;
+    gap: 0;
+    font-size: 12px;
+}
+
+.crosstab .ct-cell {
+    padding: 8px 6px;
+    border-bottom: 1px solid var(--line);
+    display: flex;
+    align-items: center;
+}
+
+.crosstab .ct-head {
+    font-weight: 700;
+    color: var(--muted);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    border-bottom: 1.5px solid var(--ink);
+}
+
+.ct-row-label { font-weight: 600; }
+
+.heat {
+    justify-content: center;
+    border-radius: 4px;
+    margin: 3px;
+    font-weight: 700;
+    color: var(--ink);
+    display: flex;
+}
+
+.rr-footnote { font-size: 11.5px; color: var(--muted); margin-top: 14px; line-height: 1.5; }
+
+@media (prefers-color-scheme: dark) {
+    .kpi, .chart-card { background: #171923; border-color: #2d3748; }
+    .bar-track { background: #0f1117; border-color: #2d3748; }
+    .crosstab .ct-cell { border-color: #2d3748; }
+}
 </style>
 """, unsafe_allow_html=True)
 
@@ -524,20 +692,104 @@ def top_colors(dataframe, color_cols_list, max_n=4):
     ranked = sorted(counts.items(), key=lambda x: x[1], reverse=True)[:max_n]
     return [(name, round(100 * count / total)) for name, count in ranked]
 
+def top_n_value_pct(dataframe, col_name, n=6):
+    """Top-n (value, pct) pairs for a single column, ranked by frequency."""
+    if col_name not in dataframe.columns or dataframe.empty:
+        return []
+    vals = dataframe[col_name].astype(str).str.strip()
+    vals = vals[~vals.str.lower().isin(["", "nan", "n/a"])]
+    if vals.empty:
+        return []
+    counts = vals.value_counts().head(n)
+    total = len(dataframe)
+    return [(idx, round(100 * cnt / total)) for idx, cnt in counts.items()]
+
+def _bar_rows_html(items, with_swatch=False):
+    parts = []
+    for name, pct in items:
+        swatch = f'<span class="swatch" style="background:{color_to_hex(name)}"></span>' if with_swatch else ""
+        parts.append(
+            f'<div class="bar-row"><div class="bar-label">{swatch}{name}</div>'
+            f'<div class="bar-track"><div class="bar-fill" style="width:{pct}%;"></div></div>'
+            f'<div class="bar-pct">{pct}%</div></div>'
+        )
+    return "".join(parts) if parts else '<div style="font-size:12px; color:var(--muted);">No data in this selection.</div>'
+
+def render_analytics_page():
+    """Detailed, filter-aware analytics dashboard — KPIs, distribution charts,
+    and a Color Family x Sector cross-tab. All built as one flush-left HTML
+    string (no loop-concatenated multi-line blocks) to avoid Streamlit's
+    Markdown parser misreading indented fragments as code blocks."""
+
+    kpi_countries = (
+        filtered_df[country_col].astype(str).str.strip().replace("", pd.NA).dropna().nunique()
+        if country_col in filtered_df.columns else 0
+    )
+    top_color_list = top_colors(filtered_df, color_cols, max_n=1)
+    top_color_name, top_color_pct = top_color_list[0] if top_color_list else ("—", 0)
+
+    top_complexity_list = top_n_value_pct(filtered_df, complexity_col, n=1)
+    top_complexity_name, top_complexity_pct = top_complexity_list[0] if top_complexity_list else ("—", 0)
+
+    color_dist = top_colors(filtered_df, color_cols, max_n=8)
+    sector_dist = top_n_value_pct(filtered_df, sector_col, n=6)
+    country_dist = top_n_value_pct(filtered_df, country_col, n=6)
+
+    # Color Family x Sector cross-tab (share within each sector), top 4 families x top 4 sectors
+    crosstab_html = '<div style="font-size:12px; color:var(--muted);">Not enough data for a cross-tab in this selection.</div>'
+    top_families = [name for name, _ in top_n_value_pct(filtered_df, color_family_col, n=4)]
+    top_sectors_ct = [name for name, _ in top_n_value_pct(filtered_df, sector_col, n=4)]
+    if top_families and top_sectors_ct and color_family_col in filtered_df.columns and sector_col in filtered_df.columns:
+        sub = filtered_df[
+            filtered_df[color_family_col].astype(str).str.strip().isin(top_families)
+            & filtered_df[sector_col].astype(str).str.strip().isin(top_sectors_ct)
+        ]
+        if not sub.empty:
+            ct = pd.crosstab(
+                sub[color_family_col].astype(str).str.strip(),
+                sub[sector_col].astype(str).str.strip(),
+                normalize="columns"
+            ) * 100
+            ct = ct.reindex(index=top_families, columns=top_sectors_ct, fill_value=0)
+
+            head_cells = "".join(f'<div class="ct-cell ct-head">{s}</div>' for s in top_sectors_ct)
+            rows_html = ""
+            for fam in top_families:
+                row_html = f'<div class="ct-cell ct-row-label">{fam}</div>'
+                for sec in top_sectors_ct:
+                    val = round(ct.loc[fam, sec]) if fam in ct.index and sec in ct.columns else 0
+                    opacity = max(0.08, min(0.85, val / 100))
+                    row_html += f'<div class="ct-cell"><div class="heat" style="background:rgba(99,102,241,{opacity}); width:100%; padding:5px 0;">{val}%</div></div>'
+                rows_html += row_html
+            crosstab_html = (
+                f'<div class="crosstab" style="grid-template-columns: 130px repeat({len(top_sectors_ct)}, 1fr);">'
+                f'<div class="ct-cell ct-head"></div>{head_cells}{rows_html}</div>'
+            )
+
+    html = (
+        f'<div class="rr-kpis">'
+        f'<div class="kpi"><div class="kpi-label">Logos</div><div class="kpi-value">{len(filtered_df)}</div><div class="kpi-sub">of {len(df)} total</div></div>'
+        f'<div class="kpi"><div class="kpi-label">Countries</div><div class="kpi-value">{kpi_countries}</div><div class="kpi-sub">in current filter</div></div>'
+        f'<div class="kpi"><div class="kpi-label">Top Color</div><div class="kpi-value">{top_color_name}</div><div class="kpi-sub">{top_color_pct}% of set</div></div>'
+        f'<div class="kpi"><div class="kpi-label">Typical Complexity</div><div class="kpi-value">{top_complexity_name}</div><div class="kpi-sub">{top_complexity_pct}% of logos</div></div>'
+        f'</div>'
+        f'<div class="rr-charts">'
+        f'<div class="chart-card"><div class="chart-title">Color Distribution</div>{_bar_rows_html(color_dist, with_swatch=True)}</div>'
+        f'<div class="chart-card"><div class="chart-title">Sector Breakdown</div>{_bar_rows_html(sector_dist)}</div>'
+        f'<div class="chart-card"><div class="chart-title">Country Breakdown</div>{_bar_rows_html(country_dist)}</div>'
+        f'<div class="chart-card"><div class="chart-title">Color Family Breakdown</div>{_bar_rows_html(top_n_value_pct(filtered_df, color_family_col, n=6))}</div>'
+        f'<div class="chart-card full-width-card"><div class="chart-title">Color Family &times; Sector (share within sector)</div>{crosstab_html}'
+        f'<div class="rr-footnote">Darker cells = a color family makes up a larger share of that sector\'s logos. Recalculates live from your current filters.</div></div>'
+        f'</div>'
+    )
+    st.markdown(html, unsafe_allow_html=True)
+
 # SIDEBAR
 with st.sidebar:
     st.markdown("### Sync Data")
     if st.button("🔄 Refresh Google Sheets", help="Click to sync latest data from Google Sheets"):
         st.cache_data.clear()
         st.rerun()
-
-    st.markdown("---")
-
-    # Reserved slot for the "In This View" color rail — filled in further down
-    # the script once filtered_df is known, but it renders here at the top
-    # since Streamlit places sidebar elements by container position, not by
-    # when in the script they're written to.
-    rail_placeholder = st.empty()
 
     st.markdown("---")
     st.markdown("### Filters")
@@ -663,27 +915,20 @@ if selected_case_types and case_type_col in df.columns:
 if selected_type_class and type_class_col in df.columns:
     filtered_df = filtered_df[filtered_df[type_class_col].astype(str).str.strip().isin([s.strip() for s in selected_type_class])]
 
-# SIDEBAR SUMMARY RAIL — filled into the placeholder reserved at the top of
-# the sidebar, now that filtered_df is known. Built as flush-left, single-line
-# HTML fragments: indented multi-line f-strings get misread by Streamlit's
-# Markdown parser as code blocks, which is why this was rendering as raw text.
-rail_colors = top_colors(filtered_df, color_cols, max_n=4)
+if selected_type_class and type_class_col in df.columns:
+    filtered_df = filtered_df[filtered_df[type_class_col].astype(str).str.strip().isin([s.strip() for s in selected_type_class])]
 
-rail_parts = ['<div class="sidebar-rail"><div class="sidebar-rail-title">In This View</div>']
-if rail_colors:
-    for name, pct in rail_colors:
-        hexval = color_to_hex(name)
-        rail_parts.append(
-            f'<div class="ring-row"><div class="ring" style="background: conic-gradient({hexval} 0% {pct}%, #eeeeee {pct}% 100%);"><div class="ring-inner">{pct}%</div></div><div class="ring-name">{name}</div></div>'
-        )
-else:
-    rail_parts.append('<div style="font-size:12px; color:var(--muted);">No color data in this selection.</div>')
-rail_parts.append('</div>')
-
-rail_placeholder.markdown("".join(rail_parts), unsafe_allow_html=True)
+# Color mix for the current filtered set — reused by the Editorial "Color Mix"
+# rings below and available to the Analytics page too.
+colormix = top_colors(filtered_df, color_cols, max_n=6)
 
 # MAIN CONTENT
-st.markdown(f"""
+if "view_mode" not in st.session_state:
+    st.session_state.view_mode = "gallery"
+
+topbar_title_col, topbar_toggle_col = st.columns([3, 1.6])
+with topbar_title_col:
+    st.markdown(f"""
 <div class="topbar-container">
   <div>
     <h1 class="app-title">Logo Landscape</h1>
@@ -691,6 +936,22 @@ st.markdown(f"""
   <div class="top-meta"><strong>{len(df)}</strong> Identities</div>
 </div>
 """, unsafe_allow_html=True)
+with topbar_toggle_col:
+    toggle_col1, toggle_col2 = st.columns(2)
+    with toggle_col1:
+        if st.button("🖼️ Gallery", use_container_width=True,
+                      type="primary" if st.session_state.view_mode == "gallery" else "secondary"):
+            st.session_state.view_mode = "gallery"
+            st.rerun()
+    with toggle_col2:
+        if st.button("📊 Analytics", use_container_width=True,
+                      type="primary" if st.session_state.view_mode == "analytics" else "secondary"):
+            st.session_state.view_mode = "analytics"
+            st.rerun()
+
+if st.session_state.view_mode == "analytics":
+    render_analytics_page()
+    st.stop()
 
 # HERO SECTION
 st.markdown("""
@@ -750,6 +1011,11 @@ country_nunique = (
     if country_col in filtered_df.columns else 0
 )
 
+colormix_rings = "".join(
+    f'<div class="ring-row"><div class="ring" style="background: conic-gradient({color_to_hex(name)} 0% {pct}%, #eeeeee {pct}% 100%);"><div class="ring-inner">{pct}%</div></div><div class="ring-name">{name}</div></div>'
+    for name, pct in colormix
+) if colormix else '<div style="font-size:12px; color:var(--muted);">No color data in this selection.</div>'
+
 st.markdown(f"""
 <div class="editorial-wrap">
     <div class="editorial-hero">
@@ -778,6 +1044,10 @@ st.markdown(f"""
             <div class="editorial-row-label">Typical complexity<span class="editorial-sub">{complexity_top or "—"}</span></div>
             <div class="editorial-row-value">{complexity_pct}%</div>
         </div>
+    </div>
+    <div class="editorial-colormix">
+        <div class="editorial-colormix-title">Color Mix</div>
+        <div class="editorial-colormix-rings">{colormix_rings}</div>
     </div>
 </div>
 """, unsafe_allow_html=True)
