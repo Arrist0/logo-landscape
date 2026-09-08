@@ -508,14 +508,18 @@ def top_value_pct(dataframe, col_name):
     return counts.index[0], round(100 * counts.iloc[0] / len(dataframe))
 
 def top_colors(dataframe, color_cols_list, max_n=4):
-    """Ranked (name, pct) pairs combining values across several color columns."""
+    """Ranked (name, pct) pairs — counts each color once per logo (row), even if
+    it appears in more than one color column on that row, so percentages can't exceed 100%."""
     counts = {}
-    for c in color_cols_list:
-        if c in dataframe.columns:
-            for v in dataframe[c].dropna():
-                v = str(v).strip()
+    for _, row in dataframe.iterrows():
+        row_colors = set()
+        for c in color_cols_list:
+            if c in dataframe.columns:
+                v = str(row.get(c, "")).strip()
                 if v and v.lower() not in ["", "nan", "n/a"]:
-                    counts[v] = counts.get(v, 0) + 1
+                    row_colors.add(v)
+        for v in row_colors:
+            counts[v] = counts.get(v, 0) + 1
     total = len(dataframe) if len(dataframe) > 0 else 1
     ranked = sorted(counts.items(), key=lambda x: x[1], reverse=True)[:max_n]
     return [(name, round(100 * count / total)) for name, count in ranked]
@@ -526,7 +530,15 @@ with st.sidebar:
     if st.button("🔄 Refresh Google Sheets", help="Click to sync latest data from Google Sheets"):
         st.cache_data.clear()
         st.rerun()
-    
+
+    st.markdown("---")
+
+    # Reserved slot for the "In This View" color rail — filled in further down
+    # the script once filtered_df is known, but it renders here at the top
+    # since Streamlit places sidebar elements by container position, not by
+    # when in the script they're written to.
+    rail_placeholder = st.empty()
+
     st.markdown("---")
     st.markdown("### Filters")
 
@@ -566,45 +578,29 @@ with st.sidebar:
     search_query = st.text_input("⌕ Search organisation...", "")
 
     # FIRST SECTION - Organization & Location
-    st.markdown('<div class="filter-section">', unsafe_allow_html=True)
-    st.markdown('<div class="filter-section-title">🏢 Organization & Location</div>', unsafe_allow_html=True)
-    
-    selected_sectors = st.multiselect("Sector:", options=get_options(sector_col), default=[], key="sectors")
-    selected_org_types = st.multiselect("Organization Type:", options=get_options(org_type_col), default=[], key="org_types")
-    selected_countries = st.multiselect("Country:", options=get_options(country_col), default=[], key="countries")
-    
-    st.markdown('</div>', unsafe_allow_html=True)
+    with st.expander("🏢 Organization & Location", expanded=True):
+        selected_sectors = st.multiselect("Sector:", options=get_options(sector_col), default=[], key="sectors")
+        selected_org_types = st.multiselect("Organization Type:", options=get_options(org_type_col), default=[], key="org_types")
+        selected_countries = st.multiselect("Country:", options=get_options(country_col), default=[], key="countries")
 
     # SECOND SECTION - Logo Details & Design
-    st.markdown('<div class="filter-section">', unsafe_allow_html=True)
-    st.markdown('<div class="filter-section-title">📐 Logo Details & Design</div>', unsafe_allow_html=True)
-    
-    selected_logo_types = st.multiselect("Type of Logo:", options=get_options(type_of_logo_col), default=[], key="type_logo")
-    selected_forms = st.multiselect("Shape (Primary Form):", options=get_options(primary_form_col), default=[], key="shapes")
-    selected_families = st.multiselect("Color Family:", options=get_options(color_family_col), default=[], key="colors")
-    selected_complexity = st.multiselect("Complexity:", options=get_options(complexity_col), default=[], key="complexity")
-    selected_symmetry = st.multiselect("Symmetry:", options=get_options(symmetry_col), default=[], key="symmetry")
-    
-    st.markdown('</div>', unsafe_allow_html=True)
+    with st.expander("📐 Logo Details & Design", expanded=False):
+        selected_logo_types = st.multiselect("Type of Logo:", options=get_options(type_of_logo_col), default=[], key="type_logo")
+        selected_forms = st.multiselect("Shape (Primary Form):", options=get_options(primary_form_col), default=[], key="shapes")
+        selected_families = st.multiselect("Color Family:", options=get_options(color_family_col), default=[], key="colors")
+        selected_complexity = st.multiselect("Complexity:", options=get_options(complexity_col), default=[], key="complexity")
+        selected_symmetry = st.multiselect("Symmetry:", options=get_options(symmetry_col), default=[], key="symmetry")
 
     # THIRD SECTION - Colors
-    st.markdown('<div class="filter-section">', unsafe_allow_html=True)
-    st.markdown('<div class="filter-section-title">🎨 Colors</div>', unsafe_allow_html=True)
-
-    selected_undertones = st.multiselect("Color Undertone:", options=get_options(undertone_col), default=[], key="undertones")
-    selected_colors = st.multiselect("Color:", options=get_options_multi(color_cols), default=[], key="colors_combined")
-    exact_color_match = st.checkbox("Exact match only (no extra colors)", value=False, key="exact_color_match")
-
-    st.markdown('</div>', unsafe_allow_html=True)
+    with st.expander("🎨 Colors", expanded=False):
+        selected_undertones = st.multiselect("Color Undertone:", options=get_options(undertone_col), default=[], key="undertones")
+        selected_colors = st.multiselect("Color:", options=get_options_multi(color_cols), default=[], key="colors_combined")
+        exact_color_match = st.checkbox("Exact match only (no extra colors)", value=False, key="exact_color_match")
 
     # FOURTH SECTION - Type Style
-    st.markdown('<div class="filter-section">', unsafe_allow_html=True)
-    st.markdown('<div class="filter-section-title">✍️ Type Style</div>', unsafe_allow_html=True)
-    
-    selected_case_types = st.multiselect("Case Type:", options=get_options(case_type_col), default=[], key="case_types")
-    selected_type_class = st.multiselect("Type Classification:", options=get_options(type_class_col), default=[], key="type_class")
-    
-    st.markdown('</div>', unsafe_allow_html=True)
+    with st.expander("✍️ Type Style", expanded=False):
+        selected_case_types = st.multiselect("Case Type:", options=get_options(case_type_col), default=[], key="case_types")
+        selected_type_class = st.multiselect("Type Classification:", options=get_options(type_class_col), default=[], key="type_class")
 
 # Apply Filters
 filtered_df = df.copy()
@@ -667,28 +663,24 @@ if selected_case_types and case_type_col in df.columns:
 if selected_type_class and type_class_col in df.columns:
     filtered_df = filtered_df[filtered_df[type_class_col].astype(str).str.strip().isin([s.strip() for s in selected_type_class])]
 
-# SIDEBAR SUMMARY RAIL — appended after filtered_df is known, so it lands
-# below the filter widgets and reflects whatever is currently selected.
+# SIDEBAR SUMMARY RAIL — filled into the placeholder reserved at the top of
+# the sidebar, now that filtered_df is known. Built as flush-left, single-line
+# HTML fragments: indented multi-line f-strings get misread by Streamlit's
+# Markdown parser as code blocks, which is why this was rendering as raw text.
 rail_colors = top_colors(filtered_df, color_cols, max_n=4)
 
-st.sidebar.markdown("---")
-rail_html = '<div class="sidebar-rail">'
-rail_html += '<div class="sidebar-rail-title">In This View</div>'
+rail_parts = ['<div class="sidebar-rail"><div class="sidebar-rail-title">In This View</div>']
 if rail_colors:
     for name, pct in rail_colors:
         hexval = color_to_hex(name)
-        rail_html += f"""
-        <div class="ring-row">
-            <div class="ring" style="background: conic-gradient({hexval} 0% {pct}%, #eeeeee {pct}% 100%);">
-                <div class="ring-inner">{pct}%</div>
-            </div>
-            <div class="ring-name">{name}</div>
-        </div>
-        """
+        rail_parts.append(
+            f'<div class="ring-row"><div class="ring" style="background: conic-gradient({hexval} 0% {pct}%, #eeeeee {pct}% 100%);"><div class="ring-inner">{pct}%</div></div><div class="ring-name">{name}</div></div>'
+        )
 else:
-    rail_html += '<div style="font-size:12px; color:var(--muted);">No color data in this selection.</div>'
-rail_html += '</div>'
-st.sidebar.markdown(rail_html, unsafe_allow_html=True)
+    rail_parts.append('<div style="font-size:12px; color:var(--muted);">No color data in this selection.</div>')
+rail_parts.append('</div>')
+
+rail_placeholder.markdown("".join(rail_parts), unsafe_allow_html=True)
 
 # MAIN CONTENT
 st.markdown(f"""
