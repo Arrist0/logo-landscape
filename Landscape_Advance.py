@@ -815,7 +815,7 @@ with st.sidebar:
 
     search_query = st.text_input("⌕ Search organisation...", "")
 
-    with st.expander("🏢 Organization & Location", expanded=True):
+    with st.expander("🏢 Organization & Location", expanded=False):
         selected_sectors = st.multiselect("Sector:", options=get_options(sector_col), default=[], key="sectors")
         selected_org_types = st.multiselect("Organization Type:", options=get_options(org_type_col), default=[], key="org_types")
         selected_countries = st.multiselect("Country:", options=get_options(country_col), default=[], key="countries")
@@ -914,61 +914,64 @@ with topbar_col1:
 """, unsafe_allow_html=True)
 
 with topbar_col2:
-    btn1, btn2 = st.columns(2, gap="small")
-    
     mode = st.session_state.view_mode
     
-    with btn1:
-        if st.button("🖼️ Gallery", key="btn_gallery", use_container_width=True, type="primary" if mode == "gallery" else "secondary"):
+    col_gal, col_ana = st.columns(2, gap="small")
+    
+    with col_gal:
+        if st.button("🖼️ Gallery", key="toggle_gal", use_container_width=True):
             st.session_state.view_mode = "gallery"
             st.rerun()
     
-    with btn2:
-        if st.button("📊 Analytics", key="btn_analytics", use_container_width=True, type="primary" if mode == "analytics" else "secondary"):
+    with col_ana:
+        if st.button("📊 Analytics", key="toggle_ana", use_container_width=True):
             st.session_state.view_mode = "analytics"
             st.rerun()
     
-    st.markdown("""
+    # CSS styling for pill toggle appearance
+    st.markdown(f"""
     <style>
-    /* Pill-style button toggle */
-    .stColumns:has(button) {
-        gap: 0 !important;
-    }
-    
-    .stColumns:has(button) > div:first-child {
-        border-radius: 999px 0 0 999px !important;
-        overflow: hidden !important;
-    }
-    
-    .stColumns:has(button) > div:last-child {
-        border-radius: 0 999px 999px 0 !important;
-        overflow: hidden !important;
-        margin-left: -2px !important;
-    }
-    
-    .stColumns:has(button) button {
+    /* Target the horizontal block containing both buttons */
+    [data-testid="stHorizontalBlock"]:has(button) {{
+        display: inline-flex !important;
+        background: var(--line) !important;
         border-radius: 999px !important;
-        margin: 0 !important;
-        height: 44px !important;
-    }
+        padding: 4px !important;
+        gap: 4px !important;
+        width: fit-content !important;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05) !important;
+    }}
     
-    .stColumns:has(button) [data-kind="primary"] {
-        background: var(--accent) !important;
-        border-color: var(--accent) !important;
-        color: white !important;
-        box-shadow: 0 2px 8px rgba(99, 102, 241, 0.4) !important;
-    }
+    /* Style the column containers */
+    [data-testid="stHorizontalBlock"]:has(button) > [data-testid="column"] {{
+        flex: 0 0 auto !important;
+    }}
     
-    .stColumns:has(button) [data-kind="secondary"] {
-        background: var(--card) !important;
-        border: 1.5px solid var(--line) !important;
+    /* Style all buttons */
+    [data-testid="stHorizontalBlock"]:has(button) button {{
+        background-color: transparent !important;
+        border: none !important;
         color: var(--muted) !important;
-    }
+        padding: 10px 20px !important;
+        border-radius: 999px !important;
+        font-weight: 600 !important;
+        font-size: 13px !important;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        cursor: pointer !important;
+        margin: 0 !important;
+        height: auto !important;
+    }}
     
-    .stColumns:has(button) [data-kind="secondary"]:hover {
-        border-color: var(--accent) !important;
+    /* Active Gallery button (first child) */
+    {"[data-testid='stHorizontalBlock']:has(button) > [data-testid='column']:nth-child(1) button { background-color: var(--ink) !important; color: #ffffff !important; }" if mode == "gallery" else ""}
+    
+    /* Active Analytics button (second child) */
+    {"[data-testid='stHorizontalBlock']:has(button) > [data-testid='column']:nth-child(2) button { background-color: var(--ink) !important; color: #ffffff !important; }" if mode == "analytics" else ""}
+    
+    /* Hover state */
+    [data-testid="stHorizontalBlock"]:has(button) button:hover {{
         color: var(--ink) !important;
-    }
+    }}
     </style>
     """, unsafe_allow_html=True)
 
