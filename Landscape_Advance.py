@@ -89,43 +89,6 @@ h1.app-title {
     margin-bottom: 25px;
 }
 
-/* VIEW MODE TOGGLE - Pill Style Buttons */
-[data-testid="column"] button {
-    border-radius: 999px !important;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
-}
-
-[data-testid="column"]:first-child button {
-    border-top-right-radius: 4px !important;
-    border-bottom-right-radius: 4px !important;
-    border-right: none !important;
-}
-
-[data-testid="column"]:last-child button {
-    border-top-left-radius: 4px !important;
-    border-bottom-left-radius: 4px !important;
-    border-left: none !important;
-}
-
-/* Active button styling */
-[data-testid="column"] button[kind="primary"] {
-    background: var(--accent) !important;
-    color: #ffffff !important;
-    border: 1.5px solid var(--accent) !important;
-    box-shadow: 0 2px 8px rgba(99, 102, 241, 0.4) !important;
-}
-
-[data-testid="column"] button[kind="secondary"] {
-    background: var(--card) !important;
-    color: var(--muted) !important;
-    border: 1.5px solid var(--line) !important;
-}
-
-[data-testid="column"] button[kind="secondary"]:hover {
-    color: var(--ink) !important;
-    border-color: var(--accent) !important;
-}
-
 /* SYNC BUTTON */
 [data-testid="stSidebar"] div.stButton > button {
     width: 100% !important;
@@ -951,19 +914,63 @@ with topbar_col1:
 """, unsafe_allow_html=True)
 
 with topbar_col2:
-    mode = st.session_state.view_mode
-    gallery_active = "active" if mode == "gallery" else ""
-    analytics_active = "active" if mode == "analytics" else ""
+    btn1, btn2 = st.columns(2, gap="small")
     
-    col_a, col_b = st.columns(2)
-    with col_a:
-        if st.button("🖼️ Gallery", key="btn_gallery", help="Gallery view", use_container_width=True):
+    mode = st.session_state.view_mode
+    
+    with btn1:
+        if st.button("🖼️ Gallery", key="btn_gallery", use_container_width=True, type="primary" if mode == "gallery" else "secondary"):
             st.session_state.view_mode = "gallery"
             st.rerun()
-    with col_b:
-        if st.button("📊 Analytics", key="btn_analytics", help="Analytics view", use_container_width=True):
+    
+    with btn2:
+        if st.button("📊 Analytics", key="btn_analytics", use_container_width=True, type="primary" if mode == "analytics" else "secondary"):
             st.session_state.view_mode = "analytics"
             st.rerun()
+    
+    st.markdown("""
+    <style>
+    /* Pill-style button toggle */
+    .stColumns:has(button) {
+        gap: 0 !important;
+    }
+    
+    .stColumns:has(button) > div:first-child {
+        border-radius: 999px 0 0 999px !important;
+        overflow: hidden !important;
+    }
+    
+    .stColumns:has(button) > div:last-child {
+        border-radius: 0 999px 999px 0 !important;
+        overflow: hidden !important;
+        margin-left: -2px !important;
+    }
+    
+    .stColumns:has(button) button {
+        border-radius: 999px !important;
+        margin: 0 !important;
+        height: 44px !important;
+    }
+    
+    .stColumns:has(button) [data-kind="primary"] {
+        background: var(--accent) !important;
+        border-color: var(--accent) !important;
+        color: white !important;
+        box-shadow: 0 2px 8px rgba(99, 102, 241, 0.4) !important;
+    }
+    
+    .stColumns:has(button) [data-kind="secondary"] {
+        background: var(--card) !important;
+        border: 1.5px solid var(--line) !important;
+        color: var(--muted) !important;
+    }
+    
+    .stColumns:has(button) [data-kind="secondary"]:hover {
+        border-color: var(--accent) !important;
+        color: var(--ink) !important;
+    }
+    </style>
+    """, unsafe_allow_html=True)
 
 if st.session_state.view_mode == "analytics":
     render_analytics_page()
