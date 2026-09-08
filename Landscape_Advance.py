@@ -916,64 +916,75 @@ with topbar_col1:
 with topbar_col2:
     mode = st.session_state.view_mode
     
-    col_gal, col_ana = st.columns(2, gap="small")
+    # Create a container div with unique identifier
+    st.markdown("""
+    <style>
+    .view-toggle-pill {
+        display: inline-flex;
+        background: var(--line);
+        border-radius: 999px;
+        padding: 4px;
+        gap: 0;
+        position: relative;
+        width: fit-content;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    }
     
-    with col_gal:
-        if st.button("🖼️ Gallery", key="toggle_gal", use_container_width=True):
+    .toggle-option {
+        padding: 10px 20px;
+        border: none;
+        background: transparent;
+        color: var(--muted);
+        font-size: 13px;
+        font-weight: 600;
+        font-family: 'DM Sans', sans-serif;
+        cursor: pointer;
+        transition: color 0.3s ease;
+        position: relative;
+        z-index: 2;
+    }
+    
+    .toggle-option:hover {
+        color: var(--ink);
+    }
+    
+    .toggle-slider {
+        position: absolute;
+        background: var(--ink);
+        border-radius: 999px;
+        top: 4px;
+        bottom: 4px;
+        width: calc(50% - 2px);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        z-index: 1;
+    }
+    
+    .toggle-slider.active-gallery {
+        left: 4px;
+    }
+    
+    .toggle-slider.active-analytics {
+        right: 4px;
+    }
+    </style>
+    
+    <div class="view-toggle-pill">
+        <div class="toggle-slider {'active-gallery' if mode == 'gallery' else 'active-analytics'}"></div>
+        <button class="toggle-option" onclick="document.getElementById('btn-toggle-gal').click()">🖼️ Gallery</button>
+        <button class="toggle-option" onclick="document.getElementById('btn-toggle-ana').click()">📊 Analytics</button>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    # Hidden trigger buttons
+    col1, col2 = st.columns(2)
+    with col1:
+        if st.button("", key="btn_toggle_gal", label_visibility="collapsed"):
             st.session_state.view_mode = "gallery"
             st.rerun()
-    
-    with col_ana:
-        if st.button("📊 Analytics", key="toggle_ana", use_container_width=True):
+    with col2:
+        if st.button("", key="btn_toggle_ana", label_visibility="collapsed"):
             st.session_state.view_mode = "analytics"
             st.rerun()
-    
-    # CSS styling for pill toggle appearance
-    st.markdown(f"""
-    <style>
-    /* Target the horizontal block containing both buttons */
-    [data-testid="stHorizontalBlock"]:has(button) {{
-        display: inline-flex !important;
-        background: var(--line) !important;
-        border-radius: 999px !important;
-        padding: 4px !important;
-        gap: 4px !important;
-        width: fit-content !important;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05) !important;
-    }}
-    
-    /* Style the column containers */
-    [data-testid="stHorizontalBlock"]:has(button) > [data-testid="column"] {{
-        flex: 0 0 auto !important;
-    }}
-    
-    /* Style all buttons */
-    [data-testid="stHorizontalBlock"]:has(button) button {{
-        background-color: transparent !important;
-        border: none !important;
-        color: var(--muted) !important;
-        padding: 10px 20px !important;
-        border-radius: 999px !important;
-        font-weight: 600 !important;
-        font-size: 13px !important;
-        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
-        cursor: pointer !important;
-        margin: 0 !important;
-        height: auto !important;
-    }}
-    
-    /* Active Gallery button (first child) */
-    {"[data-testid='stHorizontalBlock']:has(button) > [data-testid='column']:nth-child(1) button { background-color: var(--ink) !important; color: #ffffff !important; }" if mode == "gallery" else ""}
-    
-    /* Active Analytics button (second child) */
-    {"[data-testid='stHorizontalBlock']:has(button) > [data-testid='column']:nth-child(2) button { background-color: var(--ink) !important; color: #ffffff !important; }" if mode == "analytics" else ""}
-    
-    /* Hover state */
-    [data-testid="stHorizontalBlock"]:has(button) button:hover {{
-        color: var(--ink) !important;
-    }}
-    </style>
-    """, unsafe_allow_html=True)
 
 if st.session_state.view_mode == "analytics":
     render_analytics_page()
