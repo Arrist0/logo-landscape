@@ -89,38 +89,41 @@ h1.app-title {
     margin-bottom: 25px;
 }
 
-/* VIEW MODE TOGGLE - Tab Style */
-.view-mode-switcher {
-    display: inline-flex;
-    background: var(--card);
-    border: 1.5px solid var(--line);
-    border-radius: 999px;
-    padding: 4px;
-    gap: 4px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+/* VIEW MODE TOGGLE - Pill Style Buttons */
+[data-testid="column"] button {
+    border-radius: 999px !important;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
 }
 
-.view-mode-tab {
-    border: none;
-    background: transparent;
-    padding: 8px 20px;
-    border-radius: 999px;
-    font-family: "DM Sans", sans-serif;
-    font-size: 13px;
-    font-weight: 600;
-    color: var(--muted);
-    cursor: pointer;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+[data-testid="column"]:first-child button {
+    border-top-right-radius: 4px !important;
+    border-bottom-right-radius: 4px !important;
+    border-right: none !important;
 }
 
-.view-mode-tab:hover {
-    color: var(--ink);
+[data-testid="column"]:last-child button {
+    border-top-left-radius: 4px !important;
+    border-bottom-left-radius: 4px !important;
+    border-left: none !important;
 }
 
-.view-mode-tab.active {
-    background: var(--accent);
-    color: #ffffff;
-    box-shadow: 0 2px 8px rgba(99, 102, 241, 0.4);
+/* Active button styling */
+[data-testid="column"] button[kind="primary"] {
+    background: var(--accent) !important;
+    color: #ffffff !important;
+    border: 1.5px solid var(--accent) !important;
+    box-shadow: 0 2px 8px rgba(99, 102, 241, 0.4) !important;
+}
+
+[data-testid="column"] button[kind="secondary"] {
+    background: var(--card) !important;
+    color: var(--muted) !important;
+    border: 1.5px solid var(--line) !important;
+}
+
+[data-testid="column"] button[kind="secondary"]:hover {
+    color: var(--ink) !important;
+    border-color: var(--accent) !important;
 }
 
 /* SYNC BUTTON */
@@ -681,11 +684,16 @@ def transform_image_url(url_str):
     return url_str
 
 COLOR_HEX_MAP = {
-    "black": "#1a1a1a", "white": "#e8e8e8", "blue": "#2451c9", "red": "#c0392b",
-    "green": "#1e9e5a", "yellow": "#e8b923", "orange": "#e07b39", "purple": "#8e44ad",
-    "pink": "#e75f95", "teal": "#159e96", "grey": "#9aa0a6", "gray": "#9aa0a6",
-    "brown": "#8a5a3c", "navy": "#1f2a5e", "maroon": "#6e1f2a", "gold": "#c9a227",
-    "silver": "#b8bcc2", "cyan": "#22b6c9", "magenta": "#c23aa0",
+    "black": "#1a1a1a",
+    "white": "#e8e8e8",
+    "blue": "#2451c9",
+    "red": "#c0392b",
+    "green": "#1e9e5a",
+    "yellow": "#e8b923",
+    "orange": "#e07b39",
+    "purple": "#8e44ad",
+    "gray": "#9aa0a6",
+    "grey": "#9aa0a6",
 }
 
 def color_to_hex(name):
@@ -924,7 +932,7 @@ if selected_case_types and case_type_col in df.columns:
 if selected_type_class and type_class_col in df.columns:
     filtered_df = filtered_df[filtered_df[type_class_col].astype(str).str.strip().isin([s.strip() for s in selected_type_class])]
 
-colormix = top_colors(filtered_df, color_cols, max_n=6)
+colormix = top_colors(filtered_df, color_cols, max_n=3)
 
 # MAIN CONTENT
 if "view_mode" not in st.session_state:
@@ -947,27 +955,13 @@ with topbar_col2:
     gallery_active = "active" if mode == "gallery" else ""
     analytics_active = "active" if mode == "analytics" else ""
     
-    st.markdown(f"""
-<div class="view-mode-switcher">
-    <button class="view-mode-tab {gallery_active}" onclick="
-        fetch('?view=gallery', {{method: 'POST'}});
-        location.reload();
-    ">🖼️ Gallery</button>
-    <button class="view-mode-tab {analytics_active}" onclick="
-        fetch('?view=analytics', {{method: 'POST'}});
-        location.reload();
-    ">📊 Analytics</button>
-</div>
-""", unsafe_allow_html=True)
-    
-    # Handle clicks via streamlit selectbox (hidden, for actual interaction)
     col_a, col_b = st.columns(2)
     with col_a:
-        if st.button("🖼️", key="btn_gallery", help="Gallery view", use_container_width=True):
+        if st.button("🖼️ Gallery", key="btn_gallery", help="Gallery view", use_container_width=True):
             st.session_state.view_mode = "gallery"
             st.rerun()
     with col_b:
-        if st.button("📊", key="btn_analytics", help="Analytics view", use_container_width=True):
+        if st.button("📊 Analytics", key="btn_analytics", help="Analytics view", use_container_width=True):
             st.session_state.view_mode = "analytics"
             st.rerun()
 
@@ -1136,7 +1130,6 @@ else:
                     <div class="card-title">{b_name}</div>
                     <div class="card-meta">
                         <strong>Shape:</strong> {p_form}<br>
-                        <strong>Color:</strong> {c_family}<br>
                         <strong>Sector:</strong> {sector_val}<br>
                         <strong>Country:</strong> {cnt_val}
                     </div>
@@ -1149,6 +1142,10 @@ else:
             with st.expander("📋 Details"):
                 st.write(f"**Complexity:** {complexity_val}")
                 st.write(f"**Symmetry:** {symmetry_val}")
+                st.write("")
+                st.subheader("🎨 Colors", divider="gray")
+                st.write(f"**Color Family:** {c_family}")
+                st.write("")
                 st.write(f"**Case Type:** {case_type_val}")
                 st.write(f"**Type Classification:** {type_class}")
                 st.write("")
