@@ -640,7 +640,7 @@ try:
 except Exception as e:
     st.error(f"Error loading live dataset: {e}")
     st.stop()
-
+st.write(df[['Name', 'Logo Source Link']].head())
 def transform_image_url(url_str):
     url_str = str(url_str).strip()
     if not url_str or url_str.lower() in ["nan", "n/a", "none"]:
