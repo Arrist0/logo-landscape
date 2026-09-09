@@ -820,7 +820,7 @@ with st.sidebar:
 
     # Column mappings
     brand_col = "Name"
-    img_col = "Logo Source Link"
+    img_col = "Logo"
     type_of_logo_col = "Type of Logo"
     primary_form_col = "Primary form (Visually Dominating Form)"
     color_family_col = "Color Family"
