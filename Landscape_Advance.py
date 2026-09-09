@@ -38,15 +38,19 @@ div[data-testid="stRadio"] span[data-baseweb="radio"] { display:none; }
 [data-testid="stSidebar"] details summary { padding:10px 12px!important; font-size:12px!important; font-weight:600!important; color:#383838!important; }
 [data-testid="stSidebar"] details summary:hover { background:#fafafa!important; }
 [data-testid="stSidebar"] details > div { padding:8px 12px 12px 12px!important; }
-[data-testid="stSidebar"] .stCheckbox { margin:0 0 3px 0!important; }
-[data-testid="stSidebar"] .stCheckbox label p { font-size:12px!important; color:#4d4d4d!important; }
-[data-testid="stSidebar"] .stCheckbox label { gap:7px!important; }
-[data-testid="stSidebar"] .apply-btn button { width:auto!important; min-height:30px!important; height:30px!important; padding:2px 12px!important; border-radius:999px!important; border:1px solid #cfcfcf!important; background:#f7f7f7!important; color:#333!important; font-size:11px!important; font-weight:600!important; }
+[data-testid="stSidebar"] [data-baseweb="select"] { border-radius:7px!important; }
+[data-testid="stSidebar"] [data-baseweb="select"] > div { min-height:35px!important; border:1px solid var(--line)!important; box-shadow:none!important; background:#fff!important; }
+[data-testid="stSidebar"] [data-baseweb="select"] [data-testid="stMultiSelectContainer"] { font-size:12px!important; }
+[data-testid="stSidebar"] [data-baseweb="tag"] { background:#ececec!important; border-radius:999px!important; }
+[data-testid="stSidebar"] [data-baseweb="tag"] span { color:#4a4a4a!important; font-size:11px!important; }
+[data-testid="stSidebar"] .apply-btn button { width:auto!important; min-width:56px!important; min-height:28px!important; height:28px!important; padding:1px 11px!important; border-radius:6px!important; border:1px solid #d2d2d2!important; background:#f7f7f7!important; color:#333!important; font-size:11px!important; font-weight:600!important; }
 [data-testid="stSidebar"] .apply-btn button:hover { border-color:#999!important; background:#ededed!important; }
 .main-topbar { display:flex; align-items:center; justify-content:space-between; border-bottom:1px solid var(--line); padding:2px 0 8px 0; margin-bottom:10px; }
 .main-topbar-title { font-size:13px; font-weight:600; color:#666; }
 .main-topbar-count { font-size:12px; color:#777; }
 [data-testid="stExpander"] { border:1px solid var(--line)!important; border-radius:8px!important; box-shadow:none!important; background:#fff!important; margin-bottom:8px!important; }
+[data-testid="stSidebar"] [data-testid="stExpander"] { background:#fff!important; }
+
 [data-testid="stExpander"] details summary { padding:10px 14px!important; }
 [data-testid="stExpander"] details summary p { font-size:12px!important; font-weight:600!important; }
 [data-testid="stExpander"] details > div { border-top:1px solid var(--line)!important; padding:14px!important; }
@@ -56,7 +60,7 @@ div[data-testid="stRadio"] span[data-baseweb="radio"] { display:none; }
 .editorial-mini-label { font-size:10px; color:#777; margin-bottom:4px; }
 .editorial-mini-value { font-size:16px; font-family:"Space Grotesk",sans-serif; font-weight:700; color:#222; }
 .editorial-mini-sub { font-size:10px; color:#888; margin-top:2px; }
-.filter-status { display:flex; align-items:center; justify-content:space-between; min-height:34px; background:#efefef; border-radius:8px; padding:4px 6px; margin-bottom:7px; }
+.filter-status { display:flex; align-items:center; justify-content:space-between; min-height:34px; background:#d9d9d9; border-radius:8px; padding:4px 6px; margin-bottom:7px; }
 .filter-chip-label { font-size:11px; color:#8a8a8a; margin-right:2px; }
 .result-sort-row { display:flex; align-items:center; justify-content:space-between; margin:7px 0 12px 0; }
 .result-count-label { font-size:11px; color:#666; }
@@ -378,19 +382,22 @@ if "temp_exact_color_match" not in st.session_state:
     st.session_state.temp_exact_color_match = False
 if "view_mode" not in st.session_state:
     st.session_state.view_mode = "gallery"
+if "force_sync_filter_widgets" not in st.session_state:
+    st.session_state.force_sync_filter_widgets = False
 
-# Keep checkbox widget states synchronized with the last applied values.
+# Keep temporary multiselect widget states synchronized with the last applied values.
 def _safe_key(text):
     return re.sub(r"[^a-zA-Z0-9]+", "_", str(text)).strip("_")[:90]
 
 def sync_temp_widget_state(group_key):
-    group_applied = st.session_state.applied_filters.get(group_key, {})
+    group_temp = st.session_state.temp_filters.get(group_key, {})
+    force_sync = st.session_state.get("force_sync_filter_widgets", False)
     for field_label, (state_key, _, options) in FILTER_GROUPS[group_key]["fields"].items():
-        selected = set(group_applied.get(state_key, []))
-        for option in options:
-            widget_key = f"tmp__{group_key}__{state_key}__{_safe_key(option)}"
-            if widget_key not in st.session_state:
-                st.session_state[widget_key] = option in selected
+        widget_key = f"tmp__{group_key}__{state_key}"
+        if force_sync or widget_key not in st.session_state:
+            st.session_state[widget_key] = list(group_temp.get(state_key, []))
+    if force_sync and group_key == list(FILTER_GROUPS.keys())[-1]:
+        st.session_state.force_sync_filter_widgets = False
 
 
 def clear_all_filters():
@@ -398,21 +405,16 @@ def clear_all_filters():
     st.session_state.temp_filters = {key: {} for key in FILTER_GROUPS}
     st.session_state.applied_exact_color_match = False
     st.session_state.temp_exact_color_match = False
-    # Reset all checkbox values that have already been instantiated.
-    for key in list(st.session_state.keys()):
-        if str(key).startswith("tmp__"):
-            st.session_state[key] = False
+    # Clear already-instantiated multiselect widget state before the next rerun.
+    st.session_state.force_sync_filter_widgets = True
     st.rerun()
 
 
 def apply_group(group_key):
     group_values = {}
     for field_label, (state_key, _, options) in FILTER_GROUPS[group_key]["fields"].items():
-        selected = []
-        for option in options:
-            widget_key = f"tmp__{group_key}__{state_key}__{_safe_key(option)}"
-            if st.session_state.get(widget_key, False):
-                selected.append(option)
+        widget_key = f"tmp__{group_key}__{state_key}"
+        selected = [v for v in st.session_state.get(widget_key, []) if v in options]
         group_values[state_key] = selected
     st.session_state.applied_filters[group_key] = group_values
     st.session_state.temp_filters[group_key] = {k: list(v) for k, v in group_values.items()}
@@ -441,7 +443,7 @@ with st.sidebar:
         st.markdown('<div class="sidebar-filter-head"><h3>Filters</h3></div>', unsafe_allow_html=True)
     with head_right:
         st.markdown('<div class="reset-wrap">', unsafe_allow_html=True)
-        if st.button("↗", key="reset_all_filters", help="Reset filters", use_container_width=True):
+        if st.button("↻", key="reset_all_filters", help="Reset filters"):
             clear_all_filters()
         st.markdown('</div>', unsafe_allow_html=True)
 
@@ -450,23 +452,32 @@ with st.sidebar:
     for group_key, group in FILTER_GROUPS.items():
         sync_temp_widget_state(group_key)
         with st.expander(group["label"], expanded=(group_key == "organization")):
-            for field_label, (state_key, _, options) in group["fields"].items():
-                st.markdown(f'<div style="font-weight:700;font-size:12px;margin:8px 0 5px 0;color:#262626;">{field_label}</div>', unsafe_allow_html=True)
-                for option in options:
-                    widget_key = f"tmp__{group_key}__{state_key}__{_safe_key(option)}"
-                    st.checkbox(option, key=widget_key)
-
-            if group_key == "colors":
-                st.checkbox("Exact match only (no extra colors)", key="temp_exact_color_match")
-
-            st.markdown('<div class="apply-row"></div>', unsafe_allow_html=True)
-            with st.container():
+            # Minimal contextual Apply control at the top-right of the category.
+            apply_left, apply_right = st.columns([5, 1], vertical_alignment="center")
+            with apply_right:
                 st.markdown('<div class="apply-btn">', unsafe_allow_html=True)
                 if st.button("Apply", key=f"apply__{group_key}"):
                     apply_group(group_key)
                 st.markdown('</div>', unsafe_allow_html=True)
 
+            for field_label, (state_key, _, options) in group["fields"].items():
+                st.markdown(
+                    f'<div style="font-weight:700;font-size:12px;margin:8px 0 5px 0;color:#262626;">{field_label}</div>',
+                    unsafe_allow_html=True,
+                )
+                st.multiselect(
+                    field_label,
+                    options=options,
+                    key=f"tmp__{group_key}__{state_key}",
+                    placeholder="Select...",
+                    label_visibility="collapsed",
+                )
+
+            if group_key == "colors":
+                st.checkbox("Exact match only (no extra colors)", key="temp_exact_color_match")
+
 # Build the actively applied selections for filtering.
+
 applied = st.session_state.applied_filters
 selected_logo_types = applied["design"].get("type_logo", [])
 selected_forms = applied["design"].get("shapes", [])
@@ -579,9 +590,13 @@ for group_key, group in FILTER_GROUPS.items():
 if exact_color_match and selected_colors:
     chip_items.append(("Exact color", "colors", "__exact__", "__exact__"))
 
-chip_bar_cols = st.columns([0.84, 0.16], vertical_alignment="center")
+chip_bar_cols = st.columns([0.90, 0.10], vertical_alignment="center")
 with chip_bar_cols[0]:
-    chip_inner = st.columns(max(1, min(len(chip_items), 8)))
+    if chip_items:
+        chip_inner = st.columns(max(1, min(len(chip_items), 8)))
+    else:
+        chip_inner = []
+    st.markdown('<div class="filter-chip-label">Selected Filters</div>', unsafe_allow_html=True)
     if chip_items:
         for idx, (label, group_key, state_key, value) in enumerate(chip_items):
             col = chip_inner[idx % len(chip_inner)]
@@ -594,11 +609,10 @@ with chip_bar_cols[0]:
                     else:
                         vals = list(st.session_state.applied_filters[group_key].get(state_key, []))
                         st.session_state.applied_filters[group_key][state_key] = [v for v in vals if v != value]
-                        # Keep the corresponding temporary checkbox in sync.
-                        widget_key = f"tmp__{group_key}__{state_key}__{_safe_key(value)}"
-                        if widget_key in st.session_state:
-                            st.session_state[widget_key] = False
+                        # Re-sync the corresponding temporary multiselect on the next run.
+                        current_temp = list(st.session_state.temp_filters[group_key].get(state_key, []))
                     st.session_state.temp_filters[group_key] = {k:list(v) for k,v in st.session_state.applied_filters[group_key].items()}
+                    st.session_state.force_sync_filter_widgets = True
                     st.rerun()
                 st.markdown('</div>', unsafe_allow_html=True)
     else:
@@ -609,12 +623,12 @@ with chip_bar_cols[1]:
         clear_all_filters()
     st.markdown('</div>', unsafe_allow_html=True)
 
-# Result count and sort control.
-sort_col, count_col = st.columns([1, 5], vertical_alignment="center")
-with sort_col:
-    sort_option = st.selectbox("Sort", ["Name A–Z", "Name Z–A"], index=0, label_visibility="collapsed", key="sort_option")
+# Result count and sort control — count on the left, sort on the right like the reference.
+count_col, sort_col = st.columns([5, 1], vertical_alignment="center")
 with count_col:
     st.markdown(f'<div class="result-count-label">{len(filtered_df)} Results</div>', unsafe_allow_html=True)
+with sort_col:
+    sort_option = st.selectbox("Sort", ["Name A–Z", "Name Z–A"], index=0, label_visibility="collapsed", key="sort_option")
 
 if brand_col in filtered_df.columns:
     filtered_df = filtered_df.sort_values(by=brand_col, ascending=(sort_option == "Name A–Z"), key=lambda s: s.astype(str).str.lower())
