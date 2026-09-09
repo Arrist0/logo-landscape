@@ -330,14 +330,14 @@ def color_to_hex(name):
     return COLOR_HEX_MAP.get(str(name).strip().lower(), "#6366f1")
 
 def top_value_pct(dataframe, col_name):
-    if col_name not in dataframe.columns or dataframe.empty:
+    if dataframe.empty or col_name not in dataframe.columns:
         return None, 0
-    vals = dataframe[col_name].astype(str).str.strip()
-    vals = vals[~vals.str.lower().isin(["", "nan", "n/a"])]
-    if vals.empty:
+    vals = dataframe[col_name].dropna().astype(str).str.strip()
+    vals = vals[~vals.str.lower().isin(["", "nan", "n/a", "none"])]
+    if len(vals) == 0:
         return None, 0
     counts = vals.value_counts()
-    if counts.empty:
+    if len(counts) == 0:
         return None, 0
     return counts.index[0], round(100 * counts.iloc[0] / len(dataframe))
 
@@ -357,11 +357,11 @@ def top_colors(dataframe, color_cols_list, max_n=5):
     return [(name, round(100 * count / total)) for name, count in ranked]
 
 def top_n_value_pct(dataframe, col_name, n=6):
-    if col_name not in dataframe.columns or dataframe.empty:
+    if dataframe.empty or col_name not in dataframe.columns:
         return []
-    vals = dataframe[col_name].astype(str).str.strip()
-    vals = vals[~vals.str.lower().isin(["", "nan", "n/a"])]
-    if vals.empty:
+    vals = dataframe[col_name].dropna().astype(str).str.strip()
+    vals = vals[~vals.str.lower().isin(["", "nan", "n/a", "none"])]
+    if len(vals) == 0:
         return []
     counts = vals.value_counts().head(n)
     total = len(dataframe)
@@ -437,13 +437,13 @@ with st.sidebar:
     with st.expander("🏢 Organization & Location"):
         with st.form("form_org", border=False):
             st.markdown('<p class="filter-subhead">Sector</p>', unsafe_allow_html=True)
-            sec_checks = {opt: st.checkbox(opt, value=opt in st.session_state.applied_filters['sectors']) for opt in get_options(sector_col)}
+            sec_checks = {opt: st.checkbox(opt, value=opt in st.session_state.applied_filters['sectors'], key=f"sec_{opt}") for opt in get_options(sector_col)}
             
             st.markdown('<p class="filter-subhead">Organization Type</p>', unsafe_allow_html=True)
-            org_checks = {opt: st.checkbox(opt, value=opt in st.session_state.applied_filters['org_types']) for opt in get_options(org_type_col)}
+            org_checks = {opt: st.checkbox(opt, value=opt in st.session_state.applied_filters['org_types'], key=f"org_{opt}") for opt in get_options(org_type_col)}
             
             st.markdown('<p class="filter-subhead">Country</p>', unsafe_allow_html=True)
-            cntry_checks = {opt: st.checkbox(opt, value=opt in st.session_state.applied_filters['countries']) for opt in get_options(country_col)}
+            cntry_checks = {opt: st.checkbox(opt, value=opt in st.session_state.applied_filters['countries'], key=f"cntry_{opt}") for opt in get_options(country_col)}
             
             if st.form_submit_button("Apply"):
                 st.session_state.applied_filters['sectors'] = [k for k, v in sec_checks.items() if v]
@@ -455,16 +455,16 @@ with st.sidebar:
     with st.expander("📐 Logo Details & Design"):
         with st.form("form_design", border=False):
             st.markdown('<p class="filter-subhead">Type of Logo</p>', unsafe_allow_html=True)
-            type_checks = {opt: st.checkbox(opt, value=opt in st.session_state.applied_filters['type_logo']) for opt in get_options(type_of_logo_col)}
+            type_checks = {opt: st.checkbox(opt, value=opt in st.session_state.applied_filters['type_logo'], key=f"type_{opt}") for opt in get_options(type_of_logo_col)}
             
             st.markdown('<p class="filter-subhead">Shape (Primary Form)</p>', unsafe_allow_html=True)
-            shape_checks = {opt: st.checkbox(opt, value=opt in st.session_state.applied_filters['shapes']) for opt in get_options(primary_form_col)}
+            shape_checks = {opt: st.checkbox(opt, value=opt in st.session_state.applied_filters['shapes'], key=f"shape_{opt}") for opt in get_options(primary_form_col)}
             
             st.markdown('<p class="filter-subhead">Complexity</p>', unsafe_allow_html=True)
-            comp_checks = {opt: st.checkbox(opt, value=opt in st.session_state.applied_filters['complexity']) for opt in get_options(complexity_col)}
+            comp_checks = {opt: st.checkbox(opt, value=opt in st.session_state.applied_filters['complexity'], key=f"comp_{opt}") for opt in get_options(complexity_col)}
             
             st.markdown('<p class="filter-subhead">Symmetry</p>', unsafe_allow_html=True)
-            sym_checks = {opt: st.checkbox(opt, value=opt in st.session_state.applied_filters['symmetry']) for opt in get_options(symmetry_col)}
+            sym_checks = {opt: st.checkbox(opt, value=opt in st.session_state.applied_filters['symmetry'], key=f"sym_{opt}") for opt in get_options(symmetry_col)}
             
             if st.form_submit_button("Apply"):
                 st.session_state.applied_filters['type_logo'] = [k for k, v in type_checks.items() if v]
@@ -477,13 +477,13 @@ with st.sidebar:
     with st.expander("🎨 Colors"):
         with st.form("form_colors", border=False):
             st.markdown('<p class="filter-subhead">Color Family</p>', unsafe_allow_html=True)
-            fam_checks = {opt: st.checkbox(opt, value=opt in st.session_state.applied_filters['colors_family']) for opt in get_options(color_family_col)}
+            fam_checks = {opt: st.checkbox(opt, value=opt in st.session_state.applied_filters['colors_family'], key=f"fam_{opt}") for opt in get_options(color_family_col)}
             
             st.markdown('<p class="filter-subhead">Color Undertone</p>', unsafe_allow_html=True)
-            under_checks = {opt: st.checkbox(opt, value=opt in st.session_state.applied_filters['undertones']) for opt in get_options(undertone_col)}
+            under_checks = {opt: st.checkbox(opt, value=opt in st.session_state.applied_filters['undertones'], key=f"under_{opt}") for opt in get_options(undertone_col)}
             
             st.markdown('<p class="filter-subhead">Color Contains</p>', unsafe_allow_html=True)
-            col_checks = {opt: st.checkbox(opt, value=opt in st.session_state.applied_filters['colors_combined']) for opt in get_options_multi(color_cols)}
+            col_checks = {opt: st.checkbox(opt, value=opt in st.session_state.applied_filters['colors_combined'], key=f"col_{opt}") for opt in get_options_multi(color_cols)}
             
             if st.form_submit_button("Apply"):
                 st.session_state.applied_filters['colors_family'] = [k for k, v in fam_checks.items() if v]
@@ -495,10 +495,10 @@ with st.sidebar:
     with st.expander("✍️ Type Style"):
         with st.form("form_type", border=False):
             st.markdown('<p class="filter-subhead">Case Type</p>', unsafe_allow_html=True)
-            case_checks = {opt: st.checkbox(opt, value=opt in st.session_state.applied_filters['case_types']) for opt in get_options(case_type_col)}
+            case_checks = {opt: st.checkbox(opt, value=opt in st.session_state.applied_filters['case_types'], key=f"case_{opt}") for opt in get_options(case_type_col)}
             
             st.markdown('<p class="filter-subhead">Type Classification</p>', unsafe_allow_html=True)
-            class_checks = {opt: st.checkbox(opt, value=opt in st.session_state.applied_filters['type_class']) for opt in get_options(type_class_col)}
+            class_checks = {opt: st.checkbox(opt, value=opt in st.session_state.applied_filters['type_class'], key=f"class_{opt}") for opt in get_options(type_class_col)}
             
             if st.form_submit_button("Apply"):
                 st.session_state.applied_filters['case_types'] = [k for k, v in case_checks.items() if v]
@@ -574,13 +574,11 @@ st.markdown(
 )
 
 # EDITORIAL SUMMARY
-headline_label, headline_value, headline_pct = None, None, None
+headline_label, headline_value, headline_pct = "Logos in view", str(len(filtered_df)), None
 if not af['colors_combined']:
     top = top_colors(filtered_df, color_cols, max_n=1)
-    if top: headline_value, headline_pct, headline_label = top[0][0], top[0][1], "Dominant Color"
-
-if headline_value is None:
-    headline_label, headline_value, headline_pct = "Logos in view", str(len(filtered_df)), None
+    if top: 
+        headline_value, headline_pct, headline_label = top[0][0], top[0][1], "Dominant Color"
 
 headline_desc = f"{headline_pct}% of selected logos share this trait." if headline_pct else f"Out of {len(df)} total dataset entries."
 
