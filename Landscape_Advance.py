@@ -12,18 +12,33 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# 2. Custom CSS & Flip Card Architecture
+# 2. Dynamic Light & Dark Theme CSS + Click-to-Flip CSS
 st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,400;0,500;0,700;1,400&family=Space+Grotesk:wght@500;700&display=swap');
 
+/* Default Light Theme Variables */
 :root {
-  --bg: #0f1117;
-  --card: #171923;
-  --ink: #f7fafc;
-  --muted: #a0aec0;
-  --line: #2d3748;
+  --bg: #ffffff;
+  --card: #f8f9fa;
+  --ink: #1a1a1a;
+  --muted: #666666;
+  --line: #e2e8f0;
   --accent: #6366f1;
+  --card-back-bg: #f1f5f9;
+}
+
+/* Dark Mode Overrides */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0f1117;
+    --card: #171923;
+    --ink: #f7fafc;
+    --muted: #a0aec0;
+    --line: #2d3748;
+    --accent: #6366f1;
+    --card-back-bg: #1a1d29;
+  }
 }
 
 * { transition: background-color 0.2s ease, border-color 0.2s ease; }
@@ -57,6 +72,14 @@ h1.app-title {
     color: var(--muted);
 }
 
+.hero-title {
+    font-family: "Space Grotesk", sans-serif;
+    font-size: clamp(28px, 3.5vw, 44px);
+    font-weight: 700;
+    color: var(--ink);
+    margin-bottom: 18px;
+}
+
 /* Pill Toggle */
 div[data-testid="stRadio"] > div[role="radiogroup"] {
     background-color: var(--card);
@@ -72,6 +95,9 @@ div[data-testid="stRadio"] label {
     cursor: pointer;
     margin: 0;
 }
+div[data-testid="stRadio"] label p {
+    color: var(--ink) !important;
+}
 div[data-testid="stRadio"] label[data-checked="true"] {
     background-color: var(--accent) !important;
 }
@@ -82,7 +108,7 @@ div[data-testid="stRadio"] label[data-checked="true"] p {
 div[data-testid="stRadio"] div[data-testid="stMarkdownContainer"] { margin-left: 0; }
 div[data-testid="stRadio"] span[data-baseweb="radio"] { display: none; }
 
-/* Refined Editorial Card */
+/* Editorial Card */
 .editorial-wrap {
     display: grid;
     grid-template-columns: 0.9fr 1.3fr;
@@ -142,6 +168,7 @@ div[data-testid="stRadio"] span[data-baseweb="radio"] { display: none; }
     font-family: "Space Grotesk", sans-serif;
     font-size: 16px;
     font-weight: 700;
+    color: var(--ink);
 }
 
 /* Dedicated Color Palette Bar */
@@ -184,19 +211,24 @@ div[data-testid="stRadio"] span[data-baseweb="radio"] { display: none; }
     width: 14px;
     height: 14px;
     border-radius: 50%;
-    border: 1px solid rgba(255, 255, 255, 0.2);
+    border: 1px solid rgba(0, 0, 0, 0.15);
 }
 
 .palette-name { font-size: 13px; font-weight: 500; color: var(--ink); }
 .palette-pct { font-size: 12px; color: var(--muted); font-weight: 600; }
 
-/* Integrated Flip Cards */
-.flip-card {
-  background-color: transparent;
-  width: 100%;
-  height: 340px;
-  perspective: 1000px;
-  margin-bottom: 24px;
+/* Interactive Click-to-Flip Card with Hover Highlight */
+.flip-card-toggle {
+    display: none;
+}
+
+.flip-card-label {
+    display: block;
+    cursor: pointer;
+    width: 100%;
+    height: 340px;
+    perspective: 1000px;
+    margin-bottom: 24px;
 }
 
 .flip-card-inner {
@@ -204,12 +236,20 @@ div[data-testid="stRadio"] span[data-baseweb="radio"] { display: none; }
   width: 100%;
   height: 100%;
   text-align: left;
-  transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.2s ease, border-color 0.2s ease;
   transform-style: preserve-3d;
+  border-radius: 12px;
 }
 
-.flip-card:hover .flip-card-inner {
-  transform: rotateY(180deg);
+/* Hover Highlight Effect ONLY (No Flip on Hover) */
+.flip-card-label:hover .flip-card-inner {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 24px rgba(99, 102, 241, 0.2);
+}
+
+/* Click Triggered Flip State */
+.flip-card-toggle:checked + .flip-card-label .flip-card-inner {
+  transform: rotateY(180deg) translateY(0);
 }
 
 .flip-card-front, .flip-card-back {
@@ -221,7 +261,6 @@ div[data-testid="stRadio"] span[data-baseweb="radio"] { display: none; }
   border-radius: 12px;
   border: 1.5px solid var(--line);
   overflow: hidden;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
 .flip-card-front {
@@ -231,7 +270,7 @@ div[data-testid="stRadio"] span[data-baseweb="radio"] { display: none; }
 }
 
 .flip-card-back {
-  background-color: #1a1d29;
+  background-color: var(--card-back-bg);
   color: var(--ink);
   transform: rotateY(180deg);
   padding: 18px;
@@ -241,7 +280,7 @@ div[data-testid="stRadio"] span[data-baseweb="radio"] { display: none; }
   border-color: var(--accent);
 }
 
-/* Front Card Image & Metadata */
+/* Front Card Elements */
 .card-image-box {
     height: 170px;
     background-color: #ffffff;
@@ -297,7 +336,7 @@ div[data-testid="stRadio"] span[data-baseweb="radio"] { display: none; }
     gap: 4px;
 }
 
-/* Back Card Detailed Content */
+/* Back Card Details */
 .back-title {
     font-family: "Space Grotesk", sans-serif;
     font-size: 14px;
@@ -320,7 +359,7 @@ div[data-testid="stRadio"] span[data-baseweb="radio"] { display: none; }
     font-size: 11.5px;
     color: var(--ink);
     line-height: 1.45;
-    background: rgba(255, 255, 255, 0.03);
+    background: rgba(0, 0, 0, 0.03);
     padding: 8px 10px;
     border-radius: 6px;
     border: 1px solid var(--line);
@@ -328,7 +367,7 @@ div[data-testid="stRadio"] span[data-baseweb="radio"] { display: none; }
     overflow-y: auto;
 }
 
-/* Sidebar styling overrides */
+/* Sidebar Light/Dark Compatibility */
 [data-testid="stSidebar"] { background-color: var(--bg); }
 [data-testid="stSidebar"] div.stButton > button {
     width: 100% !important;
@@ -440,7 +479,7 @@ def top_colors(dataframe, color_cols_list, max_n=5):
     ranked = sorted(counts.items(), key=lambda x: x[1], reverse=True)[:max_n]
     return [(name, round(100 * count / total)) for name, count in ranked]
 
-# SIDEBAR (Preserved)
+# SIDEBAR
 with st.sidebar:
     st.markdown("### Sync Data")
     if st.button("🔄 Refresh Google Sheets", help="Click to sync latest data from Google Sheets"):
@@ -608,7 +647,7 @@ palette_bar_html = (
 )
 st.markdown(palette_bar_html, unsafe_allow_html=True)
 
-# GALLERY FLIP CARD GRID
+# GALLERY CLICK-TO-FLIP CARD GRID
 cols_per_row = 3
 cols = st.columns(cols_per_row, gap="large")
 
@@ -631,8 +670,11 @@ for idx, (_, row) in enumerate(filtered_df.iterrows()):
         symbolism_text = str(row.get(symbolism_col, "No symbolism recorded.")).strip()
         case_type_val = str(row.get(case_type_col, "—")).strip()
 
+        card_id = f"card_toggle_{idx}"
+
         card_flip_html = (
-            f'<div class="flip-card">'
+            f'<input type="checkbox" id="{card_id}" class="flip-card-toggle">'
+            f'<label for="{card_id}" class="flip-card-label">'
             f'<div class="flip-card-inner">'
             f'<div class="flip-card-front">'
             f'<div class="card-image-box">{img_html}</div>'
@@ -644,7 +686,7 @@ for idx, (_, row) in enumerate(filtered_df.iterrows()):
             f'<div class="card-meta-item">Color: <strong>{c_family}</strong></div>'
             f'<div class="card-meta-item">Country: <strong>{cnt_val}</strong></div>'
             f'</div>'
-            f'<div class="flip-hint"> Hover for research details →</div>'
+            f'<div class="flip-hint"> Tap to view details ↺</div>'
             f'</div>'
             f'</div>'
             f'<div class="flip-card-back">'
@@ -661,6 +703,6 @@ for idx, (_, row) in enumerate(filtered_df.iterrows()):
             f'</div>'
             f'</div>'
             f'</div>'
-            f'</div>'
+            f'</label>'
         )
         st.markdown(card_flip_html, unsafe_allow_html=True)
