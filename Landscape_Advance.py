@@ -61,6 +61,51 @@ h1.app-title {
     color: var(--muted);
 }
 
+/* Gallery / Analytics pill toggle */
+.st-key-view_toggle {
+    display: inline-flex;
+    background: var(--card);
+    border: 1.5px solid var(--line);
+    border-radius: 999px;
+    padding: 5px;
+    gap: 2px;
+    margin-top: 6px;
+}
+
+.st-key-view_toggle div[data-testid="stButton"] > button {
+    border-radius: 999px !important;
+    border: none !important;
+    box-shadow: none !important;
+    font-size: 13.5px !important;
+    font-weight: 600 !important;
+    padding: 9px 20px !important;
+    height: auto !important;
+    min-height: 0 !important;
+    transition: all 0.2s ease !important;
+}
+
+.st-key-view_toggle div[data-testid="stButton"] > button[kind="primary"] {
+    background: var(--ink) !important;
+    color: #fff !important;
+}
+
+.st-key-view_toggle div[data-testid="stButton"] > button[kind="secondary"] {
+    background: transparent !important;
+    color: var(--muted) !important;
+}
+
+.st-key-view_toggle div[data-testid="stButton"] > button[kind="secondary"]:hover {
+    color: var(--ink) !important;
+    background: rgba(0,0,0,0.04) !important;
+}
+
+@media (prefers-color-scheme: dark) {
+    .st-key-view_toggle div[data-testid="stButton"] > button[kind="primary"] {
+        background: #ffffff !important;
+        color: #14152b !important;
+    }
+}
+
 /* Hero Section */
 .hero-kicker {
     font-size: 12px;
@@ -388,10 +433,7 @@ h1.app-title {
     display: flex;
     align-items: center;
     gap: 10px;
-    margin-bottom: 10px;
 }
-
-.ring-row:last-child { margin-bottom: 0; }
 
 .ring {
     width: 32px;
@@ -418,12 +460,11 @@ h1.app-title {
 
 .ring-name { font-size: 12px; color: var(--ink); }
 
-/* ===== Color Mix (inside the Editorial box on the Gallery page) ===== */
+/* ===== Color Mix (inside the Editorial hero column, on the Gallery page) ===== */
 .editorial-colormix {
-    grid-column: 1 / -1;
     border-top: 1px solid var(--line);
-    margin-top: 6px;
-    padding-top: 18px;
+    margin-top: 16px;
+    padding-top: 16px;
 }
 
 .editorial-colormix-title {
@@ -437,8 +478,7 @@ h1.app-title {
 
 .editorial-colormix-rings {
     display: flex;
-    gap: 22px;
-    flex-wrap: wrap;
+    flex-direction: column;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -664,6 +704,11 @@ COLOR_HEX_MAP = {
 def color_to_hex(name):
     return COLOR_HEX_MAP.get(str(name).strip().lower(), "#6366f1")
 
+def is_hex_color(value):
+    """True for values like #FFF, #C53987, #C53987AA left over from cell fills —
+    these should be treated as noise, not real color names, wherever colors are listed."""
+    return bool(re.match(r'^#([0-9A-Fa-f]{3}|[0-9A-Fa-f]{4}|[0-9A-Fa-f]{6}|[0-9A-Fa-f]{8})$', str(value).strip()))
+
 def top_value_pct(dataframe, col_name):
     """Most common value in a column, and what % of the (non-empty) dataframe it covers."""
     if col_name not in dataframe.columns or dataframe.empty:
@@ -677,14 +722,15 @@ def top_value_pct(dataframe, col_name):
 
 def top_colors(dataframe, color_cols_list, max_n=4):
     """Ranked (name, pct) pairs — counts each color once per logo (row), even if
-    it appears in more than one color column on that row, so percentages can't exceed 100%."""
+    it appears in more than one color column on that row, so percentages can't exceed 100%.
+    Skips leftover hex codes (e.g. #C53987) — only named colors count."""
     counts = {}
     for _, row in dataframe.iterrows():
         row_colors = set()
         for c in color_cols_list:
             if c in dataframe.columns:
                 v = str(row.get(c, "")).strip()
-                if v and v.lower() not in ["", "nan", "n/a"]:
+                if v and v.lower() not in ["", "nan", "n/a"] and not is_hex_color(v):
                     row_colors.add(v)
         for v in row_colors:
             counts[v] = counts.get(v, 0) + 1
@@ -817,13 +863,14 @@ with st.sidebar:
         return []
 
     def get_options_multi(col_names):
-        """Combine unique values across several columns into one option list."""
+        """Combine unique values across several columns into one option list.
+        Skips leftover hex codes (e.g. #C53987) so only named colors show up."""
         values = set()
         for col_name in col_names:
             if col_name in df.columns:
                 for x in df[col_name].dropna().unique():
                     x = str(x).strip()
-                    if x and x.lower() not in ["nan", "n/a"]:
+                    if x and x.lower() not in ["nan", "n/a"] and not is_hex_color(x):
                         values.add(x)
         return sorted(values)
 
@@ -839,12 +886,12 @@ with st.sidebar:
     with st.expander("📐 Logo Details & Design", expanded=False):
         selected_logo_types = st.multiselect("Type of Logo:", options=get_options(type_of_logo_col), default=[], key="type_logo")
         selected_forms = st.multiselect("Shape (Primary Form):", options=get_options(primary_form_col), default=[], key="shapes")
-        selected_families = st.multiselect("Color Family:", options=get_options(color_family_col), default=[], key="colors")
         selected_complexity = st.multiselect("Complexity:", options=get_options(complexity_col), default=[], key="complexity")
         selected_symmetry = st.multiselect("Symmetry:", options=get_options(symmetry_col), default=[], key="symmetry")
 
     # THIRD SECTION - Colors
     with st.expander("🎨 Colors", expanded=False):
+        selected_families = st.multiselect("Color Family:", options=get_options(color_family_col), default=[], key="colors")
         selected_undertones = st.multiselect("Color Undertone:", options=get_options(undertone_col), default=[], key="undertones")
         selected_colors = st.multiselect("Color:", options=get_options_multi(color_cols), default=[], key="colors_combined")
         exact_color_match = st.checkbox("Exact match only (no extra colors)", value=False, key="exact_color_match")
@@ -893,7 +940,7 @@ if selected_colors:
             vals = set()
             for c in present_color_cols:
                 v = str(row.get(c, "")).strip()
-                if v and v.lower() not in ["nan", "n/a"]:
+                if v and v.lower() not in ["nan", "n/a"] and not is_hex_color(v):
                     vals.add(v)
             return vals
 
@@ -937,17 +984,18 @@ with topbar_title_col:
 </div>
 """, unsafe_allow_html=True)
 with topbar_toggle_col:
-    toggle_col1, toggle_col2 = st.columns(2)
-    with toggle_col1:
-        if st.button("🖼️ Gallery", use_container_width=True,
-                      type="primary" if st.session_state.view_mode == "gallery" else "secondary"):
-            st.session_state.view_mode = "gallery"
-            st.rerun()
-    with toggle_col2:
-        if st.button("📊 Analytics", use_container_width=True,
-                      type="primary" if st.session_state.view_mode == "analytics" else "secondary"):
-            st.session_state.view_mode = "analytics"
-            st.rerun()
+    with st.container(key="view_toggle"):
+        toggle_col1, toggle_col2 = st.columns(2)
+        with toggle_col1:
+            if st.button("🖼️ Gallery",
+                          type="primary" if st.session_state.view_mode == "gallery" else "secondary"):
+                st.session_state.view_mode = "gallery"
+                st.rerun()
+        with toggle_col2:
+            if st.button("📊 Analytics",
+                          type="primary" if st.session_state.view_mode == "analytics" else "secondary"):
+                st.session_state.view_mode = "analytics"
+                st.rerun()
 
 if st.session_state.view_mode == "analytics":
     render_analytics_page()
@@ -1022,6 +1070,10 @@ st.markdown(f"""
         <div class="editorial-eyebrow">{headline_label}</div>
         <div class="editorial-number">{headline_value}</div>
         <div class="editorial-desc">{headline_desc}</div>
+        <div class="editorial-colormix">
+            <div class="editorial-colormix-title">Color Mix</div>
+            <div class="editorial-colormix-rings">{colormix_rings}</div>
+        </div>
     </div>
     <div class="editorial-list">
         <div class="editorial-row">
@@ -1044,10 +1096,6 @@ st.markdown(f"""
             <div class="editorial-row-label">Typical complexity<span class="editorial-sub">{complexity_top or "—"}</span></div>
             <div class="editorial-row-value">{complexity_pct}%</div>
         </div>
-    </div>
-    <div class="editorial-colormix">
-        <div class="editorial-colormix-title">Color Mix</div>
-        <div class="editorial-colormix-rings">{colormix_rings}</div>
     </div>
 </div>
 """, unsafe_allow_html=True)
