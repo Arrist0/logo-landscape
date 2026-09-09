@@ -12,7 +12,21 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# 2. CSS with Click-to-Flip via <details> and Full Light/Dark Compatibility
+# Initialize Session States for Applied Filters
+filter_keys = [
+    "sectors", "org_types", "countries", 
+    "type_logo", "shapes", "complexity", "symmetry",
+    "colors_family", "undertones", "colors_combined",
+    "case_types", "type_class"
+]
+
+if "applied_filters" not in st.session_state:
+    st.session_state.applied_filters = {k: [] for k in filter_keys}
+
+def reset_filters():
+    st.session_state.applied_filters = {k: [] for k in filter_keys}
+
+# 2. Dynamic Light & Dark Theme CSS + UI Overrides
 st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,400;0,500;0,700;1,400&family=Space+Grotesk:wght@500;700&display=swap');
@@ -48,22 +62,29 @@ st.markdown("""
   font-family: "DM Sans", sans-serif; 
 }
 
-/* Header & Top Bar */
+/* Sidebar App Title */
+h1.sidebar-title {
+    font-family: "Space Grotesk", sans-serif;
+    font-size: 24px;
+    margin: 0 0 15px 0;
+    color: var(--ink);
+    font-weight: 700;
+}
+
+/* Topbar Main Content */
 .topbar-container {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 10px 0 20px 0;
+    padding: 10px 0 15px 0;
     border-bottom: 1px solid var(--line);
-    margin-bottom: 25px;
+    margin-bottom: 15px;
 }
 
-h1.app-title {
-    font-family: "Space Grotesk", sans-serif;
-    font-size: 28px;
-    margin: 0;
-    color: var(--ink);
-    font-weight: 700;
+.topbar-subtitle {
+    font-size: 14px;
+    color: var(--muted);
+    font-weight: 500;
 }
 
 .top-meta {
@@ -71,34 +92,86 @@ h1.app-title {
     color: var(--muted);
 }
 
-.hero-title {
-    font-family: "Space Grotesk", sans-serif;
-    font-size: clamp(28px, 3.5vw, 44px);
-    font-weight: 700;
-    color: var(--ink);
-    margin-bottom: 18px;
-}
-
-/* Pill Toggle Switch */
+/* Sidebar Pill Toggle Switch */
 div[data-testid="stRadio"] > div[role="radiogroup"] {
     background-color: var(--card);
     border-radius: 30px;
     padding: 4px;
     border: 1.5px solid var(--line);
-    display: inline-flex;
+    display: flex;
+    width: 100%;
 }
 div[data-testid="stRadio"] label {
     border-radius: 26px !important;
-    padding: 6px 18px !important;
+    padding: 8px 0 !important;
     background-color: transparent;
     cursor: pointer;
     margin: 0;
+    flex: 1;
+    text-align: center;
+    justify-content: center;
 }
-div[data-testid="stRadio"] label p { color: var(--ink) !important; }
-div[data-testid="stRadio"] label[data-checked="true"] { background-color: var(--accent) !important; }
+div[data-testid="stRadio"] label p { color: var(--ink) !important; font-size: 13px !important;}
+div[data-testid="stRadio"] label[data-checked="true"] { background-color: var(--muted) !important; }
 div[data-testid="stRadio"] label[data-checked="true"] p { color: #ffffff !important; font-weight: 600 !important; }
-div[data-testid="stRadio"] div[data-testid="stMarkdownContainer"] { margin-left: 0; }
+div[data-testid="stRadio"] div[data-testid="stMarkdownContainer"] { margin-left: 0; display: flex; justify-content: center;}
 div[data-testid="stRadio"] span[data-baseweb="radio"] { display: none; }
+
+/* Filter Apply Buttons */
+[data-testid="stFormSubmitButton"] > button {
+    float: right;
+    padding: 2px 14px !important;
+    min-height: 32px !important;
+    font-size: 13px !important;
+    border-radius: 6px !important;
+    background-color: var(--card) !important;
+    border: 1px solid var(--line) !important;
+}
+
+/* Chips / Active Filters Row */
+.chip-row-container {
+    background-color: var(--card);
+    padding: 12px 16px;
+    border-radius: 8px;
+    border: 1px solid var(--line);
+    margin-bottom: 24px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+div[data-testid="column"] { 
+    width: auto !important; 
+    flex: 0 0 auto !important; 
+    min-width: 0 !important; 
+    padding: 0 !important;
+}
+.chip-btn button {
+    border-radius: 20px !important;
+    padding: 2px 12px !important;
+    font-size: 11.5px !important;
+    min-height: 28px !important;
+    background-color: var(--muted) !important;
+    color: white !important;
+    border: none !important;
+}
+.clear-all-btn button {
+    background: transparent !important;
+    border: none !important;
+    color: var(--ink) !important;
+    font-size: 11.5px !important;
+    text-decoration: underline !important;
+    padding: 2px 8px !important;
+    min-height: 28px !important;
+}
+
+/* Form Headings */
+.filter-subhead {
+    font-size: 12.5px;
+    font-weight: 700;
+    color: var(--ink);
+    margin: 12px 0 6px 0;
+}
 
 /* Editorial Summary Card */
 .editorial-wrap {
@@ -106,414 +179,82 @@ div[data-testid="stRadio"] span[data-baseweb="radio"] { display: none; }
     grid-template-columns: 0.9fr 1.3fr;
     gap: 32px;
     align-items: center;
-    border: 1.5px solid var(--line);
-    border-radius: 14px;
-    padding: 24px 28px;
-    margin-bottom: 24px;
-    background: var(--card);
+    padding: 12px 14px;
 }
-
-.editorial-hero {
-    border-right: 1px solid var(--line);
-    padding-right: 28px;
-}
-
-.editorial-eyebrow {
-    font-size: 11px;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    font-weight: 700;
-    color: var(--accent);
-    margin-bottom: 6px;
-}
-
-.editorial-number {
-    font-family: "Space Grotesk", sans-serif;
-    font-size: 48px;
-    line-height: 1.0;
-    font-weight: 700;
-    color: var(--ink);
-    letter-spacing: -0.02em;
-}
-
-.editorial-desc {
-    font-size: 13px;
-    color: var(--muted);
-    line-height: 1.5;
-    margin-top: 8px;
-}
-
-.editorial-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: baseline;
-    padding: 8px 0;
-    border-bottom: 1px solid var(--line);
-}
-
+.editorial-hero { border-right: 1px solid var(--line); padding-right: 28px; }
+.editorial-eyebrow { font-size: 11px; text-transform: uppercase; font-weight: 700; color: var(--accent); margin-bottom: 6px; }
+.editorial-number { font-family: "Space Grotesk", sans-serif; font-size: 40px; font-weight: 700; color: var(--ink); line-height: 1.0; }
+.editorial-desc { font-size: 12.5px; color: var(--muted); margin-top: 8px; }
+.editorial-row { display: flex; justify-content: space-between; align-items: baseline; padding: 6px 0; border-bottom: 1px solid var(--line); }
 .editorial-row:last-child { border-bottom: none; padding-bottom: 0; }
-.editorial-row:first-child { padding-top: 0; }
+.editorial-row-label { font-size: 12.5px; color: var(--ink); }
+.editorial-sub { color: var(--muted); font-size: 10.5px; display: block; }
+.editorial-row-value { font-family: "Space Grotesk", sans-serif; font-size: 15px; font-weight: 700; color: var(--ink); }
+.palette-bar-container { background: var(--card); border-top: 1.5px solid var(--line); padding: 14px 20px; display: flex; align-items: center; }
+.palette-title { font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--accent); margin-right: 20px; }
+.palette-items { display: flex; gap: 24px; flex-wrap: wrap; width: 100%; }
+.palette-item { display: flex; align-items: center; gap: 8px; }
+.palette-swatch { width: 14px; height: 14px; border-radius: 50%; border: 1px solid rgba(0, 0, 0, 0.15); }
+.palette-name { font-size: 12.5px; font-weight: 500; color: var(--ink); }
 
-.editorial-row-label { font-size: 13px; color: var(--ink); }
-.editorial-sub { color: var(--muted); font-size: 11px; display: block; }
-.editorial-row-value {
-    font-family: "Space Grotesk", sans-serif;
-    font-size: 16px;
-    font-weight: 700;
-    color: var(--ink);
-}
-
-/* Color Palette Bar */
-.palette-bar-container {
-    background: var(--card);
-    border: 1.5px solid var(--line);
-    border-radius: 12px;
-    padding: 14px 20px;
-    margin-bottom: 28px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-}
-
-.palette-title {
-    font-size: 11px;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    color: var(--accent);
-    white-space: nowrap;
-    margin-right: 20px;
-}
-
-.palette-items {
-    display: flex;
-    gap: 24px;
-    flex-wrap: wrap;
-    align-items: center;
-    width: 100%;
-}
-
-.palette-item {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-
-.palette-swatch {
-    width: 14px;
-    height: 14px;
-    border-radius: 50%;
-    border: 1px solid rgba(0, 0, 0, 0.15);
-}
-
-.palette-name { font-size: 13px; font-weight: 500; color: var(--ink); }
-.palette-pct { font-size: 12px; color: var(--muted); font-weight: 600; }
-
-/* Pure HTML Details Click-to-Flip Architecture */
-details.flip-card {
-    width: 100%;
-    height: 350px;
-    margin-bottom: 24px;
-    perspective: 1000px;
-    outline: none;
-}
-
-details.flip-card summary {
-    list-style: none;
-    cursor: pointer;
-    width: 100%;
-    height: 100%;
-}
-
-details.flip-card summary::-webkit-details-marker {
-    display: none;
-}
-
-.flip-card-inner {
-    position: relative;
-    width: 100%;
-    height: 100%;
-    transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.25s ease;
-    transform-style: preserve-3d;
-    border-radius: 12px;
-}
-
-/* Hover Effect: Subtle Lift and Highlight ONLY */
-details.flip-card:hover .flip-card-inner {
-    transform: translateY(-4px);
-    box-shadow: 0 12px 24px rgba(99, 102, 241, 0.18);
-}
-
-/* Click Triggered Flip */
-details.flip-card[open] .flip-card-inner {
-    transform: rotateY(180deg);
-}
-
-details.flip-card[open]:hover .flip-card-inner {
-    transform: rotateY(180deg) translateY(-4px);
-}
-
-.flip-card-front, .flip-card-back {
-    position: absolute;
-    width: 100%;
-    height: 100%;
-    -webkit-backface-visibility: hidden;
-    backface-visibility: hidden;
-    border-radius: 12px;
-    border: 1.5px solid var(--line);
-    overflow: hidden;
-}
-
-.flip-card-front {
+/* Clean Native Card UI Container */
+.logo-card-box {
     background-color: var(--card);
-    display: flex;
-    flex-direction: column;
-}
-
-.flip-card-back {
-    background-color: var(--card-back);
-    color: var(--ink);
-    transform: rotateY(180deg);
-    padding: 18px;
+    border: 1.5px solid var(--line);
+    border-radius: 12px;
+    overflow: hidden;
+    height: 360px;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-    border-color: var(--accent);
-}
-
-/* Card Content Elements */
-.card-image-box {
-    height: 170px;
-    background-color: #ffffff;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 16px;
-    border-bottom: 1.5px solid var(--line);
-}
-
-.card-image-box img {
-    max-height: 130px;
-    max-width: 90%;
-    object-fit: contain;
-}
-
-.card-front-content {
-    padding: 14px;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    flex-grow: 1;
-}
-
-.card-title {
-    font-family: "Space Grotesk", sans-serif;
-    font-size: 15px;
-    font-weight: 700;
-    color: var(--ink);
-    margin-bottom: 8px;
-    line-height: 1.25;
-}
-
-.card-meta-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 6px;
-    font-size: 12px;
-    color: var(--muted);
-}
-
-.card-meta-item strong { color: var(--ink); }
-
-.flip-hint {
-    font-size: 10.5px;
-    color: var(--accent);
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    font-weight: 700;
-    margin-top: 10px;
-}
-
-/* Back Card Details */
-.back-title {
-    font-family: "Space Grotesk", sans-serif;
-    font-size: 14px;
-    font-weight: 700;
-    color: var(--accent);
-    border-bottom: 1px solid var(--line);
-    padding-bottom: 6px;
-    margin-bottom: 10px;
-}
-
-.back-detail-row {
-    font-size: 12px;
-    margin-bottom: 6px;
-    color: var(--muted);
-}
-
-.back-detail-row strong { color: var(--ink); }
-
-.back-symbolism {
-    font-size: 11.5px;
-    color: var(--ink);
-    line-height: 1.45;
-    background: rgba(0, 0, 0, 0.03);
-    padding: 8px 10px;
-    border-radius: 6px;
-    border: 1px solid var(--line);
-    max-height: 110px;
-    overflow-y: auto;
-}
-
-/* Sidebar Styling */
-[data-testid="stSidebar"] { background-color: var(--bg); }
-[data-testid="stSidebar"] div.stButton > button {
-    width: 100% !important;
-    height: 44px !important;
-    border-radius: 8px !important;
-    background-color: var(--card) !important;
-    border: 1.5px solid var(--line) !important;
-    color: var(--ink) !important;
-    font-weight: 600 !important;
-}
-
-/* ===== Analytics page ===== */
-.swatch {
-    width: 14px;
-    height: 14px;
-    border-radius: 4px;
-    border: 1px solid rgba(0,0,0,0.08);
-    display: inline-block;
-    margin-right: 7px;
-    vertical-align: middle;
-}
-
-.rr-kpis {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 12px;
     margin-bottom: 20px;
 }
-
-.kpi {
-    background: var(--card);
-    border: 1.5px solid var(--line);
-    border-radius: 10px;
-    padding: 14px 16px;
-}
-
-.kpi-label {
-    font-size: 11px;
-    font-weight: 700;
-    color: var(--accent);
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    margin-bottom: 6px;
-}
-
-.kpi-value {
-    font-family: "Space Grotesk", sans-serif;
-    font-size: 22px;
-    font-weight: 700;
-    color: var(--ink);
-}
-
-.kpi-sub { font-size: 12px; color: var(--muted); margin-top: 2px; }
-
-.rr-charts {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 20px;
-}
-
-.chart-card {
-    background: var(--card);
-    border: 1.5px solid var(--line);
+.logo-card-back-box {
+    background-color: var(--card-back);
+    border: 1.5px solid var(--accent);
     border-radius: 12px;
-    padding: 18px 20px;
-}
-
-.chart-title {
-    font-family: "Space Grotesk", sans-serif;
-    font-size: 14px;
-    font-weight: 700;
-    color: var(--ink);
-    margin-bottom: 14px;
-}
-
-.bar-row {
-    display: grid;
-    grid-template-columns: 110px 1fr 40px;
-    align-items: center;
-    gap: 10px;
-    margin-bottom: 10px;
-    font-size: 12.5px;
-}
-
-.bar-row:last-child { margin-bottom: 0; }
-
-.bar-label {
+    overflow: hidden;
+    height: 360px;
     display: flex;
-    align-items: center;
-    color: var(--ink);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 16px;
+    margin-bottom: 20px;
 }
+.card-image-box { height: 150px; background-color: #ffffff; display: flex; align-items: center; justify-content: center; padding: 12px; border-bottom: 1.5px solid var(--line); }
+.card-image-box img { max-height: 120px; max-width: 90%; object-fit: contain; }
+.card-content { padding: 12px 14px; flex-grow: 1; display: flex; flex-direction: column; justify-content: space-between; }
+.card-title { font-family: "Space Grotesk", sans-serif; font-size: 14px; font-weight: 700; color: var(--ink); margin-bottom: 6px; line-height: 1.25; }
+.card-meta-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; font-size: 11.5px; color: var(--muted); }
+.card-meta-grid strong { color: var(--ink); }
+.back-title { font-family: "Space Grotesk", sans-serif; font-size: 13px; font-weight: 700; color: var(--accent); border-bottom: 1px solid var(--line); padding-bottom: 4px; margin-bottom: 6px; }
+.back-detail-row { font-size: 11.5px; margin-bottom: 4px; color: var(--muted); }
+.back-detail-row strong { color: var(--ink); }
+.back-symbolism { font-size: 11px; color: var(--ink); line-height: 1.4; background: rgba(0, 0, 0, 0.03); padding: 6px 8px; border-radius: 6px; border: 1px solid var(--line); max-height: 85px; overflow-y: auto; }
 
-.bar-track {
-    background: var(--bg);
-    border: 1px solid var(--line);
-    border-radius: 5px;
-    height: 14px;
-    overflow: hidden;
-}
-
-.bar-fill {
-    height: 100%;
-    border-radius: 5px 0 0 5px;
-    background: var(--accent);
-}
-
+/* Analytics CSS */
+.swatch { width: 14px; height: 14px; border-radius: 4px; border: 1px solid rgba(0,0,0,0.08); display: inline-block; margin-right: 7px; vertical-align: middle; }
+.rr-kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 20px; }
+.kpi { background: var(--card); border: 1.5px solid var(--line); border-radius: 10px; padding: 14px 16px; }
+.kpi-label { font-size: 11px; font-weight: 700; color: var(--accent); text-transform: uppercase; margin-bottom: 6px; }
+.kpi-value { font-family: "Space Grotesk", sans-serif; font-size: 22px; font-weight: 700; color: var(--ink); }
+.kpi-sub { font-size: 12px; color: var(--muted); margin-top: 2px; }
+.rr-charts { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+.chart-card { background: var(--card); border: 1.5px solid var(--line); border-radius: 12px; padding: 18px 20px; }
+.chart-title { font-family: "Space Grotesk", sans-serif; font-size: 14px; font-weight: 700; color: var(--ink); margin-bottom: 14px; }
+.bar-row { display: grid; grid-template-columns: 110px 1fr 40px; align-items: center; gap: 10px; margin-bottom: 10px; font-size: 12.5px; }
+.bar-label { display: flex; align-items: center; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.bar-track { background: var(--bg); border: 1px solid var(--line); border-radius: 5px; height: 14px; overflow: hidden; }
+.bar-fill { height: 100%; border-radius: 5px 0 0 5px; background: var(--accent); }
 .bar-pct { text-align: right; color: var(--muted); font-weight: 600; }
-
 .full-width-card { grid-column: 1 / -1; }
+.crosstab { display: grid; gap: 0; font-size: 12px; }
+.crosstab .ct-cell { padding: 8px 6px; border-bottom: 1px solid var(--line); display: flex; align-items: center; }
+.crosstab .ct-head { font-weight: 700; color: var(--muted); font-size: 11px; text-transform: uppercase; border-bottom: 1.5px solid var(--ink); }
+.ct-row-label { font-weight: 600; color: var(--ink); }
+.heat { justify-content: center; border-radius: 4px; margin: 3px; font-weight: 700; color: var(--ink); display: flex; }
 
-.crosstab {
-    display: grid;
-    gap: 0;
-    font-size: 12px;
-}
-
-.crosstab .ct-cell {
-    padding: 8px 6px;
-    border-bottom: 1px solid var(--line);
-    display: flex;
-    align-items: center;
-    color: var(--ink);
-}
-
-.crosstab .ct-head {
-    font-weight: 700;
-    color: var(--muted);
-    font-size: 11px;
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-    border-bottom: 1.5px solid var(--ink);
-}
-
-.ct-row-label { font-weight: 600; }
-
-.heat {
-    justify-content: center;
-    border-radius: 4px;
-    margin: 3px;
-    font-weight: 700;
-    color: var(--ink);
-    display: flex;
-}
-
-.rr-footnote { font-size: 11.5px; color: var(--muted); margin-top: 14px; line-height: 1.5; }
+[data-testid="stSidebar"] { background-color: var(--bg); }
 </style>
 """, unsafe_allow_html=True)
 
@@ -600,18 +341,6 @@ def top_value_pct(dataframe, col_name):
         return None, 0
     return counts.index[0], round(100 * counts.iloc[0] / len(dataframe))
 
-def top_n_value_pct(dataframe, col_name, n=6):
-    """Top-n (value, pct) pairs for a single column, ranked by frequency."""
-    if col_name not in dataframe.columns or dataframe.empty:
-        return []
-    vals = dataframe[col_name].astype(str).str.strip()
-    vals = vals[~vals.str.lower().isin(["", "nan", "n/a"])]
-    if vals.empty:
-        return []
-    counts = vals.value_counts().head(n)
-    total = len(dataframe)
-    return [(idx, round(100 * cnt / total)) for idx, cnt in counts.items()]
-
 def top_colors(dataframe, color_cols_list, max_n=5):
     counts = {}
     for _, row in dataframe.iterrows():
@@ -627,6 +356,17 @@ def top_colors(dataframe, color_cols_list, max_n=5):
     ranked = sorted(counts.items(), key=lambda x: x[1], reverse=True)[:max_n]
     return [(name, round(100 * count / total)) for name, count in ranked]
 
+def top_n_value_pct(dataframe, col_name, n=6):
+    if col_name not in dataframe.columns or dataframe.empty:
+        return []
+    vals = dataframe[col_name].astype(str).str.strip()
+    vals = vals[~vals.str.lower().isin(["", "nan", "n/a"])]
+    if vals.empty:
+        return []
+    counts = vals.value_counts().head(n)
+    total = len(dataframe)
+    return [(idx, round(100 * cnt / total)) for idx, cnt in counts.items()]
+
 def _bar_rows_html(items, with_swatch=False):
     parts = []
     for name, pct in items:
@@ -638,12 +378,272 @@ def _bar_rows_html(items, with_swatch=False):
         )
     return "".join(parts) if parts else '<div style="font-size:12px; color:var(--muted);">No data in this selection.</div>'
 
-def render_analytics_page(filtered_df, df, color_cols, sector_col, color_family_col, country_col, complexity_col):
-    """Detailed, filter-aware analytics dashboard — KPIs, distribution charts,
-    and a Color Family x Sector cross-tab. Built as flush-left HTML strings
-    (no loop-concatenated multi-line blocks) so Streamlit's Markdown parser
-    doesn't misread indented fragments as code blocks."""
+# SIDEBAR ARCHITECTURE
+with st.sidebar:
+    st.markdown('<h1 class="sidebar-title">Logo Landscape</h1>', unsafe_allow_html=True)
+    
+    if "view_mode" not in st.session_state:
+        st.session_state.view_mode = "Gallery"
+        
+    view_selection = st.radio("View Mode", options=["Gallery", "Analytics"], horizontal=True, label_visibility="collapsed", index=0 if st.session_state.view_mode == "Gallery" else 1)
+    if view_selection != st.session_state.view_mode:
+        st.session_state.view_mode = view_selection
+        st.rerun()
 
+    st.markdown("<br>", unsafe_allow_html=True)
+    
+    col1, col2 = st.columns([4, 1.2], vertical_alignment="center")
+    with col1:
+        st.markdown("### Filters")
+    with col2:
+        if st.button("🧹", help="Reset all filters", use_container_width=True):
+            reset_filters()
+            st.rerun()
+
+    brand_col = "Name"
+    img_col = "Logo Source Link"
+    type_of_logo_col = "Type of Logo"
+    primary_form_col = "Primary form (Visually Dominating Form)"
+    color_family_col = "Color Family"
+    sector_col = "Sector"
+    org_type_col = "Type of Organization"
+    country_col = "Country"
+    complexity_col = "Complexity (Low/ Mid/ High) (Intrinsic Visual Load)"
+    symmetry_col = "Symmetry"
+    symbolism_col = "Symbolism"
+    case_type_col = "Case Type"
+    type_class_col = "Type classification"
+    color_cols = ["Primary Colour", "Secondary Colour", "Colour", "Colour3", "Colour4", "Colour5"]
+    undertone_col = "Color Undertone" 
+
+    def get_options(col_name):
+        if col_name in df.columns:
+            return sorted([str(x).strip() for x in df[col_name].dropna().unique() if str(x).strip() not in ["", "nan", "N/A"]])
+        return []
+
+    def get_options_multi(col_names):
+        values = set()
+        for col_name in col_names:
+            if col_name in df.columns:
+                for x in df[col_name].dropna().unique():
+                    x = str(x).strip()
+                    if x and x.lower() not in ["nan", "n/a"] and not x.startswith("#"):
+                        values.add(x)
+        return sorted(values)
+
+    search_query = st.text_input("⌕ Search organisation...", "")
+
+    # CATEGORY 1
+    with st.expander("🏢 Organization & Location"):
+        with st.form("form_org", border=False):
+            st.markdown('<p class="filter-subhead">Sector</p>', unsafe_allow_html=True)
+            sec_checks = {opt: st.checkbox(opt, value=opt in st.session_state.applied_filters['sectors']) for opt in get_options(sector_col)}
+            
+            st.markdown('<p class="filter-subhead">Organization Type</p>', unsafe_allow_html=True)
+            org_checks = {opt: st.checkbox(opt, value=opt in st.session_state.applied_filters['org_types']) for opt in get_options(org_type_col)}
+            
+            st.markdown('<p class="filter-subhead">Country</p>', unsafe_allow_html=True)
+            cntry_checks = {opt: st.checkbox(opt, value=opt in st.session_state.applied_filters['countries']) for opt in get_options(country_col)}
+            
+            if st.form_submit_button("Apply"):
+                st.session_state.applied_filters['sectors'] = [k for k, v in sec_checks.items() if v]
+                st.session_state.applied_filters['org_types'] = [k for k, v in org_checks.items() if v]
+                st.session_state.applied_filters['countries'] = [k for k, v in cntry_checks.items() if v]
+                st.rerun()
+
+    # CATEGORY 2
+    with st.expander("📐 Logo Details & Design"):
+        with st.form("form_design", border=False):
+            st.markdown('<p class="filter-subhead">Type of Logo</p>', unsafe_allow_html=True)
+            type_checks = {opt: st.checkbox(opt, value=opt in st.session_state.applied_filters['type_logo']) for opt in get_options(type_of_logo_col)}
+            
+            st.markdown('<p class="filter-subhead">Shape (Primary Form)</p>', unsafe_allow_html=True)
+            shape_checks = {opt: st.checkbox(opt, value=opt in st.session_state.applied_filters['shapes']) for opt in get_options(primary_form_col)}
+            
+            st.markdown('<p class="filter-subhead">Complexity</p>', unsafe_allow_html=True)
+            comp_checks = {opt: st.checkbox(opt, value=opt in st.session_state.applied_filters['complexity']) for opt in get_options(complexity_col)}
+            
+            st.markdown('<p class="filter-subhead">Symmetry</p>', unsafe_allow_html=True)
+            sym_checks = {opt: st.checkbox(opt, value=opt in st.session_state.applied_filters['symmetry']) for opt in get_options(symmetry_col)}
+            
+            if st.form_submit_button("Apply"):
+                st.session_state.applied_filters['type_logo'] = [k for k, v in type_checks.items() if v]
+                st.session_state.applied_filters['shapes'] = [k for k, v in shape_checks.items() if v]
+                st.session_state.applied_filters['complexity'] = [k for k, v in comp_checks.items() if v]
+                st.session_state.applied_filters['symmetry'] = [k for k, v in sym_checks.items() if v]
+                st.rerun()
+
+    # CATEGORY 3
+    with st.expander("🎨 Colors"):
+        with st.form("form_colors", border=False):
+            st.markdown('<p class="filter-subhead">Color Family</p>', unsafe_allow_html=True)
+            fam_checks = {opt: st.checkbox(opt, value=opt in st.session_state.applied_filters['colors_family']) for opt in get_options(color_family_col)}
+            
+            st.markdown('<p class="filter-subhead">Color Undertone</p>', unsafe_allow_html=True)
+            under_checks = {opt: st.checkbox(opt, value=opt in st.session_state.applied_filters['undertones']) for opt in get_options(undertone_col)}
+            
+            st.markdown('<p class="filter-subhead">Color Contains</p>', unsafe_allow_html=True)
+            col_checks = {opt: st.checkbox(opt, value=opt in st.session_state.applied_filters['colors_combined']) for opt in get_options_multi(color_cols)}
+            
+            if st.form_submit_button("Apply"):
+                st.session_state.applied_filters['colors_family'] = [k for k, v in fam_checks.items() if v]
+                st.session_state.applied_filters['undertones'] = [k for k, v in under_checks.items() if v]
+                st.session_state.applied_filters['colors_combined'] = [k for k, v in col_checks.items() if v]
+                st.rerun()
+
+    # CATEGORY 4
+    with st.expander("✍️ Type Style"):
+        with st.form("form_type", border=False):
+            st.markdown('<p class="filter-subhead">Case Type</p>', unsafe_allow_html=True)
+            case_checks = {opt: st.checkbox(opt, value=opt in st.session_state.applied_filters['case_types']) for opt in get_options(case_type_col)}
+            
+            st.markdown('<p class="filter-subhead">Type Classification</p>', unsafe_allow_html=True)
+            class_checks = {opt: st.checkbox(opt, value=opt in st.session_state.applied_filters['type_class']) for opt in get_options(type_class_col)}
+            
+            if st.form_submit_button("Apply"):
+                st.session_state.applied_filters['case_types'] = [k for k, v in case_checks.items() if v]
+                st.session_state.applied_filters['type_class'] = [k for k, v in class_checks.items() if v]
+                st.rerun()
+
+    st.markdown("<br><hr>", unsafe_allow_html=True)
+    if st.button("🔄 Sync Google Sheets", use_container_width=True):
+        st.cache_data.clear()
+        st.rerun()
+
+# ----------------- FILTER LOGIC (AND across categories, OR within) -----------------
+filtered_df = df.copy()
+
+if search_query and brand_col in df.columns:
+    filtered_df = filtered_df[filtered_df[brand_col].astype(str).str.contains(search_query, case=False, na=False)]
+
+af = st.session_state.applied_filters
+
+if af['sectors'] and sector_col in df.columns:
+    filtered_df = filtered_df[filtered_df[sector_col].astype(str).str.strip().isin(af['sectors'])]
+if af['org_types'] and org_type_col in df.columns:
+    filtered_df = filtered_df[filtered_df[org_type_col].astype(str).str.strip().str.lower().isin([s.lower() for s in af['org_types']])]
+if af['countries'] and country_col in df.columns:
+    filtered_df = filtered_df[filtered_df[country_col].astype(str).str.strip().isin(af['countries'])]
+
+if af['type_logo'] and type_of_logo_col in df.columns:
+    filtered_df = filtered_df[filtered_df[type_of_logo_col].astype(str).str.strip().isin(af['type_logo'])]
+if af['shapes'] and primary_form_col in df.columns:
+    filtered_df = filtered_df[filtered_df[primary_form_col].astype(str).str.strip().isin(af['shapes'])]
+if af['complexity'] and complexity_col in df.columns:
+    filtered_df = filtered_df[filtered_df[complexity_col].astype(str).str.strip().isin(af['complexity'])]
+if af['symmetry'] and symmetry_col in df.columns:
+    filtered_df = filtered_df[filtered_df[symmetry_col].astype(str).str.strip().isin(af['symmetry'])]
+
+if af['colors_family'] and color_family_col in df.columns:
+    filtered_df = filtered_df[filtered_df[color_family_col].astype(str).str.strip().isin(af['colors_family'])]
+if af['undertones'] and undertone_col in df.columns:
+    filtered_df = filtered_df[filtered_df[undertone_col].astype(str).str.strip().isin(af['undertones'])]
+
+if af['colors_combined']:
+    present_color_cols = [c for c in color_cols if c in df.columns]
+    if present_color_cols:
+        selected_set = set(s.strip() for s in af['colors_combined'])
+        def row_color_set(row):
+            vals = set()
+            for c in present_color_cols:
+                v = str(row.get(c, "")).strip()
+                if v and v.lower() not in ["nan", "n/a"] and not v.startswith("#"):
+                    vals.add(v)
+            return vals
+        keep_mask = filtered_df.apply(lambda r: selected_set.issubset(row_color_set(r)), axis=1)
+        filtered_df = filtered_df[keep_mask]
+
+if af['case_types'] and case_type_col in df.columns:
+    filtered_df = filtered_df[filtered_df[case_type_col].astype(str).str.strip().isin(af['case_types'])]
+if af['type_class'] and type_class_col in df.columns:
+    filtered_df = filtered_df[filtered_df[type_class_col].astype(str).str.strip().isin(af['type_class'])]
+
+colormix = top_colors(filtered_df, color_cols, max_n=6)
+
+# Session state tracker for exclusive card flipping
+if "flipped_card_idx" not in st.session_state:
+    st.session_state.flipped_card_idx = None
+
+# TOP MAIN BAR
+st.markdown(
+    f'<div class="topbar-container">'
+    f'<div class="topbar-subtitle">Visual Identity Research</div>'
+    f'<div class="top-meta"><strong>{len(df)}</strong> Identities</div>'
+    f'</div>', 
+    unsafe_allow_html=True
+)
+
+# EDITORIAL SUMMARY
+headline_label, headline_value, headline_pct = None, None, None
+if not af['colors_combined']:
+    top = top_colors(filtered_df, color_cols, max_n=1)
+    if top: headline_value, headline_pct, headline_label = top[0][0], top[0][1], "Dominant Color"
+
+if headline_value is None:
+    headline_label, headline_value, headline_pct = "Logos in view", str(len(filtered_df)), None
+
+headline_desc = f"{headline_pct}% of selected logos share this trait." if headline_pct else f"Out of {len(df)} total dataset entries."
+
+sector_top, sector_pct = top_value_pct(filtered_df, sector_col)
+family_top, family_pct = top_value_pct(filtered_df, color_family_col)
+country_nunique = filtered_df[country_col].astype(str).str.strip().replace("", pd.NA).dropna().nunique() if country_col in filtered_df.columns else 0
+
+editorial_html = (
+    f'<div class="editorial-wrap">'
+    f'<div class="editorial-hero">'
+    f'<div class="editorial-eyebrow">{headline_label}</div>'
+    f'<div class="editorial-number">{headline_value}</div>'
+    f'<div class="editorial-desc">{headline_desc}</div>'
+    f'</div>'
+    f'<div class="editorial-list">'
+    f'<div class="editorial-row"><div class="editorial-row-label">Filtered Logos</div><div class="editorial-row-value">{len(filtered_df)}</div></div>'
+    f'<div class="editorial-row"><div class="editorial-row-label">Leading Sector<span class="editorial-sub">{sector_top or "—"}</span></div><div class="editorial-row-value">{sector_pct}%</div></div>'
+    f'<div class="editorial-row"><div class="editorial-row-label">Primary Color Family<span class="editorial-sub">{family_top or "—"}</span></div><div class="editorial-row-value">{family_pct}%</div></div>'
+    f'<div class="editorial-row"><div class="editorial-row-label">Countries Represented</div><div class="editorial-row-value">{country_nunique}</div></div>'
+    f'</div>'
+    f'</div>'
+)
+
+palette_items_html = "".join([
+    f'<div class="palette-item"><span class="palette-swatch" style="background:{color_to_hex(name)}"></span><span class="palette-name">{name}</span></div>'
+    for name, pct in colormix
+]) if colormix else '<div style="font-size:12px; color:var(--muted);">No color data</div>'
+
+palette_bar_html = f'<div class="palette-bar-container"><div class="palette-title">Palette</div><div class="palette-items">{palette_items_html}</div></div>'
+
+with st.expander("Editorial Summary", expanded=False):
+    st.markdown(editorial_html, unsafe_allow_html=True)
+    st.markdown(palette_bar_html, unsafe_allow_html=True)
+
+
+# DYNAMIC FILTER CHIPS ROW
+active_chips = [(cat, val) for cat, vals in af.items() for val in vals]
+
+if active_chips:
+    st.markdown('<div class="chip-row-container">', unsafe_allow_html=True)
+    chip_cols = st.columns(len(active_chips) + 1, vertical_alignment="center")
+    
+    for i, (cat, val) in enumerate(active_chips):
+        with chip_cols[i]:
+            st.markdown('<div class="chip-btn">', unsafe_allow_html=True)
+            if st.button(f"{val} ✕", key=f"chip_{cat}_{val}"):
+                st.session_state.applied_filters[cat].remove(val)
+                st.rerun()
+            st.markdown('</div>', unsafe_allow_html=True)
+            
+    with chip_cols[-1]:
+        st.markdown('<div class="clear-all-btn">', unsafe_allow_html=True)
+        if st.button("Clear All"):
+            reset_filters()
+            st.rerun()
+        st.markdown('</div>', unsafe_allow_html=True)
+        
+    st.markdown('</div>', unsafe_allow_html=True)
+
+st.markdown(f'<p style="font-size:12.5px; color:var(--muted); font-weight:600; margin-bottom:18px;">{len(filtered_df)} Results</p>', unsafe_allow_html=True)
+
+# ---------------------- ANALYTICS VIEW ----------------------
+def render_analytics_page():
     kpi_countries = (
         filtered_df[country_col].astype(str).str.strip().replace("", pd.NA).dropna().nunique()
         if country_col in filtered_df.columns else 0
@@ -657,7 +657,6 @@ def render_analytics_page(filtered_df, df, color_cols, sector_col, color_family_
     color_dist = top_colors(filtered_df, color_cols, max_n=8)
     sector_dist = top_n_value_pct(filtered_df, sector_col, n=6)
     country_dist = top_n_value_pct(filtered_df, country_col, n=6)
-    family_dist = top_n_value_pct(filtered_df, color_family_col, n=6)
 
     crosstab_html = '<div style="font-size:12px; color:var(--muted);">Not enough data for a cross-tab in this selection.</div>'
     top_families = [name for name, _ in top_n_value_pct(filtered_df, color_family_col, n=4)]
@@ -700,192 +699,19 @@ def render_analytics_page(filtered_df, df, color_cols, sector_col, color_family_
         f'<div class="chart-card"><div class="chart-title">Color Distribution</div>{_bar_rows_html(color_dist, with_swatch=True)}</div>'
         f'<div class="chart-card"><div class="chart-title">Sector Breakdown</div>{_bar_rows_html(sector_dist)}</div>'
         f'<div class="chart-card"><div class="chart-title">Country Breakdown</div>{_bar_rows_html(country_dist)}</div>'
-        f'<div class="chart-card"><div class="chart-title">Color Family Breakdown</div>{_bar_rows_html(family_dist)}</div>'
-        f'<div class="chart-card full-width-card"><div class="chart-title">Color Family &times; Sector (share within sector)</div>{crosstab_html}'
-        f'<div class="rr-footnote">Darker cells = a color family makes up a larger share of that sector\'s logos. Recalculates live from your current filters.</div></div>'
+        f'<div class="chart-card"><div class="chart-title">Color Family Breakdown</div>{_bar_rows_html(top_n_value_pct(filtered_df, color_family_col, n=6))}</div>'
+        f'<div class="chart-card full-width-card"><div class="chart-title">Color Family &times; Sector</div>{crosstab_html}'
+        f'<div style="font-size: 11.5px; color: var(--muted); margin-top: 14px;">Darker cells = a color family makes up a larger share of that sector\'s logos.</div></div>'
         f'</div>'
     )
     st.markdown(html, unsafe_allow_html=True)
 
-# SIDEBAR
-with st.sidebar:
-    st.markdown("### Sync Data")
-    if st.button("🔄 Refresh Google Sheets", help="Click to sync latest data from Google Sheets"):
-        st.cache_data.clear()
-        st.rerun()
-
-    st.markdown("---")
-    st.markdown("### Filters")
-
-    brand_col = "Name"
-    img_col = "Logo"
-    type_of_logo_col = "Type of Logo"
-    primary_form_col = "Primary form (Visually Dominating Form)"
-    color_family_col = "Color Family"
-    sector_col = "Sector"
-    org_type_col = "Type of Organization"
-    country_col = "Country"
-    complexity_col = "Complexity (Low/ Mid/ High) (Intrinsic Visual Load)"
-    symmetry_col = "Symmetry"
-    symbolism_col = "Symbolism"
-    case_type_col = "Case Type"
-    type_class_col = "Type classification"
-    color_cols = ["Primary Colour", "Secondary Colour", "Colour", "Colour3", "Colour4", "Colour5"]
-    undertone_col = "Color Undertone" 
-
-    def get_options(col_name):
-        if col_name in df.columns:
-            return sorted([str(x).strip() for x in df[col_name].dropna().unique() if str(x).strip() not in ["", "nan", "N/A"]])
-        return []
-
-    def get_options_multi(col_names):
-        values = set()
-        for col_name in col_names:
-            if col_name in df.columns:
-                for x in df[col_name].dropna().unique():
-                    x = str(x).strip()
-                    if x and x.lower() not in ["nan", "n/a"] and not x.startswith("#"):
-                        values.add(x)
-        return sorted(values)
-
-    search_query = st.text_input("⌕ Search organisation...", "")
-
-    with st.expander("🏢 Organization & Location", expanded=True):
-        selected_sectors = st.multiselect("Sector:", options=get_options(sector_col), default=[], key="sectors")
-        selected_org_types = st.multiselect("Organization Type:", options=get_options(org_type_col), default=[], key="org_types")
-        selected_countries = st.multiselect("Country:", options=get_options(country_col), default=[], key="countries")
-
-    with st.expander("📐 Logo Details & Design", expanded=False):
-        selected_logo_types = st.multiselect("Type of Logo:", options=get_options(type_of_logo_col), default=[], key="type_logo")
-        selected_forms = st.multiselect("Shape (Primary Form):", options=get_options(primary_form_col), default=[], key="shapes")
-        selected_complexity = st.multiselect("Complexity:", options=get_options(complexity_col), default=[], key="complexity")
-        selected_symmetry = st.multiselect("Symmetry:", options=get_options(symmetry_col), default=[], key="symmetry")
-
-    with st.expander("🎨 Colors", expanded=False):
-        selected_families = st.multiselect("Color Family:", options=get_options(color_family_col), default=[], key="colors_family")
-        selected_undertones = st.multiselect("Color Undertone:", options=get_options(undertone_col), default=[], key="undertones")
-        selected_colors = st.multiselect("Color:", options=get_options_multi(color_cols), default=[], key="colors_combined")
-        exact_color_match = st.checkbox("Exact match only (no extra colors)", value=False, key="exact_color_match")
-
-    with st.expander("✍️ Type Style", expanded=False):
-        selected_case_types = st.multiselect("Case Type:", options=get_options(case_type_col), default=[], key="case_types")
-        selected_type_class = st.multiselect("Type Classification:", options=get_options(type_class_col), default=[], key="type_class")
-
-# Filter execution
-filtered_df = df.copy()
-
-if search_query and brand_col in df.columns:
-    filtered_df = filtered_df[filtered_df[brand_col].astype(str).str.contains(search_query, case=False, na=False)]
-if selected_logo_types and type_of_logo_col in df.columns:
-    filtered_df = filtered_df[filtered_df[type_of_logo_col].astype(str).str.strip().isin([s.strip() for s in selected_logo_types])]
-if selected_forms and primary_form_col in df.columns:
-    filtered_df = filtered_df[filtered_df[primary_form_col].astype(str).str.strip().isin([s.strip() for s in selected_forms])]
-if selected_families and color_family_col in df.columns:
-    filtered_df = filtered_df[filtered_df[color_family_col].astype(str).str.strip().isin([s.strip() for s in selected_families])]
-if selected_sectors and sector_col in df.columns:
-    filtered_df = filtered_df[filtered_df[sector_col].astype(str).str.strip().isin([s.strip() for s in selected_sectors])]
-if selected_org_types and org_type_col in df.columns:
-    filtered_df = filtered_df[filtered_df[org_type_col].astype(str).str.strip().str.lower().isin([s.strip().lower() for s in selected_org_types])]
-if selected_countries and country_col in df.columns:
-    filtered_df = filtered_df[filtered_df[country_col].astype(str).str.strip().isin([s.strip() for s in selected_countries])]
-if selected_complexity and complexity_col in df.columns:
-    filtered_df = filtered_df[filtered_df[complexity_col].astype(str).str.strip().isin([s.strip() for s in selected_complexity])]
-if selected_symmetry and symmetry_col in df.columns:
-    filtered_df = filtered_df[filtered_df[symmetry_col].astype(str).str.strip().isin([s.strip() for s in selected_symmetry])]
-
-if selected_colors:
-    present_color_cols = [c for c in color_cols if c in df.columns]
-    if present_color_cols:
-        selected_set = set(s.strip() for s in selected_colors)
-        def row_color_set(row):
-            vals = set()
-            for c in present_color_cols:
-                v = str(row.get(c, "")).strip()
-                if v and v.lower() not in ["nan", "n/a"] and not v.startswith("#"):
-                    vals.add(v)
-            return vals
-        keep_mask = filtered_df.apply(lambda r: row_color_set(r) == selected_set if exact_color_match else selected_set.issubset(row_color_set(r)), axis=1)
-        filtered_df = filtered_df[keep_mask]
-
-colormix = top_colors(filtered_df, color_cols, max_n=6)
-
-# Main View Render
-if "view_mode" not in st.session_state:
-    st.session_state.view_mode = "gallery"
-
-topbar_title_col, topbar_toggle_col = st.columns([3, 1.4])
-with topbar_title_col:
-    st.markdown(f'<div class="topbar-container"><div><h1 class="app-title">Logo Landscape</h1></div><div class="top-meta"><strong>{len(df)}</strong> Identities</div></div>', unsafe_allow_html=True)
-
-with topbar_toggle_col:
-    view_selection = st.radio("View Mode", options=["🖼️ Gallery", "📊 Analytics"], horizontal=True, label_visibility="collapsed", index=0 if st.session_state.view_mode == "gallery" else 1)
-    if view_selection == "🖼️ Gallery" and st.session_state.view_mode != "gallery":
-        st.session_state.view_mode = "gallery"
-        st.rerun()
-    elif view_selection == "📊 Analytics" and st.session_state.view_mode != "analytics":
-        st.session_state.view_mode = "analytics"
-        st.rerun()
-
-# Analytics is a separate page: render it and stop, so none of the Gallery-only
-# code below (hero, editorial card, palette bar, flip-card grid) executes.
-if st.session_state.view_mode == "analytics":
-    render_analytics_page(filtered_df, df, color_cols, sector_col, color_family_col, country_col, complexity_col)
+if st.session_state.view_mode == "Analytics":
+    render_analytics_page()
     st.stop()
 
-# HERO + EDITORIAL
-st.markdown('<div class="hero-title">How Medical Institutions Communicate</div>', unsafe_allow_html=True)
 
-headline_label, headline_value, headline_pct = None, None, None
-if not selected_colors:
-    top = top_colors(filtered_df, color_cols, max_n=1)
-    if top: headline_value, headline_pct, headline_label = top[0][0], top[0][1], "Dominant Color"
-
-if headline_value is None:
-    headline_label, headline_value, headline_pct = "Logos in view", str(len(filtered_df)), None
-
-headline_desc = f"{headline_pct}% of selected logos share this trait." if headline_pct else f"Out of {len(df)} total dataset entries."
-
-sector_top, sector_pct = top_value_pct(filtered_df, sector_col)
-family_top, family_pct = top_value_pct(filtered_df, color_family_col)
-complexity_top, complexity_pct = top_value_pct(filtered_df, complexity_col)
-country_nunique = filtered_df[country_col].astype(str).str.strip().replace("", pd.NA).dropna().nunique() if country_col in filtered_df.columns else 0
-
-editorial_html = (
-    f'<div class="editorial-wrap">'
-    f'<div class="editorial-hero">'
-    f'<div class="editorial-eyebrow">{headline_label}</div>'
-    f'<div class="editorial-number">{headline_value}</div>'
-    f'<div class="editorial-desc">{headline_desc}</div>'
-    f'</div>'
-    f'<div class="editorial-list">'
-    f'<div class="editorial-row"><div class="editorial-row-label">Filtered Logos</div><div class="editorial-row-value">{len(filtered_df)}</div></div>'
-    f'<div class="editorial-row"><div class="editorial-row-label">Leading Sector<span class="editorial-sub">{sector_top or "—"}</span></div><div class="editorial-row-value">{sector_pct}%</div></div>'
-    f'<div class="editorial-row"><div class="editorial-row-label">Primary Color Family<span class="editorial-sub">{family_top or "—"}</span></div><div class="editorial-row-value">{family_pct}%</div></div>'
-    f'<div class="editorial-row"><div class="editorial-row-label">Countries Represented</div><div class="editorial-row-value">{country_nunique}</div></div>'
-    f'</div>'
-    f'</div>'
-)
-st.markdown(editorial_html, unsafe_allow_html=True)
-
-# PALETTE STRIP
-palette_items_html = "".join([
-    f'<div class="palette-item"><span class="palette-swatch" style="background:{color_to_hex(name)}"></span><span class="palette-name">{name}</span><span class="palette-pct">{pct}%</span></div>'
-    for name, pct in colormix
-]) if colormix else '<div style="font-size:12px; color:var(--muted);">No color data available</div>'
-
-palette_bar_html = (
-    f'<div class="palette-bar-container">'
-    f'<div class="palette-title">Color Palette Breakdown</div>'
-    f'<div class="palette-items">{palette_items_html}</div>'
-    f'</div>'
-)
-st.markdown(palette_bar_html, unsafe_allow_html=True)
-
-# CLICK-TO-FLIP CARDS USING NATIVE HTML <details>
-# All cards share the same `name` attribute, which makes the browser treat
-# them as one exclusive group — opening one automatically closes any other
-# open card. Native HTML behavior, no JS needed. (Requires a modern browser:
-# Chrome/Edge/Firefox recent versions, Safari 17+.)
+# ---------------------- GALLERY VIEW ----------------------
 cols_per_row = 3
 cols = st.columns(cols_per_row, gap="large")
 
@@ -908,38 +734,46 @@ for idx, (_, row) in enumerate(filtered_df.iterrows()):
         symbolism_text = str(row.get(symbolism_col, "No symbolism recorded.")).strip()
         case_type_val = str(row.get(case_type_col, "—")).strip()
 
-        card_html = (
-            f'<details class="flip-card" name="logo-flip-group">'
-            f'<summary>'
-            f'<div class="flip-card-inner">'
-            f'<div class="flip-card-front">'
-            f'<div class="card-image-box">{img_html}</div>'
-            f'<div class="card-front-content">'
-            f'<div class="card-title">{b_name}</div>'
-            f'<div class="card-meta-grid">'
-            f'<div class="card-meta-item">Shape: <strong>{p_form}</strong></div>'
-            f'<div class="card-meta-item">Sector: <strong>{sector_val}</strong></div>'
-            f'<div class="card-meta-item">Color: <strong>{c_family}</strong></div>'
-            f'<div class="card-meta-item">Country: <strong>{cnt_val}</strong></div>'
-            f'</div>'
-            f'<div class="flip-hint">Tap card to flip details ↺</div>'
-            f'</div>'
-            f'</div>'
-            f'<div class="flip-card-back">'
-            f'<div>'
-            f'<div class="back-title">{b_name}</div>'
-            f'<div class="back-detail-row">Complexity: <strong>{complexity_val}</strong></div>'
-            f'<div class="back-detail-row">Symmetry: <strong>{symmetry_val}</strong></div>'
-            f'<div class="back-detail-row">Case Type: <strong>{case_type_val}</strong></div>'
-            f'<div class="back-detail-row">Type Class: <strong>{type_class}</strong></div>'
-            f'</div>'
-            f'<div>'
-            f'<div style="font-size:11px; font-weight:700; color:var(--accent); margin-bottom:4px;">SYMBOLISM</div>'
-            f'<div class="back-symbolism">{symbolism_text}</div>'
-            f'</div>'
-            f'</div>'
-            f'</div>'
-            f'</summary>'
-            f'</details>'
-        )
-        st.markdown(card_html, unsafe_allow_html=True)
+        is_flipped = (st.session_state.flipped_card_idx == idx)
+
+        if not is_flipped:
+            card_html = (
+                f'<div class="logo-card-box">'
+                f'<div>'
+                f'<div class="card-image-box">{img_html}</div>'
+                f'<div class="card-content">'
+                f'<div class="card-title">{b_name}</div>'
+                f'<div class="card-meta-grid">'
+                f'<div>Shape: <strong>{p_form}</strong></div>'
+                f'<div>Sector: <strong>{sector_val}</strong></div>'
+                f'<div>Color: <strong>{c_family}</strong></div>'
+                f'<div>Country: <strong>{cnt_val}</strong></div>'
+                f'</div>'
+                f'</div>'
+                f'</div>'
+                f'</div>'
+            )
+            st.markdown(card_html, unsafe_allow_html=True)
+            if st.button("TAP CARD TO FLIP DETAILS ↺", key=f"flip_btn_{idx}", use_container_width=True):
+                st.session_state.flipped_card_idx = idx
+                st.rerun()
+        else:
+            back_html = (
+                f'<div class="logo-card-back-box">'
+                f'<div>'
+                f'<div class="back-title">{b_name}</div>'
+                f'<div class="back-detail-row">Complexity: <strong>{complexity_val}</strong></div>'
+                f'<div class="back-detail-row">Symmetry: <strong>{symmetry_val}</strong></div>'
+                f'<div class="back-detail-row">Case Type: <strong>{case_type_val}</strong></div>'
+                f'<div class="back-detail-row">Type Class: <strong>{type_class}</strong></div>'
+                f'</div>'
+                f'<div>'
+                f'<div style="font-size:10px; font-weight:700; color:var(--accent); margin-bottom:2px; text-transform:uppercase;">Symbolism</div>'
+                f'<div class="back-symbolism">{symbolism_text}</div>'
+                f'</div>'
+                f'</div>'
+            )
+            st.markdown(back_html, unsafe_allow_html=True)
+            if st.button("TAP CARD TO FLIP DETAILS ↺", key=f"unflip_btn_{idx}", use_container_width=True):
+                st.session_state.flipped_card_idx = None
+                st.rerun()
