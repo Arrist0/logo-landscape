@@ -376,6 +376,144 @@ details.flip-card[open]:hover .flip-card-inner {
     color: var(--ink) !important;
     font-weight: 600 !important;
 }
+
+/* ===== Analytics page ===== */
+.swatch {
+    width: 14px;
+    height: 14px;
+    border-radius: 4px;
+    border: 1px solid rgba(0,0,0,0.08);
+    display: inline-block;
+    margin-right: 7px;
+    vertical-align: middle;
+}
+
+.rr-kpis {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    margin-bottom: 20px;
+}
+
+.kpi {
+    background: var(--card);
+    border: 1.5px solid var(--line);
+    border-radius: 10px;
+    padding: 14px 16px;
+}
+
+.kpi-label {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--accent);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 6px;
+}
+
+.kpi-value {
+    font-family: "Space Grotesk", sans-serif;
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--ink);
+}
+
+.kpi-sub { font-size: 12px; color: var(--muted); margin-top: 2px; }
+
+.rr-charts {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+}
+
+.chart-card {
+    background: var(--card);
+    border: 1.5px solid var(--line);
+    border-radius: 12px;
+    padding: 18px 20px;
+}
+
+.chart-title {
+    font-family: "Space Grotesk", sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--ink);
+    margin-bottom: 14px;
+}
+
+.bar-row {
+    display: grid;
+    grid-template-columns: 110px 1fr 40px;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+    font-size: 12.5px;
+}
+
+.bar-row:last-child { margin-bottom: 0; }
+
+.bar-label {
+    display: flex;
+    align-items: center;
+    color: var(--ink);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.bar-track {
+    background: var(--bg);
+    border: 1px solid var(--line);
+    border-radius: 5px;
+    height: 14px;
+    overflow: hidden;
+}
+
+.bar-fill {
+    height: 100%;
+    border-radius: 5px 0 0 5px;
+    background: var(--accent);
+}
+
+.bar-pct { text-align: right; color: var(--muted); font-weight: 600; }
+
+.full-width-card { grid-column: 1 / -1; }
+
+.crosstab {
+    display: grid;
+    gap: 0;
+    font-size: 12px;
+}
+
+.crosstab .ct-cell {
+    padding: 8px 6px;
+    border-bottom: 1px solid var(--line);
+    display: flex;
+    align-items: center;
+    color: var(--ink);
+}
+
+.crosstab .ct-head {
+    font-weight: 700;
+    color: var(--muted);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    border-bottom: 1.5px solid var(--ink);
+}
+
+.ct-row-label { font-weight: 600; }
+
+.heat {
+    justify-content: center;
+    border-radius: 4px;
+    margin: 3px;
+    font-weight: 700;
+    color: var(--ink);
+    display: flex;
+}
+
+.rr-footnote { font-size: 11.5px; color: var(--muted); margin-top: 14px; line-height: 1.5; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -462,6 +600,18 @@ def top_value_pct(dataframe, col_name):
         return None, 0
     return counts.index[0], round(100 * counts.iloc[0] / len(dataframe))
 
+def top_n_value_pct(dataframe, col_name, n=6):
+    """Top-n (value, pct) pairs for a single column, ranked by frequency."""
+    if col_name not in dataframe.columns or dataframe.empty:
+        return []
+    vals = dataframe[col_name].astype(str).str.strip()
+    vals = vals[~vals.str.lower().isin(["", "nan", "n/a"])]
+    if vals.empty:
+        return []
+    counts = vals.value_counts().head(n)
+    total = len(dataframe)
+    return [(idx, round(100 * cnt / total)) for idx, cnt in counts.items()]
+
 def top_colors(dataframe, color_cols_list, max_n=5):
     counts = {}
     for _, row in dataframe.iterrows():
@@ -476,6 +626,86 @@ def top_colors(dataframe, color_cols_list, max_n=5):
     total = len(dataframe) if len(dataframe) > 0 else 1
     ranked = sorted(counts.items(), key=lambda x: x[1], reverse=True)[:max_n]
     return [(name, round(100 * count / total)) for name, count in ranked]
+
+def _bar_rows_html(items, with_swatch=False):
+    parts = []
+    for name, pct in items:
+        swatch = f'<span class="swatch" style="background:{color_to_hex(name)}"></span>' if with_swatch else ""
+        parts.append(
+            f'<div class="bar-row"><div class="bar-label">{swatch}{name}</div>'
+            f'<div class="bar-track"><div class="bar-fill" style="width:{pct}%;"></div></div>'
+            f'<div class="bar-pct">{pct}%</div></div>'
+        )
+    return "".join(parts) if parts else '<div style="font-size:12px; color:var(--muted);">No data in this selection.</div>'
+
+def render_analytics_page(filtered_df, df, color_cols, sector_col, color_family_col, country_col, complexity_col):
+    """Detailed, filter-aware analytics dashboard — KPIs, distribution charts,
+    and a Color Family x Sector cross-tab. Built as flush-left HTML strings
+    (no loop-concatenated multi-line blocks) so Streamlit's Markdown parser
+    doesn't misread indented fragments as code blocks."""
+
+    kpi_countries = (
+        filtered_df[country_col].astype(str).str.strip().replace("", pd.NA).dropna().nunique()
+        if country_col in filtered_df.columns else 0
+    )
+    top_color_list = top_colors(filtered_df, color_cols, max_n=1)
+    top_color_name, top_color_pct = top_color_list[0] if top_color_list else ("—", 0)
+
+    top_complexity_list = top_n_value_pct(filtered_df, complexity_col, n=1)
+    top_complexity_name, top_complexity_pct = top_complexity_list[0] if top_complexity_list else ("—", 0)
+
+    color_dist = top_colors(filtered_df, color_cols, max_n=8)
+    sector_dist = top_n_value_pct(filtered_df, sector_col, n=6)
+    country_dist = top_n_value_pct(filtered_df, country_col, n=6)
+    family_dist = top_n_value_pct(filtered_df, color_family_col, n=6)
+
+    crosstab_html = '<div style="font-size:12px; color:var(--muted);">Not enough data for a cross-tab in this selection.</div>'
+    top_families = [name for name, _ in top_n_value_pct(filtered_df, color_family_col, n=4)]
+    top_sectors_ct = [name for name, _ in top_n_value_pct(filtered_df, sector_col, n=4)]
+    if top_families and top_sectors_ct and color_family_col in filtered_df.columns and sector_col in filtered_df.columns:
+        sub = filtered_df[
+            filtered_df[color_family_col].astype(str).str.strip().isin(top_families)
+            & filtered_df[sector_col].astype(str).str.strip().isin(top_sectors_ct)
+        ]
+        if not sub.empty:
+            ct = pd.crosstab(
+                sub[color_family_col].astype(str).str.strip(),
+                sub[sector_col].astype(str).str.strip(),
+                normalize="columns"
+            ) * 100
+            ct = ct.reindex(index=top_families, columns=top_sectors_ct, fill_value=0)
+
+            head_cells = "".join(f'<div class="ct-cell ct-head">{s}</div>' for s in top_sectors_ct)
+            rows_html = ""
+            for fam in top_families:
+                row_html = f'<div class="ct-cell ct-row-label">{fam}</div>'
+                for sec in top_sectors_ct:
+                    val = round(ct.loc[fam, sec]) if fam in ct.index and sec in ct.columns else 0
+                    opacity = max(0.08, min(0.85, val / 100))
+                    row_html += f'<div class="ct-cell"><div class="heat" style="background:rgba(99,102,241,{opacity}); width:100%; padding:5px 0;">{val}%</div></div>'
+                rows_html += row_html
+            crosstab_html = (
+                f'<div class="crosstab" style="grid-template-columns: 130px repeat({len(top_sectors_ct)}, 1fr);">'
+                f'<div class="ct-cell ct-head"></div>{head_cells}{rows_html}</div>'
+            )
+
+    html = (
+        f'<div class="rr-kpis">'
+        f'<div class="kpi"><div class="kpi-label">Logos</div><div class="kpi-value">{len(filtered_df)}</div><div class="kpi-sub">of {len(df)} total</div></div>'
+        f'<div class="kpi"><div class="kpi-label">Countries</div><div class="kpi-value">{kpi_countries}</div><div class="kpi-sub">in current filter</div></div>'
+        f'<div class="kpi"><div class="kpi-label">Top Color</div><div class="kpi-value">{top_color_name}</div><div class="kpi-sub">{top_color_pct}% of set</div></div>'
+        f'<div class="kpi"><div class="kpi-label">Typical Complexity</div><div class="kpi-value">{top_complexity_name}</div><div class="kpi-sub">{top_complexity_pct}% of logos</div></div>'
+        f'</div>'
+        f'<div class="rr-charts">'
+        f'<div class="chart-card"><div class="chart-title">Color Distribution</div>{_bar_rows_html(color_dist, with_swatch=True)}</div>'
+        f'<div class="chart-card"><div class="chart-title">Sector Breakdown</div>{_bar_rows_html(sector_dist)}</div>'
+        f'<div class="chart-card"><div class="chart-title">Country Breakdown</div>{_bar_rows_html(country_dist)}</div>'
+        f'<div class="chart-card"><div class="chart-title">Color Family Breakdown</div>{_bar_rows_html(family_dist)}</div>'
+        f'<div class="chart-card full-width-card"><div class="chart-title">Color Family &times; Sector (share within sector)</div>{crosstab_html}'
+        f'<div class="rr-footnote">Darker cells = a color family makes up a larger share of that sector\'s logos. Recalculates live from your current filters.</div></div>'
+        f'</div>'
+    )
+    st.markdown(html, unsafe_allow_html=True)
 
 # SIDEBAR
 with st.sidebar:
@@ -596,6 +826,12 @@ with topbar_toggle_col:
         st.session_state.view_mode = "analytics"
         st.rerun()
 
+# Analytics is a separate page: render it and stop, so none of the Gallery-only
+# code below (hero, editorial card, palette bar, flip-card grid) executes.
+if st.session_state.view_mode == "analytics":
+    render_analytics_page(filtered_df, df, color_cols, sector_col, color_family_col, country_col, complexity_col)
+    st.stop()
+
 # HERO + EDITORIAL
 st.markdown('<div class="hero-title">How Medical Institutions Communicate</div>', unsafe_allow_html=True)
 
@@ -646,6 +882,10 @@ palette_bar_html = (
 st.markdown(palette_bar_html, unsafe_allow_html=True)
 
 # CLICK-TO-FLIP CARDS USING NATIVE HTML <details>
+# All cards share the same `name` attribute, which makes the browser treat
+# them as one exclusive group — opening one automatically closes any other
+# open card. Native HTML behavior, no JS needed. (Requires a modern browser:
+# Chrome/Edge/Firefox recent versions, Safari 17+.)
 cols_per_row = 3
 cols = st.columns(cols_per_row, gap="large")
 
@@ -669,7 +909,7 @@ for idx, (_, row) in enumerate(filtered_df.iterrows()):
         case_type_val = str(row.get(case_type_col, "—")).strip()
 
         card_html = (
-            f'<details class="flip-card">'
+            f'<details class="flip-card" name="logo-flip-group">'
             f'<summary>'
             f'<div class="flip-card-inner">'
             f'<div class="flip-card-front">'
