@@ -61,51 +61,6 @@ h1.app-title {
     color: var(--muted);
 }
 
-/* Gallery / Analytics pill toggle */
-.st-key-view_toggle {
-    display: inline-flex;
-    background: var(--card);
-    border: 1.5px solid var(--line);
-    border-radius: 999px;
-    padding: 5px;
-    gap: 2px;
-    margin-top: 6px;
-}
-
-.st-key-view_toggle div[data-testid="stButton"] > button {
-    border-radius: 999px !important;
-    border: none !important;
-    box-shadow: none !important;
-    font-size: 13.5px !important;
-    font-weight: 600 !important;
-    padding: 9px 20px !important;
-    height: auto !important;
-    min-height: 0 !important;
-    transition: all 0.2s ease !important;
-}
-
-.st-key-view_toggle div[data-testid="stButton"] > button[kind="primary"] {
-    background: var(--ink) !important;
-    color: #fff !important;
-}
-
-.st-key-view_toggle div[data-testid="stButton"] > button[kind="secondary"] {
-    background: transparent !important;
-    color: var(--muted) !important;
-}
-
-.st-key-view_toggle div[data-testid="stButton"] > button[kind="secondary"]:hover {
-    color: var(--ink) !important;
-    background: rgba(0,0,0,0.04) !important;
-}
-
-@media (prefers-color-scheme: dark) {
-    .st-key-view_toggle div[data-testid="stButton"] > button[kind="primary"] {
-        background: #ffffff !important;
-        color: #14152b !important;
-    }
-}
-
 /* Hero Section */
 .hero-kicker {
     font-size: 12px;
@@ -133,6 +88,33 @@ h1.app-title {
     max-width: 650px;
     margin-bottom: 25px;
 }
+
+/* PILL TOGGLE SWITCH */
+div[data-testid="stRadio"] > div[role="radiogroup"] {
+    background-color: var(--card);
+    border-radius: 30px;
+    padding: 4px;
+    border: 1.5px solid var(--line);
+    display: inline-flex;
+    gap: 0px;
+}
+div[data-testid="stRadio"] label {
+    border-radius: 26px !important;
+    padding: 8px 20px !important;
+    background-color: transparent;
+    cursor: pointer;
+    margin: 0;
+}
+div[data-testid="stRadio"] label[data-checked="true"] {
+    background-color: var(--accent) !important;
+}
+div[data-testid="stRadio"] label[data-checked="true"] p {
+    color: #ffffff !important;
+    font-weight: 600 !important;
+}
+div[data-testid="stRadio"] div[data-testid="stMarkdownContainer"] { margin-left: 0; }
+div[data-testid="stRadio"] span[data-baseweb="radio"] { display: none; }
+
 
 /* SYNC BUTTON */
 [data-testid="stSidebar"] div.stButton > button {
@@ -433,7 +415,10 @@ h1.app-title {
     display: flex;
     align-items: center;
     gap: 10px;
+    margin-bottom: 10px;
 }
+
+.ring-row:last-child { margin-bottom: 0; }
 
 .ring {
     width: 32px;
@@ -460,11 +445,9 @@ h1.app-title {
 
 .ring-name { font-size: 12px; color: var(--ink); }
 
-/* ===== Color Mix (inside the Editorial hero column, on the Gallery page) ===== */
+/* ===== Color Mix (inside the Editorial box on the Gallery page) ===== */
 .editorial-colormix {
-    border-top: 1px solid var(--line);
-    margin-top: 16px;
-    padding-top: 16px;
+    margin-top: 24px;
 }
 
 .editorial-colormix-title {
@@ -478,11 +461,9 @@ h1.app-title {
 
 .editorial-colormix-rings {
     display: flex;
-    flex-direction: column;
-}
-
-@media (prefers-color-scheme: dark) {
-    .editorial-colormix { border-color: #2d3748; }
+    gap: 18px;
+    flex-wrap: wrap;
+    align-items: center;
 }
 
 /* ===== Analytics page ===== */
@@ -704,11 +685,6 @@ COLOR_HEX_MAP = {
 def color_to_hex(name):
     return COLOR_HEX_MAP.get(str(name).strip().lower(), "#6366f1")
 
-def is_hex_color(value):
-    """True for values like #FFF, #C53987, #C53987AA left over from cell fills —
-    these should be treated as noise, not real color names, wherever colors are listed."""
-    return bool(re.match(r'^#([0-9A-Fa-f]{3}|[0-9A-Fa-f]{4}|[0-9A-Fa-f]{6}|[0-9A-Fa-f]{8})$', str(value).strip()))
-
 def top_value_pct(dataframe, col_name):
     """Most common value in a column, and what % of the (non-empty) dataframe it covers."""
     if col_name not in dataframe.columns or dataframe.empty:
@@ -718,19 +694,21 @@ def top_value_pct(dataframe, col_name):
     if vals.empty:
         return None, 0
     counts = vals.value_counts()
+    if counts.empty:
+        return None, 0
     return counts.index[0], round(100 * counts.iloc[0] / len(dataframe))
 
 def top_colors(dataframe, color_cols_list, max_n=4):
     """Ranked (name, pct) pairs — counts each color once per logo (row), even if
-    it appears in more than one color column on that row, so percentages can't exceed 100%.
-    Skips leftover hex codes (e.g. #C53987) — only named colors count."""
+    it appears in more than one color column on that row, so percentages can't exceed 100%."""
     counts = {}
     for _, row in dataframe.iterrows():
         row_colors = set()
         for c in color_cols_list:
             if c in dataframe.columns:
                 v = str(row.get(c, "")).strip()
-                if v and v.lower() not in ["", "nan", "n/a"] and not is_hex_color(v):
+                # Ignoring blank, nan, n/a, and anything starting with a hashtag (hex)
+                if v and v.lower() not in ["", "nan", "n/a"] and not v.startswith("#"):
                     row_colors.add(v)
         for v in row_colors:
             counts[v] = counts.get(v, 0) + 1
@@ -842,7 +820,7 @@ with st.sidebar:
 
     # Column mappings
     brand_col = "Name"
-    img_col = "Logo"
+    img_col = "Logo Source Link"
     type_of_logo_col = "Type of Logo"
     primary_form_col = "Primary form (Visually Dominating Form)"
     color_family_col = "Color Family"
@@ -855,7 +833,7 @@ with st.sidebar:
     case_type_col = "Case Type"
     type_class_col = "Type classification"
     color_cols = ["Primary Colour", "Secondary Colour", "Colour", "Colour3", "Colour4", "Colour5"]
-    undertone_col = "Color Undertone"  # rename here if your sheet header differs
+    undertone_col = "Color Undertone" 
 
     def get_options(col_name):
         if col_name in df.columns:
@@ -863,14 +841,14 @@ with st.sidebar:
         return []
 
     def get_options_multi(col_names):
-        """Combine unique values across several columns into one option list.
-        Skips leftover hex codes (e.g. #C53987) so only named colors show up."""
+        """Combine unique values across several columns into one option list."""
         values = set()
         for col_name in col_names:
             if col_name in df.columns:
                 for x in df[col_name].dropna().unique():
                     x = str(x).strip()
-                    if x and x.lower() not in ["nan", "n/a"] and not is_hex_color(x):
+                    # Ignore nan, n/a, and hex codes
+                    if x and x.lower() not in ["nan", "n/a"] and not x.startswith("#"):
                         values.add(x)
         return sorted(values)
 
@@ -891,7 +869,7 @@ with st.sidebar:
 
     # THIRD SECTION - Colors
     with st.expander("🎨 Colors", expanded=False):
-        selected_families = st.multiselect("Color Family:", options=get_options(color_family_col), default=[], key="colors")
+        selected_families = st.multiselect("Color Family:", options=get_options(color_family_col), default=[], key="colors_family")
         selected_undertones = st.multiselect("Color Undertone:", options=get_options(undertone_col), default=[], key="undertones")
         selected_colors = st.multiselect("Color:", options=get_options_multi(color_cols), default=[], key="colors_combined")
         exact_color_match = st.checkbox("Exact match only (no extra colors)", value=False, key="exact_color_match")
@@ -940,7 +918,7 @@ if selected_colors:
             vals = set()
             for c in present_color_cols:
                 v = str(row.get(c, "")).strip()
-                if v and v.lower() not in ["nan", "n/a"] and not is_hex_color(v):
+                if v and v.lower() not in ["nan", "n/a"] and not v.startswith("#"):
                     vals.add(v)
             return vals
 
@@ -958,9 +936,6 @@ if selected_undertones and undertone_col in df.columns:
 
 if selected_case_types and case_type_col in df.columns:
     filtered_df = filtered_df[filtered_df[case_type_col].astype(str).str.strip().isin([s.strip() for s in selected_case_types])]
-
-if selected_type_class and type_class_col in df.columns:
-    filtered_df = filtered_df[filtered_df[type_class_col].astype(str).str.strip().isin([s.strip() for s in selected_type_class])]
 
 if selected_type_class and type_class_col in df.columns:
     filtered_df = filtered_df[filtered_df[type_class_col].astype(str).str.strip().isin([s.strip() for s in selected_type_class])]
@@ -984,18 +959,22 @@ with topbar_title_col:
 </div>
 """, unsafe_allow_html=True)
 with topbar_toggle_col:
-    with st.container(key="view_toggle"):
-        toggle_col1, toggle_col2 = st.columns(2)
-        with toggle_col1:
-            if st.button("🖼️ Gallery",
-                          type="primary" if st.session_state.view_mode == "gallery" else "secondary"):
-                st.session_state.view_mode = "gallery"
-                st.rerun()
-        with toggle_col2:
-            if st.button("📊 Analytics",
-                          type="primary" if st.session_state.view_mode == "analytics" else "secondary"):
-                st.session_state.view_mode = "analytics"
-                st.rerun()
+    # Use a styled radio button to create the pill effect
+    view_selection = st.radio(
+        "View Mode",
+        options=["🖼️ Gallery", "📊 Analytics"],
+        horizontal=True,
+        label_visibility="collapsed",
+        index=0 if st.session_state.view_mode == "gallery" else 1
+    )
+
+    # Check if the selection changed and update session state
+    if view_selection == "🖼️ Gallery" and st.session_state.view_mode != "gallery":
+        st.session_state.view_mode = "gallery"
+        st.rerun()
+    elif view_selection == "📊 Analytics" and st.session_state.view_mode != "analytics":
+        st.session_state.view_mode = "analytics"
+        st.rerun()
 
 if st.session_state.view_mode == "analytics":
     render_analytics_page()
@@ -1010,8 +989,7 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
-# EDITORIAL SUMMARY — headline adapts to whichever dimension the user hasn't
-# already filtered on, so it doesn't just restate a filter they picked themselves.
+# EDITORIAL SUMMARY
 headline_label = None
 headline_value = None
 headline_pct = None
@@ -1064,41 +1042,29 @@ colormix_rings = "".join(
     for name, pct in colormix
 ) if colormix else '<div style="font-size:12px; color:var(--muted);">No color data in this selection.</div>'
 
-st.markdown(f"""
-<div class="editorial-wrap">
-    <div class="editorial-hero">
-        <div class="editorial-eyebrow">{headline_label}</div>
-        <div class="editorial-number">{headline_value}</div>
-        <div class="editorial-desc">{headline_desc}</div>
-        <div class="editorial-colormix">
-            <div class="editorial-colormix-title">Color Mix</div>
-            <div class="editorial-colormix-rings">{colormix_rings}</div>
-        </div>
-    </div>
-    <div class="editorial-list">
-        <div class="editorial-row">
-            <div class="editorial-row-label">Results in view<span class="editorial-sub">of {len(df)} total logos</span></div>
-            <div class="editorial-row-value">{len(filtered_df)}</div>
-        </div>
-        <div class="editorial-row">
-            <div class="editorial-row-label">Leading sector<span class="editorial-sub">{sector_top or "—"}</span></div>
-            <div class="editorial-row-value">{sector_pct}%</div>
-        </div>
-        <div class="editorial-row">
-            <div class="editorial-row-label">Leading color family<span class="editorial-sub">{family_top or "—"}</span></div>
-            <div class="editorial-row-value">{family_pct}%</div>
-        </div>
-        <div class="editorial-row">
-            <div class="editorial-row-label">Countries represented</div>
-            <div class="editorial-row-value">{country_nunique}</div>
-        </div>
-        <div class="editorial-row">
-            <div class="editorial-row-label">Typical complexity<span class="editorial-sub">{complexity_top or "—"}</span></div>
-            <div class="editorial-row-value">{complexity_pct}%</div>
-        </div>
-    </div>
-</div>
-""", unsafe_allow_html=True)
+html_summary = (
+    f'<div class="editorial-wrap">'
+    f'<div class="editorial-hero">'
+    f'<div class="editorial-eyebrow">{headline_label}</div>'
+    f'<div class="editorial-number">{headline_value}</div>'
+    f'<div class="editorial-desc">{headline_desc}</div>'
+    f'<div class="editorial-colormix">'
+    f'<div class="editorial-colormix-title">Color Mix</div>'
+    f'<div class="editorial-colormix-rings">{colormix_rings}</div>'
+    f'</div>'
+    f'</div>'
+    f'<div class="editorial-list">'
+    f'<div class="editorial-row"><div class="editorial-row-label">Results in view<span class="editorial-sub">of {len(df)} total logos</span></div><div class="editorial-row-value">{len(filtered_df)}</div></div>'
+    f'<div class="editorial-row"><div class="editorial-row-label">Leading sector<span class="editorial-sub">{sector_top or "—"}</span></div><div class="editorial-row-value">{sector_pct}%</div></div>'
+    f'<div class="editorial-row"><div class="editorial-row-label">Leading color family<span class="editorial-sub">{family_top or "—"}</span></div><div class="editorial-row-value">{family_pct}%</div></div>'
+    f'<div class="editorial-row"><div class="editorial-row-label">Countries represented</div><div class="editorial-row-value">{country_nunique}</div></div>'
+    f'<div class="editorial-row"><div class="editorial-row-label">Typical complexity<span class="editorial-sub">{complexity_top or "—"}</span></div><div class="editorial-row-value">{complexity_pct}%</div></div>'
+    f'</div>'
+    f'</div>'
+)
+
+st.markdown(html_summary, unsafe_allow_html=True)
+
 
 # RESULTS HEADER WITH SORT
 col1, col2 = st.columns([3, 1])
