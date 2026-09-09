@@ -12,7 +12,7 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# 2. CSS with Click-to-Flip via <details> and Full Light/Dark Compatibility
+# 2. CSS with Exclusive Accordion Radio Flip Architecture
 st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,400;0,500;0,700;1,400&family=Space+Grotesk:wght@500;700&display=swap');
@@ -209,24 +209,18 @@ div[data-testid="stRadio"] span[data-baseweb="radio"] { display: none; }
 .palette-name { font-size: 13px; font-weight: 500; color: var(--ink); }
 .palette-pct { font-size: 12px; color: var(--muted); font-weight: 600; }
 
-/* Pure HTML Details Click-to-Flip Architecture */
-details.flip-card {
+/* Radio Button Exclusive Flip Cards */
+input.card-radio-trigger {
+    display: none !important;
+}
+
+label.card-radio-label {
+    display: block;
     width: 100%;
     height: 350px;
     margin-bottom: 24px;
     perspective: 1000px;
-    outline: none;
-}
-
-details.flip-card summary {
-    list-style: none;
     cursor: pointer;
-    width: 100%;
-    height: 100%;
-}
-
-details.flip-card summary::-webkit-details-marker {
-    display: none;
 }
 
 .flip-card-inner {
@@ -238,18 +232,18 @@ details.flip-card summary::-webkit-details-marker {
     border-radius: 12px;
 }
 
-/* Hover Effect: Subtle Lift and Highlight ONLY */
-details.flip-card:hover .flip-card-inner {
+/* Hover Effect: Subtle Lift */
+label.card-radio-label:hover .flip-card-inner {
     transform: translateY(-4px);
     box-shadow: 0 12px 24px rgba(99, 102, 241, 0.18);
 }
 
-/* Click Triggered Flip */
-details.flip-card[open] .flip-card-inner {
+/* Radio Checked -> Flip Card Front to Back */
+input.card-radio-trigger:checked + label.card-radio-label .flip-card-inner {
     transform: rotateY(180deg);
 }
 
-details.flip-card[open]:hover .flip-card-inner {
+input.card-radio-trigger:checked + label.card-radio-label:hover .flip-card-inner {
     transform: rotateY(180deg) translateY(-4px);
 }
 
@@ -645,7 +639,7 @@ palette_bar_html = (
 )
 st.markdown(palette_bar_html, unsafe_allow_html=True)
 
-# CLICK-TO-FLIP CARDS USING NATIVE HTML <details>
+# EXCLUSIVE FLIP CARDS USING SHARED RADIO GROUP
 cols_per_row = 3
 cols = st.columns(cols_per_row, gap="large")
 
@@ -668,9 +662,11 @@ for idx, (_, row) in enumerate(filtered_df.iterrows()):
         symbolism_text = str(row.get(symbolism_col, "No symbolism recorded.")).strip()
         case_type_val = str(row.get(case_type_col, "—")).strip()
 
+        card_radio_id = f"logo_card_radio_{idx}"
+
         card_html = (
-            f'<details class="flip-card">'
-            f'<summary>'
+            f'<input type="radio" name="logo_gallery_accordion" id="{card_radio_id}" class="card-radio-trigger">'
+            f'<label for="{card_radio_id}" class="card-radio-label">'
             f'<div class="flip-card-inner">'
             f'<div class="flip-card-front">'
             f'<div class="card-image-box">{img_html}</div>'
@@ -699,7 +695,6 @@ for idx, (_, row) in enumerate(filtered_df.iterrows()):
             f'</div>'
             f'</div>'
             f'</div>'
-            f'</summary>'
-            f'</details>'
+            f'</label>'
         )
         st.markdown(card_html, unsafe_allow_html=True)
