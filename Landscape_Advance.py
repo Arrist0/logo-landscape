@@ -19,8 +19,8 @@ st.markdown(r"""
 :root { --bg:#fff; --card:#f8f9fa; --ink:#1a1a1a; --muted:#6b6b6b; --line:#e2e5ea; --chip:#8a8a8a; }
 * { transition:background-color .18s ease,border-color .18s ease; }
 html,body,.stApp { background:var(--bg)!important; color:var(--ink); font-family:"DM Sans",sans-serif; }
-[data-testid="stSidebar"] { background:#fff!important; border-right:1px solid var(--line); }
-[data-testid="stSidebarContent"] { padding:0 24px 28px 24px; }
+[data-testid="stSidebar"] { background:#fff!important; border-right:1px solid var(--line); min-width:300px!important; max-width:300px!important; }
+[data-testid="stSidebarContent"] { padding:0 17px 24px 17px; }
 .sidebar-brand { font-family:"Space Grotesk",sans-serif; font-size:24px; font-weight:700; color:var(--ink); margin:0 0 16px 0; }
 div[data-testid="stRadio"] > div[role="radiogroup"] { display:inline-flex; width:100%; max-width:182px; gap:0; padding:3px; border:1px solid var(--line); border-radius:999px; background:#f1f1f1; }
 div[data-testid="stRadio"] label { flex:1; min-width:0; border-radius:999px!important; padding:7px 12px!important; margin:0!important; cursor:pointer; text-align:center; }
@@ -34,38 +34,60 @@ div[data-testid="stRadio"] span[data-baseweb="radio"] { display:none; }
 .reset-wrap button { width:34px!important; min-height:34px!important; height:34px!important; padding:0!important; border-radius:50%!important; background:#f6f6f6!important; border:1px solid var(--line)!important; font-size:15px!important; }
 [data-testid="stSidebar"] div[data-testid="stTextInput"] input { border:1px solid var(--line)!important; border-radius:8px!important; background:#fafafa!important; min-height:38px!important; font-size:12px!important; }
 [data-testid="stSidebar"] label[data-testid="stWidgetLabel"] p { font-size:11px!important; color:#666!important; }
-[data-testid="stSidebar"] details { border:1px solid var(--line)!important; border-radius:8px!important; margin:9px 0!important; background:#fff!important; overflow:hidden!important; }
-[data-testid="stSidebar"] details summary { padding:10px 12px!important; font-size:12px!important; font-weight:600!important; color:#383838!important; }
+[data-testid="stSidebar"] details { border:1px solid var(--line)!important; border-radius:7px!important; margin:8px 0!important; background:#fff!important; overflow:hidden!important; }
+[data-testid="stSidebar"] details summary { padding:9px 11px!important; font-size:12px!important; font-weight:600!important; color:#383838!important; }
 [data-testid="stSidebar"] details summary:hover { background:#fafafa!important; }
-[data-testid="stSidebar"] details > div { padding:8px 12px 12px 12px!important; }
+[data-testid="stSidebar"] details > div { padding:6px 11px 11px 11px!important; }
 [data-testid="stSidebar"] [data-baseweb="select"] { border-radius:7px!important; }
-[data-testid="stSidebar"] [data-baseweb="select"] > div { min-height:35px!important; border:1px solid var(--line)!important; box-shadow:none!important; background:#fff!important; }
+[data-testid="stSidebar"] [data-baseweb="select"] > div { min-height:33px!important; border:1px solid var(--line)!important; box-shadow:none!important; background:#fff!important; }
 [data-testid="stSidebar"] [data-baseweb="select"] [data-testid="stMultiSelectContainer"] { font-size:12px!important; }
 [data-testid="stSidebar"] [data-baseweb="tag"] { background:#ececec!important; border-radius:999px!important; }
 [data-testid="stSidebar"] [data-baseweb="tag"] span { color:#4a4a4a!important; font-size:11px!important; }
 [data-testid="stSidebar"] .apply-btn button { width:auto!important; min-width:56px!important; min-height:28px!important; height:28px!important; padding:1px 11px!important; border-radius:6px!important; border:1px solid #d2d2d2!important; background:#f7f7f7!important; color:#333!important; font-size:11px!important; font-weight:600!important; }
 [data-testid="stSidebar"] .apply-btn button:hover { border-color:#999!important; background:#ededed!important; }
 .main-topbar { display:flex; align-items:center; justify-content:space-between; border-bottom:1px solid var(--line); padding:2px 0 8px 0; margin-bottom:10px; }
-.main-topbar-title { font-size:13px; font-weight:600; color:#666; }
-.main-topbar-count { font-size:12px; color:#777; }
+.main-topbar-title { font-size:12.5px; font-weight:600; color:#666; }
+.main-topbar-count { font-size:11.5px; color:#777; }
 [data-testid="stExpander"] { border:1px solid var(--line)!important; border-radius:8px!important; box-shadow:none!important; background:#fff!important; margin-bottom:8px!important; }
 [data-testid="stSidebar"] [data-testid="stExpander"] { background:#fff!important; }
 
 [data-testid="stExpander"] details summary { padding:10px 14px!important; }
 [data-testid="stExpander"] details summary p { font-size:12px!important; font-weight:600!important; }
-[data-testid="stExpander"] details > div { border-top:1px solid var(--line)!important; padding:14px!important; }
-.editorial-mini-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:14px; }
-.editorial-mini-item { border-right:1px solid var(--line); padding-right:12px; }
-.editorial-mini-item:last-child { border-right:none; }
-.editorial-mini-label { font-size:10px; color:#777; margin-bottom:4px; }
-.editorial-mini-value { font-size:16px; font-family:"Space Grotesk",sans-serif; font-weight:700; color:#222; }
-.editorial-mini-sub { font-size:10px; color:#888; margin-top:2px; }
-.filter-status { display:flex; align-items:center; justify-content:space-between; min-height:34px; background:#d9d9d9; border-radius:8px; padding:4px 6px; margin-bottom:7px; }
+[data-testid="stExpander"] details > div { border-top:1px solid var(--line)!important; padding:0!important; }
+/* Editorial Summary — expanded state closely follows the Figma reference */
+.editorial-wrap {
+    display:grid; grid-template-columns:minmax(300px, .88fr) minmax(420px, 1.12fr);
+    gap:36px; align-items:stretch;
+    padding:24px 28px; background:#f8f9fa;
+}
+.editorial-left { padding-right:30px; border-right:1px solid var(--line); display:flex; flex-direction:column; justify-content:flex-start; }
+.editorial-kicker { font-size:11px; color:#7a7a7a; margin-bottom:8px; }
+.editorial-number { font-family:"Space Grotesk",sans-serif; font-size:50px; line-height:.98; font-weight:700; color:#6366f1; letter-spacing:-.04em; margin-bottom:10px; }
+.editorial-desc { font-size:12px; line-height:1.5; color:#777; max-width:350px; }
+.editorial-mix-title { font-size:10px; font-weight:700; color:#6366f1; letter-spacing:.08em; text-transform:uppercase; margin:26px 0 10px; }
+.editorial-mix { display:flex; flex-wrap:wrap; gap:10px 16px; align-items:center; }
+.editorial-mix-item { display:flex; align-items:center; gap:7px; font-size:11px; color:#333; }
+.editorial-donut { width:31px; height:31px; border-radius:50%; position:relative; display:grid; place-items:center; font-size:8px; font-weight:700; color:#444; background:conic-gradient(var(--donut) calc(var(--pct) * 1%), #ececed 0); }
+.editorial-donut:after { content:""; width:22px; height:22px; border-radius:50%; background:#f8f9fa; position:absolute; }
+.editorial-donut span { position:relative; z-index:1; }
+.editorial-right { display:flex; flex-direction:column; }
+.editorial-stat { display:grid; grid-template-columns:1fr auto; align-items:start; padding:10px 0; border-bottom:1px solid #e7e7e7; }
+.editorial-stat:first-child { padding-top:4px; }
+.editorial-stat:last-child { border-bottom:none; padding-bottom:2px; }
+.editorial-stat-label { font-size:12px; color:#343434; }
+.editorial-stat-sub { display:block; font-size:10.5px; color:#8a8a8a; margin-top:5px; }
+.editorial-stat-value { font-family:"Space Grotesk",sans-serif; font-size:17px; line-height:1; font-weight:700; color:#2f2f2f; padding-left:18px; text-align:right; }
+.filter-status { display:flex; align-items:center; justify-content:space-between; min-height:33px; background:#d8d8d8; border-radius:7px; padding:3px 6px; margin-bottom:6px; }
 .filter-chip-label { font-size:11px; color:#8a8a8a; margin-right:2px; }
-.result-sort-row { display:flex; align-items:center; justify-content:space-between; margin:7px 0 12px 0; }
+.result-sort-row { display:flex; align-items:center; justify-content:space-between; margin:6px 0 10px 0; }
 .result-count-label { font-size:11px; color:#666; }
 .chip-button button { min-height:28px!important; height:28px!important; border-radius:999px!important; background:#8a8a8a!important; color:#fff!important; border:0!important; padding:2px 11px!important; font-size:10.5px!important; font-weight:600!important; }
 .clear-button button { min-height:28px!important; height:28px!important; padding:2px 9px!important; border:0!important; background:transparent!important; color:#333!important; font-size:10.5px!important; text-decoration:underline!important; }
+@media (max-width:1100px) {
+  .editorial-wrap { grid-template-columns:1fr; gap:18px; }
+  .editorial-left { border-right:none; border-bottom:1px solid var(--line); padding-right:0; padding-bottom:18px; }
+}
+
 /* Existing logo card architecture — preserve animations and proportions */
 details.flip-card { width:100%; height:350px; margin-bottom:24px; perspective:1000px; outline:none; }
 details.flip-card summary { list-style:none; cursor:pointer; width:100%; height:100%; }
@@ -558,25 +580,43 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-# Dynamic Editorial Summary — collapsed by default.
+# Dynamic Editorial Summary — collapsed by default, with the fuller analysis from the earlier version.
 headline_top = top_colors(filtered_df, color_cols, max_n=1)
 if headline_top:
     headline_value, headline_pct = headline_top[0]
-    headline_desc = f"{headline_pct}% of the current selection shares this dominant color."
+    headline_desc = f"{headline_pct}% of the {len(filtered_df)} logos currently shown share this."
 else:
     headline_value, headline_pct = "—", 0
     headline_desc = "No dominant color can be determined from the current selection."
+
+color_mix = top_colors(filtered_df, color_cols, max_n=6)
 sector_top, sector_pct = top_value_pct(filtered_df, sector_col)
 family_top, family_pct = top_value_pct(filtered_df, color_family_col)
+complexity_top, complexity_pct = top_value_pct(filtered_df, complexity_col)
 country_nunique = filtered_df[country_col].astype(str).str.strip().replace("", pd.NA).dropna().nunique() if country_col in filtered_df.columns else 0
 
 with st.expander("Editorial Summary", expanded=False):
+    mix_html = "".join(
+        f'<div class="editorial-mix-item"><div class="editorial-donut" style="--pct:{pct};--donut:{color_to_hex(name)}"><span>{pct}%</span></div><span>{name}</span></div>'
+        for name, pct in color_mix
+    ) if color_mix else '<span style="font-size:11px;color:#888;">No color data available</span>'
+
     st.markdown(
-        f'<div class="editorial-mini-grid">'
-        f'<div class="editorial-mini-item"><div class="editorial-mini-label">Dominant Color</div><div class="editorial-mini-value">{headline_value}</div><div class="editorial-mini-sub">{headline_desc}</div></div>'
-        f'<div class="editorial-mini-item"><div class="editorial-mini-label">Filtered Logos</div><div class="editorial-mini-value">{len(filtered_df)}</div><div class="editorial-mini-sub">of {len(df)} total</div></div>'
-        f'<div class="editorial-mini-item"><div class="editorial-mini-label">Leading Sector</div><div class="editorial-mini-value">{sector_top or "—"}</div><div class="editorial-mini-sub">{sector_pct}% of current selection</div></div>'
-        f'<div class="editorial-mini-item"><div class="editorial-mini-label">Countries Represented</div><div class="editorial-mini-value">{country_nunique}</div><div class="editorial-mini-sub">within current selection</div></div>'
+        f'<div class="editorial-wrap">'
+        f'<div class="editorial-left">'
+        f'<div class="editorial-kicker">Most common color</div>'
+        f'<div class="editorial-number">{headline_value}</div>'
+        f'<div class="editorial-desc">{headline_desc}</div>'
+        f'<div class="editorial-mix-title">Color mix</div>'
+        f'<div class="editorial-mix">{mix_html}</div>'
+        f'</div>'
+        f'<div class="editorial-right">'
+        f'<div class="editorial-stat"><div class="editorial-stat-label">Results in view<span class="editorial-stat-sub">of {len(df)} total logos</span></div><div class="editorial-stat-value">{len(filtered_df)}</div></div>'
+        f'<div class="editorial-stat"><div class="editorial-stat-label">Leading sector<span class="editorial-stat-sub">{sector_top or "—"}</span></div><div class="editorial-stat-value">{sector_pct}%</div></div>'
+        f'<div class="editorial-stat"><div class="editorial-stat-label">Leading color family<span class="editorial-stat-sub">{family_top or "—"}</span></div><div class="editorial-stat-value">{family_pct}%</div></div>'
+        f'<div class="editorial-stat"><div class="editorial-stat-label">Countries represented</div><div class="editorial-stat-value">{country_nunique}</div></div>'
+        f'<div class="editorial-stat"><div class="editorial-stat-label">Typical complexity<span class="editorial-stat-sub">{complexity_top or "—"}</span></div><div class="editorial-stat-value">{complexity_pct}%</div></div>'
+        f'</div>'
         f'</div>',
         unsafe_allow_html=True,
     )
@@ -641,7 +681,7 @@ colormix = top_colors(filtered_df, color_cols, max_n=6)
 # open card. Native HTML behavior, no JS needed. (Requires a modern browser:
 # Chrome/Edge/Firefox recent versions, Safari 17+.)
 cols_per_row = 3
-cols = st.columns(cols_per_row, gap="large")
+cols = st.columns(cols_per_row, gap="medium")
 
 for idx, (_, row) in enumerate(filtered_df.iterrows()):
     col = cols[idx % cols_per_row]
