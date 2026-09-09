@@ -12,7 +12,7 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# 2. CSS with Reliable Hover Cards & Theme Mapping
+# 2. CSS with Click-to-Flip via <details> and Full Light/Dark Compatibility
 st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,400;0,500;0,700;1,400&family=Space+Grotesk:wght@500;700&display=swap');
@@ -25,6 +25,7 @@ st.markdown("""
   --muted: #666666;
   --line: #e2e8f0;
   --accent: #6366f1;
+  --card-back: #ffffff;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -35,6 +36,7 @@ st.markdown("""
     --muted: #a0aec0;
     --line: #2d3748;
     --accent: #6366f1;
+    --card-back: #1a1d29;
   }
 }
 
@@ -77,7 +79,7 @@ h1.app-title {
     margin-bottom: 18px;
 }
 
-/* Pill Toggle */
+/* Pill Toggle Switch */
 div[data-testid="stRadio"] > div[role="radiogroup"] {
     background-color: var(--card);
     border-radius: 30px;
@@ -98,7 +100,7 @@ div[data-testid="stRadio"] label[data-checked="true"] p { color: #ffffff !import
 div[data-testid="stRadio"] div[data-testid="stMarkdownContainer"] { margin-left: 0; }
 div[data-testid="stRadio"] span[data-baseweb="radio"] { display: none; }
 
-/* Editorial Card */
+/* Editorial Summary Card */
 .editorial-wrap {
     display: grid;
     grid-template-columns: 0.9fr 1.3fr;
@@ -161,7 +163,7 @@ div[data-testid="stRadio"] span[data-baseweb="radio"] { display: none; }
     color: var(--ink);
 }
 
-/* Palette Bar */
+/* Color Palette Bar */
 .palette-bar-container {
     background: var(--card);
     border: 1.5px solid var(--line);
@@ -207,32 +209,79 @@ div[data-testid="stRadio"] span[data-baseweb="radio"] { display: none; }
 .palette-name { font-size: 13px; font-weight: 500; color: var(--ink); }
 .palette-pct { font-size: 12px; color: var(--muted); font-weight: 600; }
 
-/* Reliable Overlay Card Architecture */
-.logo-card-container {
-    position: relative;
+/* Pure HTML Details Click-to-Flip Architecture */
+details.flip-card {
     width: 100%;
-    height: 340px;
-    background-color: var(--card);
-    border: 1.5px solid var(--line);
-    border-radius: 12px;
-    overflow: hidden;
+    height: 350px;
     margin-bottom: 24px;
-    transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+    perspective: 1000px;
+    outline: none;
 }
 
-.logo-card-container:hover {
+details.flip-card summary {
+    list-style: none;
+    cursor: pointer;
+    width: 100%;
+    height: 100%;
+}
+
+details.flip-card summary::-webkit-details-marker {
+    display: none;
+}
+
+.flip-card-inner {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.25s ease;
+    transform-style: preserve-3d;
+    border-radius: 12px;
+}
+
+/* Hover Effect: Subtle Lift and Highlight ONLY */
+details.flip-card:hover .flip-card-inner {
     transform: translateY(-4px);
-    border-color: var(--accent);
     box-shadow: 0 12px 24px rgba(99, 102, 241, 0.18);
 }
 
-.card-front {
+/* Click Triggered Flip */
+details.flip-card[open] .flip-card-inner {
+    transform: rotateY(180deg);
+}
+
+details.flip-card[open]:hover .flip-card-inner {
+    transform: rotateY(180deg) translateY(-4px);
+}
+
+.flip-card-front, .flip-card-back {
+    position: absolute;
     width: 100%;
     height: 100%;
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
+    border-radius: 12px;
+    border: 1.5px solid var(--line);
+    overflow: hidden;
+}
+
+.flip-card-front {
+    background-color: var(--card);
     display: flex;
     flex-direction: column;
 }
 
+.flip-card-back {
+    background-color: var(--card-back);
+    color: var(--ink);
+    transform: rotateY(180deg);
+    padding: 18px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    border-color: var(--accent);
+}
+
+/* Card Content Elements */
 .card-image-box {
     height: 170px;
     background-color: #ffffff;
@@ -276,28 +325,17 @@ div[data-testid="stRadio"] span[data-baseweb="radio"] { display: none; }
 
 .card-meta-item strong { color: var(--ink); }
 
-.card-overlay {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: var(--card);
-    padding: 18px;
-    opacity: 0;
-    visibility: hidden;
-    transition: opacity 0.3s ease, visibility 0.3s ease;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
+.flip-hint {
+    font-size: 10.5px;
+    color: var(--accent);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-weight: 700;
+    margin-top: 10px;
 }
 
-.logo-card-container:hover .card-overlay {
-    opacity: 1;
-    visibility: visible;
-}
-
-.overlay-title {
+/* Back Card Details */
+.back-title {
     font-family: "Space Grotesk", sans-serif;
     font-size: 14px;
     font-weight: 700;
@@ -307,15 +345,15 @@ div[data-testid="stRadio"] span[data-baseweb="radio"] { display: none; }
     margin-bottom: 10px;
 }
 
-.overlay-detail-row {
+.back-detail-row {
     font-size: 12px;
     margin-bottom: 6px;
     color: var(--muted);
 }
 
-.overlay-detail-row strong { color: var(--ink); }
+.back-detail-row strong { color: var(--ink); }
 
-.overlay-symbolism {
+.back-symbolism {
     font-size: 11.5px;
     color: var(--ink);
     line-height: 1.45;
@@ -327,7 +365,7 @@ div[data-testid="stRadio"] span[data-baseweb="radio"] { display: none; }
     overflow-y: auto;
 }
 
-/* Sidebar Styles */
+/* Sidebar Styling */
 [data-testid="stSidebar"] { background-color: var(--bg); }
 [data-testid="stSidebar"] div.stButton > button {
     width: 100% !important;
@@ -607,7 +645,7 @@ palette_bar_html = (
 )
 st.markdown(palette_bar_html, unsafe_allow_html=True)
 
-# RELIABLE GRID CARDS WITH OVERLAY REVEAL
+# CLICK-TO-FLIP CARDS USING NATIVE HTML <details>
 cols_per_row = 3
 cols = st.columns(cols_per_row, gap="large")
 
@@ -631,8 +669,10 @@ for idx, (_, row) in enumerate(filtered_df.iterrows()):
         case_type_val = str(row.get(case_type_col, "—")).strip()
 
         card_html = (
-            f'<div class="logo-card-container">'
-            f'<div class="card-front">'
+            f'<details class="flip-card">'
+            f'<summary>'
+            f'<div class="flip-card-inner">'
+            f'<div class="flip-card-front">'
             f'<div class="card-image-box">{img_html}</div>'
             f'<div class="card-front-content">'
             f'<div class="card-title">{b_name}</div>'
@@ -642,21 +682,24 @@ for idx, (_, row) in enumerate(filtered_df.iterrows()):
             f'<div class="card-meta-item">Color: <strong>{c_family}</strong></div>'
             f'<div class="card-meta-item">Country: <strong>{cnt_val}</strong></div>'
             f'</div>'
+            f'<div class="flip-hint">Tap card to flip details ↺</div>'
             f'</div>'
             f'</div>'
-            f'<div class="card-overlay">'
+            f'<div class="flip-card-back">'
             f'<div>'
-            f'<div class="overlay-title">{b_name}</div>'
-            f'<div class="overlay-detail-row">Complexity: <strong>{complexity_val}</strong></div>'
-            f'<div class="overlay-detail-row">Symmetry: <strong>{symmetry_val}</strong></div>'
-            f'<div class="overlay-detail-row">Case Type: <strong>{case_type_val}</strong></div>'
-            f'<div class="overlay-detail-row">Type Class: <strong>{type_class}</strong></div>'
+            f'<div class="back-title">{b_name}</div>'
+            f'<div class="back-detail-row">Complexity: <strong>{complexity_val}</strong></div>'
+            f'<div class="back-detail-row">Symmetry: <strong>{symmetry_val}</strong></div>'
+            f'<div class="back-detail-row">Case Type: <strong>{case_type_val}</strong></div>'
+            f'<div class="back-detail-row">Type Class: <strong>{type_class}</strong></div>'
             f'</div>'
             f'<div>'
             f'<div style="font-size:11px; font-weight:700; color:var(--accent); margin-bottom:4px;">SYMBOLISM</div>'
-            f'<div class="overlay-symbolism">{symbolism_text}</div>'
+            f'<div class="back-symbolism">{symbolism_text}</div>'
             f'</div>'
             f'</div>'
             f'</div>'
+            f'</summary>'
+            f'</details>'
         )
         st.markdown(card_html, unsafe_allow_html=True)
