@@ -515,7 +515,7 @@ details.flip-card[open]:hover .flip-card-inner {
 
 .rr-footnote { font-size: 11.5px; color: var(--muted); margin-top: 14px; line-height: 1.5; }
 
-/* ===== UX overhaul additions ===== */
+/* ===== UX overhaul additions (v8) ===== */
 
 /* Sidebar title + toggle */
 .sidebar-app-title {
@@ -526,12 +526,66 @@ details.flip-card[open]:hover .flip-card-inner {
     margin: 4px 0 14px 0;
 }
 
-[data-testid="stSidebar"] div[data-testid="stRadio"] > div[role="radiogroup"] {
+/* Gallery / Analytics segmented pill: bigger track, solid dark pill for the
+   active segment sliding "on top" of it. */
+.st-key-view_toggle_wrap div[data-testid="stRadio"] > div[role="radiogroup"] {
     width: 100%;
+    background-color: var(--card);
+    border-radius: 999px;
+    padding: 5px;
+    border: 1.5px solid var(--line);
+    display: flex;
 }
-[data-testid="stSidebar"] div[data-testid="stRadio"] label {
+.st-key-view_toggle_wrap div[data-testid="stRadio"] label {
     flex: 1;
     text-align: center;
+    border-radius: 999px !important;
+    padding: 9px 0 !important;
+    margin: 0 !important;
+    background-color: transparent;
+}
+.st-key-view_toggle_wrap div[data-testid="stRadio"] label p {
+    color: var(--muted) !important;
+    font-size: 14px !important;
+    font-weight: 600 !important;
+}
+.st-key-view_toggle_wrap div[data-testid="stRadio"] label[data-checked="true"] {
+    background-color: var(--ink) !important;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.18);
+}
+.st-key-view_toggle_wrap div[data-testid="stRadio"] label[data-checked="true"] p {
+    color: #ffffff !important;
+}
+.st-key-view_toggle_wrap div[data-testid="stRadio"] span[data-baseweb="radio"] { display: none; }
+
+/* Small circular sync icon button, sits beside the toggle */
+.st-key-sync_icon_wrap button {
+    border-radius: 50% !important;
+    width: 40px !important;
+    height: 40px !important;
+    padding: 0 !important;
+    min-height: unset !important;
+    background: var(--card) !important;
+    border: 1.5px solid var(--line) !important;
+    color: var(--ink) !important;
+    font-size: 15px !important;
+}
+.st-key-sync_icon_wrap button:hover {
+    border-color: var(--accent) !important;
+    color: var(--accent) !important;
+}
+
+/* Sidebar search box — give it a visible rounded field */
+[data-testid="stSidebar"] div[data-testid="stTextInput"] input {
+    background: var(--card) !important;
+    border: 1.5px solid var(--line) !important;
+    border-radius: 10px !important;
+    padding: 8px 12px !important;
+    color: var(--ink) !important;
+}
+[data-testid="stSidebar"] div[data-testid="stTextInput"] input:focus {
+    border-color: var(--accent) !important;
+    box-shadow: 0 0 0 1px var(--accent) !important;
 }
 
 /* Main content subtitle bar (title moved to sidebar) */
@@ -578,7 +632,16 @@ div[data-testid="stExpander"] div[data-testid="stExpanderDetails"] {
     padding: 0 20px 20px 20px !important;
 }
 
-/* Selected filter chips row (flexbox hack over Streamlit's vertical block) */
+/* Selected-filters bar: one bordered strip holding chips + Clear All + Sort */
+div[class*="st-key-filters_summary_bar"] {
+    background: var(--card);
+    border: 1.5px solid var(--line);
+    border-radius: 12px;
+    padding: 12px 18px;
+    margin-bottom: 4px;
+}
+
+/* Chips row (flexbox hack over Streamlit's vertical block) */
 .st-key-chips_row [data-testid="stVerticalBlock"] {
     display: flex;
     flex-wrap: wrap;
@@ -594,28 +657,33 @@ div[data-testid="stExpander"] div[data-testid="stExpanderDetails"] {
     border-radius: 20px !important;
     padding: 4px 14px !important;
     font-size: 12.5px !important;
-    font-weight: 500 !important;
-    background: var(--card) !important;
-    border: 1.5px solid var(--line) !important;
-    color: var(--ink) !important;
+    font-weight: 600 !important;
+    background: var(--ink) !important;
+    border: 1.5px solid var(--ink) !important;
+    color: #ffffff !important;
     line-height: 1.4 !important;
     min-height: unset !important;
 }
 .st-key-chips_row button:hover {
-    border-color: var(--accent) !important;
-    color: var(--accent) !important;
+    opacity: 0.85;
 }
-.st-key-chips_row .clear-all-btn button {
+.st-key-clear_all_chips button {
     background: transparent !important;
     border: none !important;
     color: var(--accent) !important;
     text-decoration: underline;
     font-weight: 600 !important;
+    padding: 4px 6px !important;
 }
 .no-filters-text {
     font-size: 12.5px;
     color: var(--muted);
     font-style: italic;
+}
+
+/* Sort dropdown inside the same bar */
+div[class*="st-key-filters_summary_bar"] div[data-testid="stSelectbox"] {
+    margin-top: 0 !important;
 }
 
 /* Result count line */
@@ -656,14 +724,26 @@ div[data-testid="stExpander"] div[data-testid="stExpanderDetails"] {
     color: var(--ink);
 }
 
-/* Per-category filter field groups */
-.filter-field-label {
-    font-size: 11.5px;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    color: var(--muted);
-    margin: 10px 0 2px 0;
+/* Sub-category rows inside a category expander (Colors > Color Scheme > ...) */
+div[data-testid="stExpanderDetails"] div[class*="st-key-subtoggle_"] button {
+    background: transparent !important;
+    border: none !important;
+    border-bottom: 1px solid var(--line) !important;
+    border-radius: 0 !important;
+    text-align: left !important;
+    justify-content: flex-start !important;
+    padding: 8px 2px !important;
+    font-size: 13px !important;
+    font-weight: 600 !important;
+    color: var(--ink) !important;
+}
+div[data-testid="stExpanderDetails"] div[class*="st-key-subtoggle_"] button:hover {
+    color: var(--accent) !important;
+}
+div[class*="st-key-subfield_"] {
+    padding: 2px 0 4px 10px;
+    border-left: 2px solid var(--line);
+    margin-bottom: 6px;
 }
 [data-testid="stSidebar"] div[data-testid="stCheckbox"] {
     margin-bottom: -6px;
@@ -672,7 +752,25 @@ div[data-testid="stExpander"] div[data-testid="stExpanderDetails"] {
     font-size: 13px !important;
 }
 
-/* Per-category minimal Apply button, aligned right */
+/* Country tag chips inside Editorial Summary */
+.editorial-country-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    margin-top: 6px;
+}
+.editorial-country-tag {
+    font-size: 10.5px;
+    font-weight: 600;
+    color: var(--ink);
+    background: var(--bg);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: 2px 7px;
+    white-space: nowrap;
+}
+
+/* Per-field minimal Apply button, aligned right */
 div[class*="st-key-apply_wrap_"] [data-testid="stVerticalBlock"] {
     display: flex;
     justify-content: flex-end;
@@ -910,7 +1008,7 @@ FILTER_FIELDS = {
     "shape":        {"label": "Shape (Primary Form)", "col": primary_form_col,    "category": "logo_design"},
     "complexity":   {"label": "Complexity",           "col": complexity_col,      "category": "logo_design"},
     "symmetry":     {"label": "Symmetry",             "col": symmetry_col,        "category": "logo_design"},
-    "color_family": {"label": "Color Family",         "col": color_family_col,    "category": "colors"},
+    "color_family": {"label": "Color Scheme",          "col": color_family_col,    "category": "colors"},
     "undertone":    {"label": "Color Undertone",      "col": undertone_col,       "category": "colors"},
     "color":        {"label": "Color",                "col": color_cols,          "category": "colors", "multi_col": True},
     "case_type":    {"label": "Case Type",            "col": case_type_col,       "category": "type_style"},
@@ -1024,22 +1122,24 @@ if _pending:
 with st.sidebar:
     st.markdown('<div class="sidebar-app-title">Logo Landscape</div>', unsafe_allow_html=True)
 
-    view_selection = st.radio(
-        "View Mode", options=["🖼️ Gallery", "📊 Analytics"], horizontal=True,
-        label_visibility="collapsed",
-        index=0 if st.session_state.view_mode == "gallery" else 1,
-        key="view_mode_radio",
-    )
-    new_view_mode = "gallery" if view_selection == "🖼️ Gallery" else "analytics"
-    if new_view_mode != st.session_state.view_mode:
-        st.session_state.view_mode = new_view_mode
-        st.rerun()
-
-    st.markdown("---")
-    st.markdown("### Sync Data")
-    if st.button("🔄 Refresh Google Sheets", help="Click to sync latest data from Google Sheets"):
-        st.cache_data.clear()
-        st.rerun()
+    toggle_col, sync_col = st.columns([5, 1])
+    with toggle_col:
+        with st.container(key="view_toggle_wrap"):
+            view_selection = st.radio(
+                "View Mode", options=["Gallery", "Analytics"], horizontal=True,
+                label_visibility="collapsed",
+                index=0 if st.session_state.view_mode == "gallery" else 1,
+                key="view_mode_radio",
+            )
+        new_view_mode = "gallery" if view_selection == "Gallery" else "analytics"
+        if new_view_mode != st.session_state.view_mode:
+            st.session_state.view_mode = new_view_mode
+            st.rerun()
+    with sync_col:
+        with st.container(key="sync_icon_wrap"):
+            if st.button("↻", key="sync_btn", help="Sync latest data from Google Sheets"):
+                st.cache_data.clear()
+                st.rerun()
 
     st.markdown("---")
 
@@ -1052,7 +1152,7 @@ with st.sidebar:
                 st.session_state._pending_action = ("reset_all",)
                 st.rerun()
 
-    st.text_input("⌕ Search organisation...", key="search_query")
+    st.text_input("⌕ Search organisation...", key="search_query", label_visibility="collapsed", placeholder="⌕ Search organisation...")
 
     for cat_key, cat_label in CATEGORIES:
         cat_fields = [fk for fk, conf in FILTER_FIELDS.items() if conf["category"] == cat_key]
@@ -1062,19 +1162,26 @@ with st.sidebar:
                 opts = field_options(field_key)
                 if not opts:
                     continue
-                st.markdown(f'<div class="filter-field-label">{conf["label"]}</div>', unsafe_allow_html=True)
-                for opt in opts:
-                    st.checkbox(opt, key=checkbox_key(field_key, opt))
+
+                is_open = st.session_state.get(f"subopen__{field_key}", False)
+                arrow = "⌄" if is_open else "›"
+                with st.container(key=f"subtoggle_{field_key}"):
+                    if st.button(f"{arrow}  {conf['label']}", key=f"subtoggle_btn_{field_key}", use_container_width=True):
+                        st.session_state[f"subopen__{field_key}"] = not is_open
+                        st.rerun()
+
+                if is_open:
+                    with st.container(key=f"subfield_{field_key}"):
+                        for opt in opts:
+                            st.checkbox(opt, key=checkbox_key(field_key, opt))
+                        with st.container(key=f"apply_wrap_{field_key}"):
+                            if st.button("Apply", key=f"apply_btn_{field_key}"):
+                                selected = [o for o in opts if st.session_state.get(checkbox_key(field_key, o))]
+                                set_applied(field_key, selected)
+                                st.rerun()
 
             if cat_key == "colors":
                 st.checkbox("Exact match only (no extra colors)", key="exact_color_match")
-
-            with st.container(key=f"apply_wrap_{cat_key}"):
-                if st.button("Apply", key=f"apply_btn_{cat_key}"):
-                    for field_key in cat_fields:
-                        selected = [opt for opt in field_options(field_key) if st.session_state.get(checkbox_key(field_key, opt))]
-                        set_applied(field_key, selected)
-                    st.rerun()
 
 # ===================== FILTER EXECUTION =====================
 
@@ -1156,7 +1263,16 @@ headline_desc = f"{headline_pct}% of selected logos share this trait." if headli
 
 sector_top, sector_pct = top_value_pct(filtered_df, sector_col)
 family_top, family_pct = top_value_pct(filtered_df, color_family_col)
-country_nunique = filtered_df[country_col].astype(str).str.strip().replace("", pd.NA).dropna().nunique() if country_col in filtered_df.columns else 0
+country_names = (
+    sorted(filtered_df[country_col].astype(str).str.strip().replace("", pd.NA).dropna().unique().tolist())
+    if country_col in filtered_df.columns else []
+)
+country_nunique = len(country_names)
+
+MAX_COUNTRY_TAGS = 10
+country_tags_html = "".join(f'<span class="editorial-country-tag">{c}</span>' for c in country_names[:MAX_COUNTRY_TAGS])
+if country_nunique > MAX_COUNTRY_TAGS:
+    country_tags_html += f'<span class="editorial-country-tag">+{country_nunique - MAX_COUNTRY_TAGS} more</span>'
 
 editorial_html = (
     f'<div class="editorial-wrap" style="border:none; margin-bottom:0; padding:0;">'
@@ -1167,15 +1283,33 @@ editorial_html = (
     f'</div>'
     f'<div class="editorial-list">'
     f'<div class="editorial-row"><div class="editorial-row-label">Filtered Logos</div><div class="editorial-row-value">{len(filtered_df)}</div></div>'
-    f'<div class="editorial-row"><div class="editorial-row-label">Leading Sector<span class="editorial-sub">{sector_top or "—"}</span></div><div class="editorial-row-value">{sector_pct}%</div></div>'
-    f'<div class="editorial-row"><div class="editorial-row-label">Primary Color Family<span class="editorial-sub">{family_top or "—"}</span></div><div class="editorial-row-value">{family_pct}%</div></div>'
-    f'<div class="editorial-row"><div class="editorial-row-label">Countries Represented</div><div class="editorial-row-value">{country_nunique}</div></div>'
+    f'<div class="editorial-row"><div class="editorial-row-label">Major Sector<span class="editorial-sub">{sector_top or "—"}</span></div><div class="editorial-row-value">{sector_pct}%</div></div>'
+    f'<div class="editorial-row"><div class="editorial-row-label">Primary Color Scheme<span class="editorial-sub">{family_top or "—"}</span></div><div class="editorial-row-value">{family_pct}%</div></div>'
+    f'<div class="editorial-row" style="flex-direction:column; align-items:flex-start; gap:0;">'
+    f'<div style="display:flex; justify-content:space-between; width:100%; align-items:baseline;">'
+    f'<div class="editorial-row-label">Countries Represented</div><div class="editorial-row-value">{country_nunique}</div>'
     f'</div>'
+    f'<div class="editorial-country-tags">{country_tags_html}</div>'
+    f'</div>'
+    f'</div>'
+    f'</div>'
+)
+
+palette_items_html = "".join([
+    f'<div class="palette-item"><span class="palette-swatch" style="background:{color_to_hex(name)}"></span><span class="palette-name">{name}</span><span class="palette-pct">{pct}%</span></div>'
+    for name, pct in colormix
+]) if colormix else '<div style="font-size:12px; color:var(--muted);">No color data available</div>'
+
+palette_bar_html = (
+    f'<div class="palette-bar-container" style="margin-bottom:0; margin-top:16px;">'
+    f'<div class="palette-title">Color Palette Breakdown</div>'
+    f'<div class="palette-items">{palette_items_html}</div>'
     f'</div>'
 )
 
 with st.expander("Editorial Summary", expanded=True):
     st.markdown(editorial_html, unsafe_allow_html=True)
+    st.markdown(palette_bar_html, unsafe_allow_html=True)
 
 # ===================== SELECTED FILTER CHIPS + SORT =====================
 
@@ -1184,42 +1318,26 @@ for field_key in FILTER_FIELDS:
     for value in get_applied(field_key):
         chips.append((field_key, value))
 
-chip_col, sort_col = st.columns([4, 1])
+with st.container(key="filters_summary_bar"):
+    chip_col, sort_col = st.columns([4, 1])
 
-with chip_col:
-    with st.container(key="chips_row"):
-        if not chips:
-            st.markdown('<span class="no-filters-text">No filters applied</span>', unsafe_allow_html=True)
-        else:
-            for field_key, value in chips:
-                if st.button(f"{value}  ✕", key=f"chip__{field_key}__{value}"):
-                    st.session_state._pending_action = ("remove_chip", field_key, value)
-                    st.rerun()
-            with st.container():
-                st.markdown('<div class="clear-all-btn">', unsafe_allow_html=True)
+    with chip_col:
+        with st.container(key="chips_row"):
+            if not chips:
+                st.markdown('<span class="no-filters-text">No filters applied</span>', unsafe_allow_html=True)
+            else:
+                for field_key, value in chips:
+                    if st.button(f"{value}  ✕", key=f"chip__{field_key}__{value}"):
+                        st.session_state._pending_action = ("remove_chip", field_key, value)
+                        st.rerun()
                 if st.button("Clear All", key="clear_all_chips"):
                     st.session_state._pending_action = ("reset_all",)
                     st.rerun()
-                st.markdown('</div>', unsafe_allow_html=True)
 
-with sort_col:
-    st.selectbox("Sort", options=["Name A-Z", "Name Z-A"], key="sort_mode", label_visibility="collapsed")
+    with sort_col:
+        st.selectbox("Sort", options=["Name A-Z", "Name Z-A"], key="sort_mode", label_visibility="collapsed")
 
 st.markdown(f'<div class="result-count-text"><strong>{len(filtered_df)}</strong> Results</div>', unsafe_allow_html=True)
-
-# PALETTE STRIP
-palette_items_html = "".join([
-    f'<div class="palette-item"><span class="palette-swatch" style="background:{color_to_hex(name)}"></span><span class="palette-name">{name}</span><span class="palette-pct">{pct}%</span></div>'
-    for name, pct in colormix
-]) if colormix else '<div style="font-size:12px; color:var(--muted);">No color data available</div>'
-
-palette_bar_html = (
-    f'<div class="palette-bar-container">'
-    f'<div class="palette-title">Color Palette Breakdown</div>'
-    f'<div class="palette-items">{palette_items_html}</div>'
-    f'</div>'
-)
-st.markdown(palette_bar_html, unsafe_allow_html=True)
 
 # CLICK-TO-FLIP CARDS USING NATIVE HTML <details>
 # All cards share the same `name` attribute, which makes the browser treat
