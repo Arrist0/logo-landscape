@@ -1397,7 +1397,7 @@ for idx, (_, row) in enumerate(filtered_df.iterrows()):
         img_html = f'<img src="{img_url}" alt="{b_name}" />' if (img_url and img_url.startswith("http")) else '<div style="color: #a0aec0; font-size: 12px;">📷 Image unavailable</div>'
 
         p_form = str(row.get(primary_form_col, "—")).strip()
-        c_family = str(row.get(color_family_col, "—")).strip()
+        c_family = str(row.get(Primary Colour_col, "—")).strip()
         sector_val = str(row.get(sector_col, "—")).strip()
         cnt_val = str(row.get(country_col, "—")).strip()
         complexity_val = str(row.get(complexity_col, "—")).strip()
