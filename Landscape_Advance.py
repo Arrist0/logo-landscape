@@ -1173,7 +1173,7 @@ with st.sidebar:
         with pill_col:
             with st.container(key="view_toggle_wrap"):
                 view_selection = st.radio(
-                    "View Mode", options=["Gallery", "Analytics"], horizontal=True,
+                    "", options=["Gallery", "Analytics"], horizontal=True,
                     label_visibility="collapsed",
                     index=0 if st.session_state.view_mode == "gallery" else 1,
                     key="view_mode_radio",
