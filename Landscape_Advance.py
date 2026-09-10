@@ -526,17 +526,19 @@ details.flip-card[open]:hover .flip-card-inner {
     margin: 4px 0 14px 0;
 }
 
-/* Title row: app name + sync icon on one baseline */
-.st-key-title_row div[data-testid="stHorizontalBlock"] {
+/* Toggle row: pill + sync icon on one baseline */
+.st-key-toggle_row div[data-testid="stHorizontalBlock"] {
     align-items: center !important;
 }
-.st-key-title_row .sidebar-app-title { margin: 0 !important; }
 
 /* Gallery / Analytics segmented pill: a real sliding thumb that physically
    moves between the two options, rather than each label independently
    toggling its own background. Full-width, roomy, no leftover native
    radio-button artwork. */
 .st-key-view_toggle_wrap { margin-bottom: 18px; }
+.st-key-view_toggle_wrap div[data-testid="stWidgetLabel"] {
+    display: none !important;
+}
 .st-key-view_toggle_wrap div[data-testid="stRadio"] > div[role="radiogroup"] {
     position: relative;
     width: 100%;
@@ -576,7 +578,7 @@ details.flip-card[open]:hover .flip-card-inner {
     justify-content: center;
     text-align: center;
     border-radius: 999px !important;
-    padding: 0 !important;
+    padding: 0 26px !important;
     margin: 0 !important;
     background-color: transparent !important;
     cursor: pointer;
@@ -1164,25 +1166,24 @@ if _pending:
 # ===================== SIDEBAR =====================
 
 with st.sidebar:
-    with st.container(key="title_row"):
-        title_col, sync_col = st.columns([5, 1])
-        with title_col:
-            st.markdown('<div class="sidebar-app-title">Logo Landscape</div>', unsafe_allow_html=True)
+    st.markdown('<div class="sidebar-app-title">Logo Landscape</div>', unsafe_allow_html=True)
+
+    with st.container(key="toggle_row"):
+        pill_col, sync_col = st.columns([5, 1], gap="small")
+        with pill_col:
+            with st.container(key="view_toggle_wrap"):
+                view_selection = st.radio(
+                    "View Mode", options=["Gallery", "Analytics"], horizontal=True,
+                    label_visibility="collapsed",
+                    index=0 if st.session_state.view_mode == "gallery" else 1,
+                    key="view_mode_radio",
+                )
         with sync_col:
             with st.container(key="sync_icon_wrap"):
-                if st.button("↻", key="sync_btn", help="Sync latest data from Google Sheets"):
+                if st.button("", key="sync_btn", icon=":material/cloud_sync:", help="Sync latest data from Google Sheets"):
                     st.cache_data.clear()
                     st.rerun()
 
-    # Full-width pill toggle — giving it the whole row (rather than squeezing
-    # it beside another button) is what keeps "Analytics" from wrapping.
-    with st.container(key="view_toggle_wrap"):
-        view_selection = st.radio(
-            "View Mode", options=["Gallery", "Analytics"], horizontal=True,
-            label_visibility="collapsed",
-            index=0 if st.session_state.view_mode == "gallery" else 1,
-            key="view_mode_radio",
-        )
     new_view_mode = "gallery" if view_selection == "Gallery" else "analytics"
     if new_view_mode != st.session_state.view_mode:
         st.session_state.view_mode = new_view_mode
