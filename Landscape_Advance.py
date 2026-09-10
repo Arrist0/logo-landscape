@@ -636,7 +636,7 @@ details.flip-card[open]:hover .flip-card-inner {
     color: var(--accent) !important;
     transform: rotate(45deg);
 }
-.st-key-sync_icon_wrap { display: flex; justify-content: flex-end; }
+.st-key-sync_icon_wrap { display: flex; justify-content: flex-end; margin-top: 8px; }
 
 /* Sidebar search box — give it a visible rounded field */
 [data-testid="stSidebar"] div[data-testid="stTextInput"] input {
