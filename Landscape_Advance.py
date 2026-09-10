@@ -515,6 +515,22 @@ details.flip-card[open]:hover .flip-card-inner {
 
 .rr-footnote { font-size: 11.5px; color: var(--muted); margin-top: 14px; line-height: 1.5; }
 
+/* Interactive cross-tab card: native container styled to match .chart-card
+   so the dropdown-driven table sits flush with the rest of the dashboard. */
+.st-key-crosstab_card {
+    background: var(--card);
+    border: 1.5px solid var(--line);
+    border-radius: 12px;
+    padding: 18px 20px;
+    margin-top: 20px;
+}
+.st-key-crosstab_card div[data-testid="stHorizontalBlock"] {
+    align-items: center !important;
+}
+.st-key-crosstab_card div[data-testid="stSelectbox"] {
+    margin-top: 0 !important;
+}
+
 /* ===== UX overhaul additions (v8) ===== */
 
 /* Sidebar title + toggle */
@@ -971,10 +987,26 @@ def _bar_rows_html(items, with_swatch=False):
         )
     return "".join(parts) if parts else '<div style="font-size:12px; color:var(--muted);">No data in this selection.</div>'
 
-def render_analytics_page(filtered_df, df, color_cols, sector_col, color_family_col, country_col, complexity_col):
+
+def safe_val(row, col_name, default="—"):
+    """Read a cell safely: falls back to `default` for missing columns,
+    NaN floats, or blank/"nan"/"n/a" strings — not just missing keys.
+    Prevents pandas' NaN from rendering as the literal text "nan"."""
+    val = row.get(col_name, default)
+    if pd.isna(val):
+        return default
+    s = str(val).strip()
+    if s == "" or s.lower() in ("nan", "n/a"):
+        return default
+    return s
+
+
+def render_analytics_page(filtered_df, df, color_cols, sector_col, color_family_col, country_col, complexity_col, crosstab_row_options):
     """Detailed, filter-aware analytics dashboard — KPIs, distribution charts,
-    and a Color Family x Sector cross-tab. Built as flush-left HTML strings
-    (no loop-concatenated multi-line blocks) so Streamlit's Markdown parser
+    and an interactive cross-tab whose row dimension can be repointed at any
+    Logo Details/Design or Colors field via a dropdown (Sector always stays
+    as the fixed column dimension). Built as flush-left HTML strings (no
+    loop-concatenated multi-line blocks) so Streamlit's Markdown parser
     doesn't misread indented fragments as code blocks."""
 
     kpi_countries = (
@@ -992,36 +1024,6 @@ def render_analytics_page(filtered_df, df, color_cols, sector_col, color_family_
     country_dist = top_n_value_pct(filtered_df, country_col, n=6)
     family_dist = top_n_value_pct(filtered_df, color_family_col, n=6)
 
-    crosstab_html = '<div style="font-size:12px; color:var(--muted);">Not enough data for a cross-tab in this selection.</div>'
-    top_families = [name for name, _ in top_n_value_pct(filtered_df, color_family_col, n=4)]
-    top_sectors_ct = [name for name, _ in top_n_value_pct(filtered_df, sector_col, n=4)]
-    if top_families and top_sectors_ct and color_family_col in filtered_df.columns and sector_col in filtered_df.columns:
-        sub = filtered_df[
-            filtered_df[color_family_col].astype(str).str.strip().isin(top_families)
-            & filtered_df[sector_col].astype(str).str.strip().isin(top_sectors_ct)
-        ]
-        if not sub.empty:
-            ct = pd.crosstab(
-                sub[color_family_col].astype(str).str.strip(),
-                sub[sector_col].astype(str).str.strip(),
-                normalize="columns"
-            ) * 100
-            ct = ct.reindex(index=top_families, columns=top_sectors_ct, fill_value=0)
-
-            head_cells = "".join(f'<div class="ct-cell ct-head">{s}</div>' for s in top_sectors_ct)
-            rows_html = ""
-            for fam in top_families:
-                row_html = f'<div class="ct-cell ct-row-label">{fam}</div>'
-                for sec in top_sectors_ct:
-                    val = round(ct.loc[fam, sec]) if fam in ct.index and sec in ct.columns else 0
-                    opacity = max(0.08, min(0.85, val / 100))
-                    row_html += f'<div class="ct-cell"><div class="heat" style="background:rgba(99,102,241,{opacity}); width:100%; padding:5px 0;">{val}%</div></div>'
-                rows_html += row_html
-            crosstab_html = (
-                f'<div class="crosstab" style="grid-template-columns: 130px repeat({len(top_sectors_ct)}, 1fr);">'
-                f'<div class="ct-cell ct-head"></div>{head_cells}{rows_html}</div>'
-            )
-
     html = (
         f'<div class="rr-kpis">'
         f'<div class="kpi"><div class="kpi-label">Logos</div><div class="kpi-value">{len(filtered_df)}</div><div class="kpi-sub">of {len(df)} total</div></div>'
@@ -1034,11 +1036,64 @@ def render_analytics_page(filtered_df, df, color_cols, sector_col, color_family_
         f'<div class="chart-card"><div class="chart-title">Sector Breakdown</div>{_bar_rows_html(sector_dist)}</div>'
         f'<div class="chart-card"><div class="chart-title">Country Breakdown</div>{_bar_rows_html(country_dist)}</div>'
         f'<div class="chart-card"><div class="chart-title">Color Family Breakdown</div>{_bar_rows_html(family_dist)}</div>'
-        f'<div class="chart-card full-width-card"><div class="chart-title">Color Family &times; Sector (share within sector)</div>{crosstab_html}'
-        f'<div class="rr-footnote">Darker cells = a color family makes up a larger share of that sector\'s logos. Recalculates live from your current filters.</div></div>'
         f'</div>'
     )
     st.markdown(html, unsafe_allow_html=True)
+
+    # ---- Interactive cross-tab: Sector (fixed) x user-selected dimension ----
+    if "crosstab_row_dim" not in st.session_state:
+        st.session_state.crosstab_row_dim = next(iter(crosstab_row_options))
+
+    with st.container(key="crosstab_card"):
+        head_l, head_r = st.columns([3, 2])
+        with head_l:
+            st.markdown('<div class="chart-title" style="margin-bottom:0;">Cross-tab (share within sector)</div>', unsafe_allow_html=True)
+        with head_r:
+            st.selectbox(
+                "Group rows by",
+                options=list(crosstab_row_options.keys()),
+                key="crosstab_row_dim",
+                label_visibility="collapsed",
+            )
+
+        row_label = st.session_state.crosstab_row_dim
+        row_col = crosstab_row_options[row_label]
+
+        crosstab_html = '<div style="font-size:12px; color:var(--muted); margin-top:12px;">Not enough data for a cross-tab in this selection.</div>'
+        top_rows = [name for name, _ in top_n_value_pct(filtered_df, row_col, n=4)]
+        top_sectors_ct = [name for name, _ in top_n_value_pct(filtered_df, sector_col, n=4)]
+        if top_rows and top_sectors_ct and row_col in filtered_df.columns and sector_col in filtered_df.columns:
+            sub = filtered_df[
+                filtered_df[row_col].astype(str).str.strip().isin(top_rows)
+                & filtered_df[sector_col].astype(str).str.strip().isin(top_sectors_ct)
+            ]
+            if not sub.empty:
+                ct = pd.crosstab(
+                    sub[row_col].astype(str).str.strip(),
+                    sub[sector_col].astype(str).str.strip(),
+                    normalize="columns"
+                ) * 100
+                ct = ct.reindex(index=top_rows, columns=top_sectors_ct, fill_value=0)
+
+                head_cells = "".join(f'<div class="ct-cell ct-head">{s}</div>' for s in top_sectors_ct)
+                rows_html = ""
+                for r_name in top_rows:
+                    row_html = f'<div class="ct-cell ct-row-label">{r_name}</div>'
+                    for sec in top_sectors_ct:
+                        val = round(ct.loc[r_name, sec]) if r_name in ct.index and sec in ct.columns else 0
+                        opacity = max(0.08, min(0.85, val / 100))
+                        row_html += f'<div class="ct-cell"><div class="heat" style="background:rgba(99,102,241,{opacity}); width:100%; padding:5px 0;">{val}%</div></div>'
+                    rows_html += row_html
+                crosstab_html = (
+                    f'<div class="crosstab" style="grid-template-columns: 130px repeat({len(top_sectors_ct)}, 1fr); margin-top:12px;">'
+                    f'<div class="ct-cell ct-head"></div>{head_cells}{rows_html}</div>'
+                )
+
+        st.markdown(
+            crosstab_html
+            + f'<div class="rr-footnote">Darker cells = "{row_label}" makes up a larger share of that sector\'s logos. Recalculates live from your current filters and selection.</div>',
+            unsafe_allow_html=True,
+        )
 
 # ===================== FIELD / CATEGORY DEFINITIONS =====================
 
@@ -1046,6 +1101,7 @@ brand_col = "Name"
 img_col = "Logo"
 type_of_logo_col = "Type of Logo"
 primary_form_col = "Primary form (Visually Dominating Form)"
+primary_colour_col = "Primary Colour"
 color_family_col = "Color Family"
 sector_col = "Sector"
 org_type_col = "Type of Organization"
@@ -1057,6 +1113,20 @@ case_type_col = "Case Type"
 type_class_col = "Type classification"
 color_cols = ["Primary Colour", "Secondary Colour", "Colour", "Colour3", "Colour4", "Colour5"]
 undertone_col = "Color Undertone"
+
+# Columns the analytics cross-tab's row dimension can be pointed at, pulled
+# only from the "Logo Details & Design" and "Colors" filter categories per
+# request (Sector always stays fixed as the cross-tab's column dimension).
+# The multi-column "Color" field is left out here since it holds several
+# colors per logo rather than one value to group rows by.
+CROSSTAB_ROW_OPTIONS = {
+    "Color Family": color_family_col,
+    "Color Undertone": undertone_col,
+    "Type of Logo": type_of_logo_col,
+    "Shape (Primary Form)": primary_form_col,
+    "Complexity": complexity_col,
+    "Symmetry": symmetry_col,
+}
 
 # Every filterable field, grouped into the four sidebar categories.
 FILTER_FIELDS = {
@@ -1285,7 +1355,7 @@ st.markdown(
 # Analytics is a separate page: render it and stop, so none of the Gallery-only
 # code below (editorial summary, chips, palette bar, flip-card grid) executes.
 if st.session_state.view_mode == "analytics":
-    render_analytics_page(filtered_df, df, color_cols, sector_col, color_family_col, country_col, complexity_col)
+    render_analytics_page(filtered_df, df, color_cols, sector_col, color_family_col, country_col, complexity_col, CROSSTAB_ROW_OPTIONS)
     st.stop()
 
 # ===================== EDITORIAL SUMMARY (collapsible) =====================
@@ -1390,21 +1460,21 @@ cols = st.columns(cols_per_row, gap="large")
 for idx, (_, row) in enumerate(filtered_df.iterrows()):
     col = cols[idx % cols_per_row]
     with col:
-        b_name = str(row.get(brand_col, "Unknown Brand")).strip()
+        b_name = safe_val(row, brand_col, "Unknown Brand")
         raw_img = str(row.get(img_col, "")).strip() if pd.notna(row.get(img_col, "")) else ""
         img_url = transform_image_url(raw_img)
 
         img_html = f'<img src="{img_url}" alt="{b_name}" />' if (img_url and img_url.startswith("http")) else '<div style="color: #a0aec0; font-size: 12px;">📷 Image unavailable</div>'
 
-        p_form = str(row.get(primary_form_col, "—")).strip()
-        c_family = str(row.get(color_family_col, "—")).strip()
-        sector_val = str(row.get(sector_col, "—")).strip()
-        cnt_val = str(row.get(country_col, "—")).strip()
-        complexity_val = str(row.get(complexity_col, "—")).strip()
-        symmetry_val = str(row.get(symmetry_col, "—")).strip()
-        type_class = str(row.get(type_class_col, "—")).strip()
-        symbolism_text = str(row.get(symbolism_col, "No symbolism recorded.")).strip()
-        case_type_val = str(row.get(case_type_col, "—")).strip()
+        p_form = safe_val(row, primary_form_col)
+        c_family = safe_val(row, primary_colour_col)
+        sector_val = safe_val(row, sector_col)
+        cnt_val = safe_val(row, country_col)
+        complexity_val = safe_val(row, complexity_col)
+        symmetry_val = safe_val(row, symmetry_col)
+        type_class = safe_val(row, type_class_col)
+        symbolism_text = safe_val(row, symbolism_col, "No symbolism recorded.")
+        case_type_val = safe_val(row, case_type_col)
 
         card_html = (
             f'<details class="flip-card" name="logo-flip-group">'
@@ -1417,7 +1487,7 @@ for idx, (_, row) in enumerate(filtered_df.iterrows()):
             f'<div class="card-meta-grid">'
             f'<div class="card-meta-item">Shape: <strong>{p_form}</strong></div>'
             f'<div class="card-meta-item">Sector: <strong>{sector_val}</strong></div>'
-            f'<div class="card-meta-item">Color: <strong>{c_family}</strong></div>'
+            f'<div class="card-meta-item">Primary Color: <strong>{c_family}</strong></div>'
             f'<div class="card-meta-item">Country: <strong>{cnt_val}</strong></div>'
             f'</div>'
             f'<div class="flip-hint">Tap card to flip details ↺</div>'
