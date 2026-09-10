@@ -514,6 +514,274 @@ details.flip-card[open]:hover .flip-card-inner {
 }
 
 .rr-footnote { font-size: 11.5px; color: var(--muted); margin-top: 14px; line-height: 1.5; }
+
+/* ===== UX overhaul additions (v8) ===== */
+
+/* Sidebar title + toggle */
+.sidebar-app-title {
+    font-family: "Space Grotesk", sans-serif;
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--ink);
+    margin: 4px 0 14px 0;
+}
+
+/* Gallery / Analytics segmented pill: a real sliding thumb that physically
+   moves between the two options, rather than each label independently
+   toggling its own background. */
+.st-key-view_toggle_wrap div[data-testid="stRadio"] > div[role="radiogroup"] {
+    position: relative;
+    width: 100%;
+    background-color: var(--card);
+    border-radius: 999px;
+    padding: 5px;
+    border: 1.5px solid var(--line);
+    display: flex;
+    isolation: isolate;
+}
+.st-key-view_toggle_wrap div[data-testid="stRadio"] > div[role="radiogroup"]::before {
+    content: "";
+    position: absolute;
+    top: 5px;
+    bottom: 5px;
+    left: 5px;
+    width: calc(50% - 5px);
+    background-color: var(--ink);
+    border-radius: 999px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.18);
+    transition: transform 0.32s cubic-bezier(0.4, 0, 0.2, 1);
+    z-index: 0;
+}
+.st-key-view_toggle_wrap div[data-testid="stRadio"] > div[role="radiogroup"]:has(label:nth-of-type(2) input:checked)::before {
+    transform: translateX(100%);
+}
+.st-key-view_toggle_wrap div[data-testid="stRadio"] label {
+    position: relative;
+    z-index: 1;
+    flex: 1;
+    text-align: center;
+    border-radius: 999px !important;
+    padding: 9px 0 !important;
+    margin: 0 !important;
+    background-color: transparent !important;
+}
+.st-key-view_toggle_wrap div[data-testid="stRadio"] label p {
+    color: var(--muted) !important;
+    font-size: 14px !important;
+    font-weight: 600 !important;
+    transition: color 0.2s ease;
+}
+.st-key-view_toggle_wrap div[data-testid="stRadio"] label[data-checked="true"] p {
+    color: #ffffff !important;
+}
+.st-key-view_toggle_wrap div[data-testid="stRadio"] span[data-baseweb="radio"] { display: none; }
+
+/* Small circular sync icon button, sits beside the toggle */
+.st-key-sync_icon_wrap button {
+    border-radius: 50% !important;
+    width: 40px !important;
+    height: 40px !important;
+    padding: 0 !important;
+    min-height: unset !important;
+    background: var(--card) !important;
+    border: 1.5px solid var(--line) !important;
+    color: var(--ink) !important;
+    font-size: 15px !important;
+}
+.st-key-sync_icon_wrap button:hover {
+    border-color: var(--accent) !important;
+    color: var(--accent) !important;
+}
+
+/* Sidebar search box — give it a visible rounded field */
+[data-testid="stSidebar"] div[data-testid="stTextInput"] input {
+    background: var(--card) !important;
+    border: 1.5px solid var(--line) !important;
+    border-radius: 10px !important;
+    padding: 8px 12px !important;
+    color: var(--ink) !important;
+}
+[data-testid="stSidebar"] div[data-testid="stTextInput"] input:focus {
+    border-color: var(--accent) !important;
+    box-shadow: 0 0 0 1px var(--accent) !important;
+}
+
+/* Sidebar multiselect fields — match the rounded/bordered field language */
+[data-testid="stSidebar"] div[data-baseweb="select"] > div {
+    background: var(--card) !important;
+    border: 1.5px solid var(--line) !important;
+    border-radius: 10px !important;
+}
+[data-testid="stSidebar"] div[data-baseweb="select"] > div:focus-within {
+    border-color: var(--accent) !important;
+    box-shadow: 0 0 0 1px var(--accent) !important;
+}
+[data-testid="stSidebar"] div[data-baseweb="tag"] {
+    background-color: var(--accent) !important;
+    border-radius: 6px !important;
+}
+[data-testid="stSidebar"] div[data-testid="stMultiSelect"] label p {
+    font-size: 13px !important;
+    font-weight: 600 !important;
+    color: var(--ink) !important;
+}
+[data-testid="stSidebar"] div[data-testid="stMultiSelect"] {
+    margin-bottom: 14px;
+}
+
+/* Main content subtitle bar (title moved to sidebar) */
+.main-subtitle-bar {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    padding-bottom: 14px;
+    margin-bottom: 18px;
+    border-bottom: 1px solid var(--line);
+}
+.main-subtitle-text {
+    font-size: 14px;
+    color: var(--muted);
+    font-weight: 500;
+}
+.main-subtitle-count {
+    font-size: 13px;
+    color: var(--ink);
+}
+.main-subtitle-count strong {
+    font-family: "Space Grotesk", sans-serif;
+    font-weight: 700;
+}
+
+/* Editorial Summary rendered inside a native expander -> restyle it to match card language */
+div[data-testid="stExpander"] {
+    border: 1.5px solid var(--line) !important;
+    border-radius: 14px !important;
+    background: var(--card) !important;
+    margin-bottom: 18px !important;
+    overflow: hidden;
+}
+div[data-testid="stExpander"] summary {
+    padding: 14px 20px !important;
+}
+div[data-testid="stExpander"] summary p {
+    font-family: "Space Grotesk", sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--ink);
+}
+div[data-testid="stExpander"] div[data-testid="stExpanderDetails"] {
+    padding: 0 20px 20px 20px !important;
+}
+
+/* Selected-filters bar: one bordered strip holding chips + Clear All + Sort */
+div[class*="st-key-filters_summary_bar"] {
+    background: var(--card);
+    border: 1.5px solid var(--line);
+    border-radius: 12px;
+    padding: 12px 18px;
+    margin-bottom: 4px;
+}
+
+/* Chips row (flexbox hack over Streamlit's vertical block) */
+.st-key-chips_row [data-testid="stVerticalBlock"] {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    row-gap: 8px;
+}
+.st-key-chips_row div[data-testid="stElementContainer"] {
+    width: auto !important;
+    flex: 0 0 auto !important;
+}
+.st-key-chips_row button {
+    border-radius: 20px !important;
+    padding: 4px 14px !important;
+    font-size: 12.5px !important;
+    font-weight: 600 !important;
+    background: var(--ink) !important;
+    border: 1.5px solid var(--ink) !important;
+    color: #ffffff !important;
+    line-height: 1.4 !important;
+    min-height: unset !important;
+}
+.st-key-chips_row button:hover {
+    opacity: 0.85;
+}
+.st-key-clear_all_chips button {
+    background: transparent !important;
+    border: none !important;
+    color: var(--accent) !important;
+    text-decoration: underline;
+    font-weight: 600 !important;
+    padding: 4px 6px !important;
+}
+.no-filters-text {
+    font-size: 12.5px;
+    color: var(--muted);
+    font-style: italic;
+}
+
+/* Sort dropdown inside the same bar */
+div[class*="st-key-filters_summary_bar"] div[data-testid="stSelectbox"] {
+    margin-top: 0 !important;
+}
+
+/* Result count line */
+.result-count-text {
+    font-size: 13px;
+    color: var(--muted);
+    margin: 10px 0 18px 0;
+}
+.result-count-text strong {
+    color: var(--ink);
+    font-weight: 700;
+}
+
+/* Reset-filters circular icon button */
+.st-key-reset_icon_wrap button {
+    border-radius: 50% !important;
+    width: 34px !important;
+    height: 34px !important;
+    padding: 0 !important;
+    min-height: unset !important;
+    background: var(--card) !important;
+    border: 1.5px solid var(--line) !important;
+    color: var(--ink) !important;
+}
+.st-key-reset_icon_wrap button:hover {
+    border-color: var(--accent) !important;
+    color: var(--accent) !important;
+}
+.filters-header-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 6px;
+}
+.filters-header-title {
+    font-weight: 700;
+    font-size: 15px;
+    color: var(--ink);
+}
+
+/* Country tag chips inside Editorial Summary */
+.editorial-country-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    margin-top: 6px;
+}
+.editorial-country-tag {
+    font-size: 10.5px;
+    font-weight: 600;
+    color: var(--ink);
+    background: var(--bg);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: 2px 7px;
+    white-space: nowrap;
+}
 </style>
 """, unsafe_allow_html=True)
 
@@ -707,138 +975,258 @@ def render_analytics_page(filtered_df, df, color_cols, sector_col, color_family_
     )
     st.markdown(html, unsafe_allow_html=True)
 
-# SIDEBAR
+# ===================== FIELD / CATEGORY DEFINITIONS =====================
+
+brand_col = "Name"
+img_col = "Logo"
+type_of_logo_col = "Type of Logo"
+primary_form_col = "Primary form (Visually Dominating Form)"
+color_family_col = "Color Family"
+sector_col = "Sector"
+org_type_col = "Type of Organization"
+country_col = "Country"
+complexity_col = "Complexity (Low/ Mid/ High) (Intrinsic Visual Load)"
+symmetry_col = "Symmetry"
+symbolism_col = "Symbolism"
+case_type_col = "Case Type"
+type_class_col = "Type classification"
+color_cols = ["Primary Colour", "Secondary Colour", "Colour", "Colour3", "Colour4", "Colour5"]
+undertone_col = "Color Undertone"
+
+# Every filterable field, grouped into the four sidebar categories.
+FILTER_FIELDS = {
+    "sector":       {"label": "Sector",              "col": sector_col,          "category": "org_location"},
+    "org_type":     {"label": "Organization Type",    "col": org_type_col,        "category": "org_location", "case_insensitive": True},
+    "country":      {"label": "Country",              "col": country_col,         "category": "org_location"},
+    "type_logo":    {"label": "Type of Logo",         "col": type_of_logo_col,    "category": "logo_design"},
+    "shape":        {"label": "Shape (Primary Form)", "col": primary_form_col,    "category": "logo_design"},
+    "complexity":   {"label": "Complexity",           "col": complexity_col,      "category": "logo_design"},
+    "symmetry":     {"label": "Symmetry",             "col": symmetry_col,        "category": "logo_design"},
+    "color_family": {"label": "Color Scheme",          "col": color_family_col,    "category": "colors"},
+    "undertone":    {"label": "Color Undertone",      "col": undertone_col,       "category": "colors"},
+    "color":        {"label": "Color",                "col": color_cols,          "category": "colors", "multi_col": True},
+    "case_type":    {"label": "Case Type",            "col": case_type_col,       "category": "type_style"},
+    "type_class":   {"label": "Type Classification",  "col": type_class_col,      "category": "type_style"},
+}
+
+CATEGORIES = [
+    ("org_location", "🏢 Organization & Location"),
+    ("logo_design",  "📐 Logo Details & Design"),
+    ("colors",       "🎨 Colors"),
+    ("type_style",   "✍️ Type Style"),
+]
+
+
+def get_options(col_name):
+    if col_name in df.columns:
+        return sorted([str(x).strip() for x in df[col_name].dropna().unique() if str(x).strip() not in ["", "nan", "N/A"]])
+    return []
+
+
+def get_options_multi(col_names):
+    values = set()
+    for col_name in col_names:
+        if col_name in df.columns:
+            for x in df[col_name].dropna().unique():
+                x = str(x).strip()
+                if x and x.lower() not in ["nan", "n/a"] and not x.startswith("#"):
+                    values.add(x)
+    return sorted(values)
+
+
+def field_options(field_key):
+    conf = FILTER_FIELDS[field_key]
+    if conf.get("multi_col"):
+        return get_options_multi(conf["col"])
+    return get_options(conf["col"])
+
+
+def ms_key(field_key):
+    """Session-state key for this field's multiselect widget. The widget's
+    own state *is* the applied filter — no separate temp/apply/applied
+    bookkeeping needed, so picking a value filters instantly."""
+    return f"ms__{field_key}"
+
+
+def get_applied(field_key):
+    return st.session_state.get(ms_key(field_key), [])
+
+
+def set_applied(field_key, values):
+    st.session_state[ms_key(field_key)] = values
+
+
+def reset_all_filters():
+    for field_key in FILTER_FIELDS:
+        st.session_state[ms_key(field_key)] = []
+    st.session_state.search_query = ""
+    st.session_state.exact_color_match = False
+
+
+# ===================== SESSION STATE INIT =====================
+
+if "view_mode" not in st.session_state:
+    st.session_state.view_mode = "gallery"
+if "search_query" not in st.session_state:
+    st.session_state.search_query = ""
+if "exact_color_match" not in st.session_state:
+    st.session_state.exact_color_match = False
+if "sort_mode" not in st.session_state:
+    st.session_state.sort_mode = "Name A-Z"
+if "_pending_action" not in st.session_state:
+    st.session_state._pending_action = None
+
+# Every multiselect needs an initial value in session_state before it's
+# instantiated (only sets keys that don't exist yet, so it never clobbers
+# a choice already made this session).
+for _field_key in FILTER_FIELDS:
+    if ms_key(_field_key) not in st.session_state:
+        st.session_state[ms_key(_field_key)] = []
+
+# Chip-removal / Clear-All live in the main content area, which renders AFTER
+# the sidebar multiselects. Streamlit forbids writing to a widget's session_state
+# key once that widget has been instantiated in the same run, so those actions
+# only queue a pending action + rerun; it's applied HERE, before any multiselect
+# widget exists for this run, which is safe.
+_pending = st.session_state._pending_action
+if _pending:
+    st.session_state._pending_action = None
+    if _pending[0] == "reset_all":
+        reset_all_filters()
+    elif _pending[0] == "remove_chip":
+        _, _fkey, _val = _pending
+        _remaining = [v for v in get_applied(_fkey) if v != _val]
+        set_applied(_fkey, _remaining)
+
+# ===================== SIDEBAR =====================
+
 with st.sidebar:
-    st.markdown("### Sync Data")
-    if st.button("🔄 Refresh Google Sheets", help="Click to sync latest data from Google Sheets"):
-        st.cache_data.clear()
-        st.rerun()
+    st.markdown('<div class="sidebar-app-title">Logo Landscape</div>', unsafe_allow_html=True)
+
+    toggle_col, sync_col = st.columns([5, 1])
+    with toggle_col:
+        with st.container(key="view_toggle_wrap"):
+            view_selection = st.radio(
+                "View Mode", options=["Gallery", "Analytics"], horizontal=True,
+                label_visibility="collapsed",
+                index=0 if st.session_state.view_mode == "gallery" else 1,
+                key="view_mode_radio",
+            )
+        new_view_mode = "gallery" if view_selection == "Gallery" else "analytics"
+        if new_view_mode != st.session_state.view_mode:
+            st.session_state.view_mode = new_view_mode
+            st.rerun()
+    with sync_col:
+        with st.container(key="sync_icon_wrap"):
+            if st.button("↻", key="sync_btn", help="Sync latest data from Google Sheets"):
+                st.cache_data.clear()
+                st.rerun()
 
     st.markdown("---")
-    st.markdown("### Filters")
 
-    brand_col = "Name"
-    img_col = "Logo"
-    type_of_logo_col = "Type of Logo"
-    primary_form_col = "Primary form (Visually Dominating Form)"
-    color_family_col = "Color Family"
-    sector_col = "Sector"
-    org_type_col = "Type of Organization"
-    country_col = "Country"
-    complexity_col = "Complexity (Low/ Mid/ High) (Intrinsic Visual Load)"
-    symmetry_col = "Symmetry"
-    symbolism_col = "Symbolism"
-    case_type_col = "Case Type"
-    type_class_col = "Type classification"
-    color_cols = ["Primary Colour", "Secondary Colour", "Colour", "Colour3", "Colour4", "Colour5"]
-    undertone_col = "Color Undertone" 
+    header_l, header_r = st.columns([5, 1])
+    with header_l:
+        st.markdown('<div class="filters-header-title">Filters</div>', unsafe_allow_html=True)
+    with header_r:
+        with st.container(key="reset_icon_wrap"):
+            if st.button("↺", key="reset_filters_btn", help="Reset filters"):
+                st.session_state._pending_action = ("reset_all",)
+                st.rerun()
 
-    def get_options(col_name):
-        if col_name in df.columns:
-            return sorted([str(x).strip() for x in df[col_name].dropna().unique() if str(x).strip() not in ["", "nan", "N/A"]])
-        return []
+    st.text_input("⌕ Search organisation...", key="search_query", label_visibility="collapsed", placeholder="⌕ Search organisation...")
 
-    def get_options_multi(col_names):
-        values = set()
-        for col_name in col_names:
-            if col_name in df.columns:
-                for x in df[col_name].dropna().unique():
-                    x = str(x).strip()
-                    if x and x.lower() not in ["nan", "n/a"] and not x.startswith("#"):
-                        values.add(x)
-        return sorted(values)
+    # Plain multiselect per field, grouped into category expanders. Picking a
+    # value filters immediately — there's no separate "Apply" step.
+    for cat_key, cat_label in CATEGORIES:
+        cat_fields = [fk for fk, conf in FILTER_FIELDS.items() if conf["category"] == cat_key]
+        with st.expander(cat_label, expanded=False):
+            for field_key in cat_fields:
+                conf = FILTER_FIELDS[field_key]
+                opts = field_options(field_key)
+                if not opts:
+                    continue
+                st.multiselect(
+                    conf["label"],
+                    options=opts,
+                    key=ms_key(field_key),
+                    placeholder=f"Select {conf['label'].lower()}...",
+                )
 
-    search_query = st.text_input("⌕ Search organisation...", "")
+            if cat_key == "colors":
+                st.checkbox("Exact match only (no extra colors)", key="exact_color_match")
 
-    with st.expander("🏢 Organization & Location", expanded=True):
-        selected_sectors = st.multiselect("Sector:", options=get_options(sector_col), default=[], key="sectors")
-        selected_org_types = st.multiselect("Organization Type:", options=get_options(org_type_col), default=[], key="org_types")
-        selected_countries = st.multiselect("Country:", options=get_options(country_col), default=[], key="countries")
+# ===================== FILTER EXECUTION =====================
 
-    with st.expander("📐 Logo Details & Design", expanded=False):
-        selected_logo_types = st.multiselect("Type of Logo:", options=get_options(type_of_logo_col), default=[], key="type_logo")
-        selected_forms = st.multiselect("Shape (Primary Form):", options=get_options(primary_form_col), default=[], key="shapes")
-        selected_complexity = st.multiselect("Complexity:", options=get_options(complexity_col), default=[], key="complexity")
-        selected_symmetry = st.multiselect("Symmetry:", options=get_options(symmetry_col), default=[], key="symmetry")
-
-    with st.expander("🎨 Colors", expanded=False):
-        selected_families = st.multiselect("Color Family:", options=get_options(color_family_col), default=[], key="colors_family")
-        selected_undertones = st.multiselect("Color Undertone:", options=get_options(undertone_col), default=[], key="undertones")
-        selected_colors = st.multiselect("Color:", options=get_options_multi(color_cols), default=[], key="colors_combined")
-        exact_color_match = st.checkbox("Exact match only (no extra colors)", value=False, key="exact_color_match")
-
-    with st.expander("✍️ Type Style", expanded=False):
-        selected_case_types = st.multiselect("Case Type:", options=get_options(case_type_col), default=[], key="case_types")
-        selected_type_class = st.multiselect("Type Classification:", options=get_options(type_class_col), default=[], key="type_class")
-
-# Filter execution
 filtered_df = df.copy()
 
+search_query = st.session_state.search_query
 if search_query and brand_col in df.columns:
     filtered_df = filtered_df[filtered_df[brand_col].astype(str).str.contains(search_query, case=False, na=False)]
-if selected_logo_types and type_of_logo_col in df.columns:
-    filtered_df = filtered_df[filtered_df[type_of_logo_col].astype(str).str.strip().isin([s.strip() for s in selected_logo_types])]
-if selected_forms and primary_form_col in df.columns:
-    filtered_df = filtered_df[filtered_df[primary_form_col].astype(str).str.strip().isin([s.strip() for s in selected_forms])]
-if selected_families and color_family_col in df.columns:
-    filtered_df = filtered_df[filtered_df[color_family_col].astype(str).str.strip().isin([s.strip() for s in selected_families])]
-if selected_sectors and sector_col in df.columns:
-    filtered_df = filtered_df[filtered_df[sector_col].astype(str).str.strip().isin([s.strip() for s in selected_sectors])]
-if selected_org_types and org_type_col in df.columns:
-    filtered_df = filtered_df[filtered_df[org_type_col].astype(str).str.strip().str.lower().isin([s.strip().lower() for s in selected_org_types])]
-if selected_countries and country_col in df.columns:
-    filtered_df = filtered_df[filtered_df[country_col].astype(str).str.strip().isin([s.strip() for s in selected_countries])]
-if selected_complexity and complexity_col in df.columns:
-    filtered_df = filtered_df[filtered_df[complexity_col].astype(str).str.strip().isin([s.strip() for s in selected_complexity])]
-if selected_symmetry and symmetry_col in df.columns:
-    filtered_df = filtered_df[filtered_df[symmetry_col].astype(str).str.strip().isin([s.strip() for s in selected_symmetry])]
 
-if selected_colors:
-    present_color_cols = [c for c in color_cols if c in df.columns]
-    if present_color_cols:
-        selected_set = set(s.strip() for s in selected_colors)
-        def row_color_set(row):
-            vals = set()
-            for c in present_color_cols:
-                v = str(row.get(c, "")).strip()
-                if v and v.lower() not in ["nan", "n/a"] and not v.startswith("#"):
-                    vals.add(v)
-            return vals
-        keep_mask = filtered_df.apply(lambda r: row_color_set(r) == selected_set if exact_color_match else selected_set.issubset(row_color_set(r)), axis=1)
-        filtered_df = filtered_df[keep_mask]
+for field_key, conf in FILTER_FIELDS.items():
+    values = get_applied(field_key)
+    if not values:
+        continue
+
+    if conf.get("multi_col"):
+        present_color_cols = [c for c in conf["col"] if c in filtered_df.columns]
+        if present_color_cols:
+            selected_set = set(v.strip() for v in values)
+
+            def row_color_set(row, _cols=present_color_cols):
+                vals = set()
+                for c in _cols:
+                    v = str(row.get(c, "")).strip()
+                    if v and v.lower() not in ["nan", "n/a"] and not v.startswith("#"):
+                        vals.add(v)
+                return vals
+
+            exact = st.session_state.exact_color_match
+            keep_mask = filtered_df.apply(
+                lambda r: row_color_set(r) == selected_set if exact else selected_set.issubset(row_color_set(r)),
+                axis=1,
+            )
+            filtered_df = filtered_df[keep_mask]
+        continue
+
+    col = conf["col"]
+    if col not in filtered_df.columns:
+        continue
+    if conf.get("case_insensitive"):
+        filtered_df = filtered_df[filtered_df[col].astype(str).str.strip().str.lower().isin([v.strip().lower() for v in values])]
+    else:
+        filtered_df = filtered_df[filtered_df[col].astype(str).str.strip().isin([v.strip() for v in values])]
+
+if st.session_state.sort_mode == "Name A-Z" and brand_col in filtered_df.columns:
+    filtered_df = filtered_df.sort_values(by=brand_col, key=lambda s: s.astype(str).str.lower())
+elif st.session_state.sort_mode == "Name Z-A" and brand_col in filtered_df.columns:
+    filtered_df = filtered_df.sort_values(by=brand_col, key=lambda s: s.astype(str).str.lower(), ascending=False)
 
 colormix = top_colors(filtered_df, color_cols, max_n=6)
 
-# Main View Render
-if "view_mode" not in st.session_state:
-    st.session_state.view_mode = "gallery"
+# ===================== MAIN AREA — SUBTITLE BAR =====================
 
-topbar_title_col, topbar_toggle_col = st.columns([3, 1.4])
-with topbar_title_col:
-    st.markdown(f'<div class="topbar-container"><div><h1 class="app-title">Logo Landscape</h1></div><div class="top-meta"><strong>{len(df)}</strong> Identities</div></div>', unsafe_allow_html=True)
-
-with topbar_toggle_col:
-    view_selection = st.radio("View Mode", options=["🖼️ Gallery", "📊 Analytics"], horizontal=True, label_visibility="collapsed", index=0 if st.session_state.view_mode == "gallery" else 1)
-    if view_selection == "🖼️ Gallery" and st.session_state.view_mode != "gallery":
-        st.session_state.view_mode = "gallery"
-        st.rerun()
-    elif view_selection == "📊 Analytics" and st.session_state.view_mode != "analytics":
-        st.session_state.view_mode = "analytics"
-        st.rerun()
+st.markdown(
+    f'<div class="main-subtitle-bar">'
+    f'<div class="main-subtitle-text">Visual Identity Research</div>'
+    f'<div class="main-subtitle-count"><strong>{len(df)}</strong> Identities</div>'
+    f'</div>',
+    unsafe_allow_html=True,
+)
 
 # Analytics is a separate page: render it and stop, so none of the Gallery-only
-# code below (hero, editorial card, palette bar, flip-card grid) executes.
+# code below (editorial summary, chips, palette bar, flip-card grid) executes.
 if st.session_state.view_mode == "analytics":
     render_analytics_page(filtered_df, df, color_cols, sector_col, color_family_col, country_col, complexity_col)
     st.stop()
 
-# HERO + EDITORIAL
-st.markdown('<div class="hero-title">How Medical Institutions Communicate</div>', unsafe_allow_html=True)
+# ===================== EDITORIAL SUMMARY (collapsible) =====================
 
 headline_label, headline_value, headline_pct = None, None, None
-if not selected_colors:
+if not get_applied("color"):
     top = top_colors(filtered_df, color_cols, max_n=1)
-    if top: headline_value, headline_pct, headline_label = top[0][0], top[0][1], "Dominant Color"
+    if top:
+        headline_value, headline_pct, headline_label = top[0][0], top[0][1], "Dominant Color"
 
 if headline_value is None:
     headline_label, headline_value, headline_pct = "Logos in view", str(len(filtered_df)), None
@@ -847,11 +1235,19 @@ headline_desc = f"{headline_pct}% of selected logos share this trait." if headli
 
 sector_top, sector_pct = top_value_pct(filtered_df, sector_col)
 family_top, family_pct = top_value_pct(filtered_df, color_family_col)
-complexity_top, complexity_pct = top_value_pct(filtered_df, complexity_col)
-country_nunique = filtered_df[country_col].astype(str).str.strip().replace("", pd.NA).dropna().nunique() if country_col in filtered_df.columns else 0
+country_names = (
+    sorted(filtered_df[country_col].astype(str).str.strip().replace("", pd.NA).dropna().unique().tolist())
+    if country_col in filtered_df.columns else []
+)
+country_nunique = len(country_names)
+
+MAX_COUNTRY_TAGS = 10
+country_tags_html = "".join(f'<span class="editorial-country-tag">{c}</span>' for c in country_names[:MAX_COUNTRY_TAGS])
+if country_nunique > MAX_COUNTRY_TAGS:
+    country_tags_html += f'<span class="editorial-country-tag">+{country_nunique - MAX_COUNTRY_TAGS} more</span>'
 
 editorial_html = (
-    f'<div class="editorial-wrap">'
+    f'<div class="editorial-wrap" style="border:none; margin-bottom:0; padding:0;">'
     f'<div class="editorial-hero">'
     f'<div class="editorial-eyebrow">{headline_label}</div>'
     f'<div class="editorial-number">{headline_value}</div>'
@@ -859,27 +1255,61 @@ editorial_html = (
     f'</div>'
     f'<div class="editorial-list">'
     f'<div class="editorial-row"><div class="editorial-row-label">Filtered Logos</div><div class="editorial-row-value">{len(filtered_df)}</div></div>'
-    f'<div class="editorial-row"><div class="editorial-row-label">Leading Sector<span class="editorial-sub">{sector_top or "—"}</span></div><div class="editorial-row-value">{sector_pct}%</div></div>'
-    f'<div class="editorial-row"><div class="editorial-row-label">Primary Color Family<span class="editorial-sub">{family_top or "—"}</span></div><div class="editorial-row-value">{family_pct}%</div></div>'
-    f'<div class="editorial-row"><div class="editorial-row-label">Countries Represented</div><div class="editorial-row-value">{country_nunique}</div></div>'
+    f'<div class="editorial-row"><div class="editorial-row-label">Major Sector<span class="editorial-sub">{sector_top or "—"}</span></div><div class="editorial-row-value">{sector_pct}%</div></div>'
+    f'<div class="editorial-row"><div class="editorial-row-label">Primary Color Scheme<span class="editorial-sub">{family_top or "—"}</span></div><div class="editorial-row-value">{family_pct}%</div></div>'
+    f'<div class="editorial-row" style="flex-direction:column; align-items:flex-start; gap:0;">'
+    f'<div style="display:flex; justify-content:space-between; width:100%; align-items:baseline;">'
+    f'<div class="editorial-row-label">Countries Represented</div><div class="editorial-row-value">{country_nunique}</div>'
+    f'</div>'
+    f'<div class="editorial-country-tags">{country_tags_html}</div>'
+    f'</div>'
     f'</div>'
     f'</div>'
 )
-st.markdown(editorial_html, unsafe_allow_html=True)
 
-# PALETTE STRIP
 palette_items_html = "".join([
     f'<div class="palette-item"><span class="palette-swatch" style="background:{color_to_hex(name)}"></span><span class="palette-name">{name}</span><span class="palette-pct">{pct}%</span></div>'
     for name, pct in colormix
 ]) if colormix else '<div style="font-size:12px; color:var(--muted);">No color data available</div>'
 
 palette_bar_html = (
-    f'<div class="palette-bar-container">'
+    f'<div class="palette-bar-container" style="margin-bottom:0; margin-top:16px;">'
     f'<div class="palette-title">Color Palette Breakdown</div>'
     f'<div class="palette-items">{palette_items_html}</div>'
     f'</div>'
 )
-st.markdown(palette_bar_html, unsafe_allow_html=True)
+
+with st.expander("Editorial Summary", expanded=True):
+    st.markdown(editorial_html, unsafe_allow_html=True)
+    st.markdown(palette_bar_html, unsafe_allow_html=True)
+
+# ===================== SELECTED FILTER CHIPS + SORT =====================
+
+chips = []  # list of (field_key, value)
+for field_key in FILTER_FIELDS:
+    for value in get_applied(field_key):
+        chips.append((field_key, value))
+
+with st.container(key="filters_summary_bar"):
+    chip_col, sort_col = st.columns([4, 1])
+
+    with chip_col:
+        with st.container(key="chips_row"):
+            if not chips:
+                st.markdown('<span class="no-filters-text">No filters applied</span>', unsafe_allow_html=True)
+            else:
+                for field_key, value in chips:
+                    if st.button(f"{value}  ✕", key=f"chip__{field_key}__{value}"):
+                        st.session_state._pending_action = ("remove_chip", field_key, value)
+                        st.rerun()
+                if st.button("Clear All", key="clear_all_chips"):
+                    st.session_state._pending_action = ("reset_all",)
+                    st.rerun()
+
+    with sort_col:
+        st.selectbox("Sort", options=["Name A-Z", "Name Z-A"], key="sort_mode", label_visibility="collapsed")
+
+st.markdown(f'<div class="result-count-text"><strong>{len(filtered_df)}</strong> Results</div>', unsafe_allow_html=True)
 
 # CLICK-TO-FLIP CARDS USING NATIVE HTML <details>
 # All cards share the same `name` attribute, which makes the browser treat
@@ -895,9 +1325,9 @@ for idx, (_, row) in enumerate(filtered_df.iterrows()):
         b_name = str(row.get(brand_col, "Unknown Brand")).strip()
         raw_img = str(row.get(img_col, "")).strip() if pd.notna(row.get(img_col, "")) else ""
         img_url = transform_image_url(raw_img)
-        
+
         img_html = f'<img src="{img_url}" alt="{b_name}" />' if (img_url and img_url.startswith("http")) else '<div style="color: #a0aec0; font-size: 12px;">📷 Image unavailable</div>'
-        
+
         p_form = str(row.get(primary_form_col, "—")).strip()
         c_family = str(row.get(color_family_col, "—")).strip()
         sector_val = str(row.get(sector_col, "—")).strip()
@@ -936,7 +1366,6 @@ for idx, (_, row) in enumerate(filtered_df.iterrows()):
             f'<div>'
             f'<div style="font-size:11px; font-weight:700; color:var(--accent); margin-bottom:4px;">SYMBOLISM</div>'
             f'<div class="back-symbolism">{symbolism_text}</div>'
-            f'</div>'
             f'</div>'
             f'</div>'
             f'</summary>'
