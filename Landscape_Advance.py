@@ -524,11 +524,10 @@ details.flip-card[open]:hover .flip-card-inner {
     padding: 18px 20px;
     margin-top: 20px;
 }
-.st-key-crosstab_card div[data-testid="stHorizontalBlock"] {
-    align-items: center !important;
-}
-.st-key-crosstab_card div[data-testid="stSelectbox"] {
-    margin-top: 0 !important;
+.st-key-crosstab_card div[data-testid="stSelectbox"] label p {
+    font-size: 12px !important;
+    font-weight: 600 !important;
+    color: var(--muted) !important;
 }
 
 /* ===== UX overhaul additions (v8) ===== */
@@ -988,6 +987,32 @@ def _bar_rows_html(items, with_swatch=False):
     return "".join(parts) if parts else '<div style="font-size:12px; color:var(--muted);">No data in this selection.</div>'
 
 
+def dim_value_set(row, conf):
+    """The set of values `row` holds for a cross-tab dimension. Single-value
+    fields return a 0-or-1-element set; the multi-value "Color" field returns
+    every color the logo actually uses, so a red-and-black logo counts toward
+    both the Red and Black columns/rows."""
+    vals = set()
+    if conf.get("multi"):
+        for c in conf["cols"]:
+            v = str(row.get(c, "")).strip()
+            if v and v.lower() not in ("", "nan", "n/a") and not v.startswith("#"):
+                vals.add(v)
+    else:
+        v = str(row.get(conf["col"], "")).strip()
+        if v and v.lower() not in ("", "nan", "n/a"):
+            vals.add(v)
+    return vals
+
+
+def dim_top_n(dataframe, conf, n=4):
+    """Top-n (value, pct-of-rows) pairs for a cross-tab dimension, single- or
+    multi-value alike."""
+    if conf.get("multi"):
+        return top_colors(dataframe, conf["cols"], max_n=n)
+    return top_n_value_pct(dataframe, conf["col"], n=n)
+
+
 def safe_val(row, col_name, default="—"):
     """Read a cell safely: falls back to `default` for missing columns,
     NaN floats, or blank/"nan"/"n/a" strings — not just missing keys.
@@ -1001,7 +1026,7 @@ def safe_val(row, col_name, default="—"):
     return s
 
 
-def render_analytics_page(filtered_df, df, color_cols, sector_col, color_family_col, country_col, complexity_col, crosstab_row_options):
+def render_analytics_page(filtered_df, df, color_cols, sector_col, color_family_col, country_col, complexity_col, crosstab_dims):
     """Detailed, filter-aware analytics dashboard — KPIs, distribution charts,
     and an interactive cross-tab whose row dimension can be repointed at any
     Logo Details/Design or Colors field via a dropdown (Sector always stays
@@ -1040,60 +1065,70 @@ def render_analytics_page(filtered_df, df, color_cols, sector_col, color_family_
     )
     st.markdown(html, unsafe_allow_html=True)
 
-    # ---- Interactive cross-tab: Sector (fixed) x user-selected dimension ----
+    # ---- Interactive cross-tab: any field x any field, e.g. Shape x Color ----
+    dim_labels = list(crosstab_dims.keys())
     if "crosstab_row_dim" not in st.session_state:
-        st.session_state.crosstab_row_dim = next(iter(crosstab_row_options))
+        st.session_state.crosstab_row_dim = "Shape (Primary Form)" if "Shape (Primary Form)" in dim_labels else dim_labels[0]
+    if "crosstab_col_dim" not in st.session_state:
+        st.session_state.crosstab_col_dim = "Color" if "Color" in dim_labels else (dim_labels[1] if len(dim_labels) > 1 else dim_labels[0])
 
     with st.container(key="crosstab_card"):
-        head_l, head_r = st.columns([3, 2])
-        with head_l:
-            st.markdown('<div class="chart-title" style="margin-bottom:0;">Cross-tab (share within sector)</div>', unsafe_allow_html=True)
-        with head_r:
-            st.selectbox(
-                "Group rows by",
-                options=list(crosstab_row_options.keys()),
-                key="crosstab_row_dim",
-                label_visibility="collapsed",
-            )
+        st.markdown('<div class="chart-title" style="margin-bottom:10px;">Cross-tab Explorer</div>', unsafe_allow_html=True)
+        sel_l, sel_r = st.columns(2)
+        with sel_l:
+            st.selectbox("Rows", options=dim_labels, key="crosstab_row_dim")
+        with sel_r:
+            st.selectbox("Columns", options=dim_labels, key="crosstab_col_dim")
 
         row_label = st.session_state.crosstab_row_dim
-        row_col = crosstab_row_options[row_label]
+        col_label = st.session_state.crosstab_col_dim
+        row_conf = crosstab_dims[row_label]
+        col_conf = crosstab_dims[col_label]
 
-        crosstab_html = '<div style="font-size:12px; color:var(--muted); margin-top:12px;">Not enough data for a cross-tab in this selection.</div>'
-        top_rows = [name for name, _ in top_n_value_pct(filtered_df, row_col, n=4)]
-        top_sectors_ct = [name for name, _ in top_n_value_pct(filtered_df, sector_col, n=4)]
-        if top_rows and top_sectors_ct and row_col in filtered_df.columns and sector_col in filtered_df.columns:
-            sub = filtered_df[
-                filtered_df[row_col].astype(str).str.strip().isin(top_rows)
-                & filtered_df[sector_col].astype(str).str.strip().isin(top_sectors_ct)
-            ]
-            if not sub.empty:
-                ct = pd.crosstab(
-                    sub[row_col].astype(str).str.strip(),
-                    sub[sector_col].astype(str).str.strip(),
-                    normalize="columns"
-                ) * 100
-                ct = ct.reindex(index=top_rows, columns=top_sectors_ct, fill_value=0)
+        if row_label == col_label:
+            st.markdown('<div class="rr-footnote">Pick two different fields to compare — e.g. Shape (Primary Form) for Rows and Color for Columns.</div>', unsafe_allow_html=True)
+        else:
+            top_rows = [name for name, _ in dim_top_n(filtered_df, row_conf, n=4)]
+            top_cols = [name for name, _ in dim_top_n(filtered_df, col_conf, n=4)]
 
-                head_cells = "".join(f'<div class="ct-cell ct-head">{s}</div>' for s in top_sectors_ct)
-                rows_html = ""
-                for r_name in top_rows:
-                    row_html = f'<div class="ct-cell ct-row-label">{r_name}</div>'
-                    for sec in top_sectors_ct:
-                        val = round(ct.loc[r_name, sec]) if r_name in ct.index and sec in ct.columns else 0
-                        opacity = max(0.08, min(0.85, val / 100))
-                        row_html += f'<div class="ct-cell"><div class="heat" style="background:rgba(99,102,241,{opacity}); width:100%; padding:5px 0;">{val}%</div></div>'
-                    rows_html += row_html
-                crosstab_html = (
-                    f'<div class="crosstab" style="grid-template-columns: 130px repeat({len(top_sectors_ct)}, 1fr); margin-top:12px;">'
-                    f'<div class="ct-cell ct-head"></div>{head_cells}{rows_html}</div>'
-                )
+            crosstab_html = '<div style="font-size:12px; color:var(--muted); margin-top:12px;">Not enough data for a cross-tab in this selection.</div>'
+            if top_rows and top_cols:
+                row_sets = filtered_df.apply(lambda r: dim_value_set(r, row_conf), axis=1)
+                col_sets = filtered_df.apply(lambda r: dim_value_set(r, col_conf), axis=1)
 
-        st.markdown(
-            crosstab_html
-            + f'<div class="rr-footnote">Darker cells = "{row_label}" makes up a larger share of that sector\'s logos. Recalculates live from your current filters and selection.</div>',
-            unsafe_allow_html=True,
-        )
+                col_totals = {cv: 0 for cv in top_cols}
+                counts = {rv: {cv: 0 for cv in top_cols} for rv in top_rows}
+                for rset, cset in zip(row_sets, col_sets):
+                    matched_cols = [cv for cv in top_cols if cv in cset]
+                    for cv in matched_cols:
+                        col_totals[cv] += 1
+                    matched_rows = [rv for rv in top_rows if rv in rset]
+                    for rv in matched_rows:
+                        for cv in matched_cols:
+                            counts[rv][cv] += 1
+
+                if any(col_totals.values()):
+                    head_cells = "".join(f'<div class="ct-cell ct-head">{c}</div>' for c in top_cols)
+                    rows_html = ""
+                    for rv in top_rows:
+                        row_html = f'<div class="ct-cell ct-row-label">{rv}</div>'
+                        for cv in top_cols:
+                            total = col_totals[cv]
+                            val = round(100 * counts[rv][cv] / total) if total else 0
+                            opacity = max(0.08, min(0.85, val / 100))
+                            row_html += f'<div class="ct-cell"><div class="heat" style="background:rgba(99,102,241,{opacity}); width:100%; padding:5px 0;">{val}%</div></div>'
+                        rows_html += row_html
+                    crosstab_html = (
+                        f'<div class="crosstab" style="grid-template-columns: 130px repeat({len(top_cols)}, 1fr); margin-top:12px;">'
+                        f'<div class="ct-cell ct-head"></div>{head_cells}{rows_html}</div>'
+                    )
+
+            st.markdown(
+                crosstab_html
+                + f'<div class="rr-footnote">Each cell = share of "{col_label}" logos in that column that are also "{row_label}" = that row. '
+                  f'E.g. the Red column shows what % of red logos have each {row_label.lower()}. Recalculates live from your current filters and selection.</div>',
+                unsafe_allow_html=True,
+            )
 
 # ===================== FIELD / CATEGORY DEFINITIONS =====================
 
@@ -1114,20 +1149,6 @@ type_class_col = "Type classification"
 color_cols = ["Primary Colour", "Secondary Colour", "Colour", "Colour3", "Colour4", "Colour5"]
 undertone_col = "Color Undertone"
 
-# Columns the analytics cross-tab's row dimension can be pointed at, pulled
-# only from the "Logo Details & Design" and "Colors" filter categories per
-# request (Sector always stays fixed as the cross-tab's column dimension).
-# The multi-column "Color" field is left out here since it holds several
-# colors per logo rather than one value to group rows by.
-CROSSTAB_ROW_OPTIONS = {
-    "Color Family": color_family_col,
-    "Color Undertone": undertone_col,
-    "Type of Logo": type_of_logo_col,
-    "Shape (Primary Form)": primary_form_col,
-    "Complexity": complexity_col,
-    "Symmetry": symmetry_col,
-}
-
 # Every filterable field, grouped into the four sidebar categories.
 FILTER_FIELDS = {
     "sector":       {"label": "Sector",              "col": sector_col,          "category": "org_location"},
@@ -1143,6 +1164,18 @@ FILTER_FIELDS = {
     "case_type":    {"label": "Case Type",            "col": case_type_col,       "category": "type_style"},
     "type_class":   {"label": "Type Classification",  "col": type_class_col,      "category": "type_style"},
 }
+
+# Every field above, reusable as EITHER axis of the analytics cross-tab
+# ("Rows" and "Columns" can both be pointed at any of these — Shape x Color,
+# Sector x Complexity, Color x Color Family, etc). Single-value fields carry
+# one value per logo; "Color" is flagged multi=True since a logo can hold
+# several colors at once, so it's matched by membership rather than equality.
+ALL_CROSSTAB_DIMS = {}
+for _fkey, _conf in FILTER_FIELDS.items():
+    if _conf.get("multi_col"):
+        ALL_CROSSTAB_DIMS[_conf["label"]] = {"multi": True, "cols": _conf["col"]}
+    else:
+        ALL_CROSSTAB_DIMS[_conf["label"]] = {"multi": False, "col": _conf["col"]}
 
 CATEGORIES = [
     ("org_location", "🏢 Organization & Location"),
@@ -1355,7 +1388,7 @@ st.markdown(
 # Analytics is a separate page: render it and stop, so none of the Gallery-only
 # code below (editorial summary, chips, palette bar, flip-card grid) executes.
 if st.session_state.view_mode == "analytics":
-    render_analytics_page(filtered_df, df, color_cols, sector_col, color_family_col, country_col, complexity_col, CROSSTAB_ROW_OPTIONS)
+    render_analytics_page(filtered_df, df, color_cols, sector_col, color_family_col, country_col, complexity_col, ALL_CROSSTAB_DIMS)
     st.stop()
 
 # ===================== EDITORIAL SUMMARY (collapsible) =====================
