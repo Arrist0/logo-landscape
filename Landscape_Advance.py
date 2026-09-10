@@ -1080,6 +1080,17 @@ def render_analytics_page(filtered_df, df, color_cols, sector_col, color_family_
         with sel_r:
             st.selectbox("Columns", options=dim_labels, key="crosstab_col_dim")
 
+        n_options = [3, 4, 5, 6, 8, 10, 12, 15, 20]
+        if "crosstab_row_n" not in st.session_state:
+            st.session_state.crosstab_row_n = 6
+        if "crosstab_col_n" not in st.session_state:
+            st.session_state.crosstab_col_n = 6
+        n_l, n_r = st.columns(2)
+        with n_l:
+            st.selectbox("Rows to show", options=n_options, key="crosstab_row_n")
+        with n_r:
+            st.selectbox("Columns to show", options=n_options, key="crosstab_col_n")
+
         row_label = st.session_state.crosstab_row_dim
         col_label = st.session_state.crosstab_col_dim
         row_conf = crosstab_dims[row_label]
@@ -1088,8 +1099,8 @@ def render_analytics_page(filtered_df, df, color_cols, sector_col, color_family_
         if row_label == col_label:
             st.markdown('<div class="rr-footnote">Pick two different fields to compare — e.g. Shape (Primary Form) for Rows and Color for Columns.</div>', unsafe_allow_html=True)
         else:
-            top_rows = [name for name, _ in dim_top_n(filtered_df, row_conf, n=4)]
-            top_cols = [name for name, _ in dim_top_n(filtered_df, col_conf, n=4)]
+            top_rows = [name for name, _ in dim_top_n(filtered_df, row_conf, n=st.session_state.crosstab_row_n)]
+            top_cols = [name for name, _ in dim_top_n(filtered_df, col_conf, n=st.session_state.crosstab_col_n)]
 
             crosstab_html = '<div style="font-size:12px; color:var(--muted); margin-top:12px;">Not enough data for a cross-tab in this selection.</div>'
             if top_rows and top_cols:
@@ -1108,6 +1119,8 @@ def render_analytics_page(filtered_df, df, color_cols, sector_col, color_family_
                             counts[rv][cv] += 1
 
                 if any(col_totals.values()):
+                    col_count = len(top_cols)
+                    min_table_width = 130 + col_count * 90
                     head_cells = "".join(f'<div class="ct-cell ct-head">{c}</div>' for c in top_cols)
                     rows_html = ""
                     for rv in top_rows:
@@ -1119,8 +1132,10 @@ def render_analytics_page(filtered_df, df, color_cols, sector_col, color_family_
                             row_html += f'<div class="ct-cell"><div class="heat" style="background:rgba(99,102,241,{opacity}); width:100%; padding:5px 0;">{val}%</div></div>'
                         rows_html += row_html
                     crosstab_html = (
-                        f'<div class="crosstab" style="grid-template-columns: 130px repeat({len(top_cols)}, 1fr); margin-top:12px;">'
+                        f'<div style="overflow-x:auto; margin-top:12px;">'
+                        f'<div class="crosstab" style="grid-template-columns: 130px repeat({col_count}, minmax(90px, 1fr)); min-width:{min_table_width}px;">'
                         f'<div class="ct-cell ct-head"></div>{head_cells}{rows_html}</div>'
+                        f'</div>'
                     )
 
             st.markdown(
