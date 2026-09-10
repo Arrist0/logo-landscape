@@ -1013,6 +1013,27 @@ def dim_top_n(dataframe, conf, n=4):
     return top_n_value_pct(dataframe, conf["col"], n=n)
 
 
+def dim_unique_count(dataframe, conf):
+    """How many distinct values a cross-tab dimension actually has in
+    `dataframe` — used to size the table automatically (6 countries -> 6
+    rows/columns, no manual tuning needed)."""
+    if conf.get("multi"):
+        vals = set()
+        present_cols = [c for c in conf["cols"] if c in dataframe.columns]
+        for c in present_cols:
+            cleaned = dataframe[c].astype(str).str.strip()
+            cleaned = cleaned[~cleaned.str.lower().isin(["", "nan", "n/a"])]
+            cleaned = cleaned[~cleaned.str.startswith("#")]
+            vals.update(cleaned.tolist())
+        return len(vals)
+    col = conf.get("col")
+    if col not in dataframe.columns:
+        return 0
+    vals = dataframe[col].astype(str).str.strip()
+    vals = vals[~vals.str.lower().isin(["", "nan", "n/a"])]
+    return int(vals.nunique())
+
+
 def safe_val(row, col_name, default="—"):
     """Read a cell safely: falls back to `default` for missing columns,
     NaN floats, or blank/"nan"/"n/a" strings — not just missing keys.
@@ -1080,11 +1101,11 @@ def render_analytics_page(filtered_df, df, color_cols, sector_col, color_family_
         with sel_r:
             st.selectbox("Columns", options=dim_labels, key="crosstab_col_dim")
 
-        n_options = [3, 4, 5, 6, 8, 10, 12, 15, 20]
+        n_options = ["Auto (all)", 3, 4, 5, 6, 8, 10, 12, 15, 20]
         if "crosstab_row_n" not in st.session_state:
-            st.session_state.crosstab_row_n = 6
+            st.session_state.crosstab_row_n = "Auto (all)"
         if "crosstab_col_n" not in st.session_state:
-            st.session_state.crosstab_col_n = 6
+            st.session_state.crosstab_col_n = "Auto (all)"
         n_l, n_r = st.columns(2)
         with n_l:
             st.selectbox("Rows to show", options=n_options, key="crosstab_row_n")
@@ -1099,8 +1120,19 @@ def render_analytics_page(filtered_df, df, color_cols, sector_col, color_family_
         if row_label == col_label:
             st.markdown('<div class="rr-footnote">Pick two different fields to compare — e.g. Shape (Primary Form) for Rows and Color for Columns.</div>', unsafe_allow_html=True)
         else:
-            top_rows = [name for name, _ in dim_top_n(filtered_df, row_conf, n=st.session_state.crosstab_row_n)]
-            top_cols = [name for name, _ in dim_top_n(filtered_df, col_conf, n=st.session_state.crosstab_col_n)]
+            # "Auto" sizes the table to however many distinct values the field
+            # actually has in the current filter (e.g. 6 countries -> 6 rows),
+            # capped so an open-ended field can't blow up the table.
+            AUTO_CAP = 25
+            row_unique = dim_unique_count(filtered_df, row_conf)
+            col_unique = dim_unique_count(filtered_df, col_conf)
+            row_setting = st.session_state.crosstab_row_n
+            col_setting = st.session_state.crosstab_col_n
+            row_n = min(row_unique, AUTO_CAP) if row_setting == "Auto (all)" else row_setting
+            col_n = min(col_unique, AUTO_CAP) if col_setting == "Auto (all)" else col_setting
+
+            top_rows = [name for name, _ in dim_top_n(filtered_df, row_conf, n=max(row_n, 1))]
+            top_cols = [name for name, _ in dim_top_n(filtered_df, col_conf, n=max(col_n, 1))]
 
             crosstab_html = '<div style="font-size:12px; color:var(--muted); margin-top:12px;">Not enough data for a cross-tab in this selection.</div>'
             if top_rows and top_cols:
@@ -1138,10 +1170,16 @@ def render_analytics_page(filtered_df, df, color_cols, sector_col, color_family_
                         f'</div>'
                     )
 
+            capped_note = ""
+            if row_setting == "Auto (all)" and row_unique > AUTO_CAP:
+                capped_note += f' Showing top {AUTO_CAP} of {row_unique} row values.'
+            if col_setting == "Auto (all)" and col_unique > AUTO_CAP:
+                capped_note += f' Showing top {AUTO_CAP} of {col_unique} column values.'
+
             st.markdown(
                 crosstab_html
                 + f'<div class="rr-footnote">Each cell = share of "{col_label}" logos in that column that are also "{row_label}" = that row. '
-                  f'E.g. the Red column shows what % of red logos have each {row_label.lower()}. Recalculates live from your current filters and selection.</div>',
+                  f'E.g. the Red column shows what % of red logos have each {row_label.lower()}. Recalculates live from your current filters and selection.{capped_note}</div>',
                 unsafe_allow_html=True,
             )
 
