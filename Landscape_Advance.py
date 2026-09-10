@@ -377,6 +377,15 @@ details.flip-card[open]:hover .flip-card-inner {
     font-weight: 600 !important;
 }
 
+
+/* Cross-tab metric cells */
+.heat {
+    transition: opacity 0.15s ease, transform 0.15s ease;
+}
+.heat:hover {
+    transform: scale(1.02);
+}
+
 /* ===== Analytics page ===== */
 .swatch {
     width: 14px;
@@ -1048,12 +1057,27 @@ def safe_val(row, col_name, default="—"):
 
 
 def render_analytics_page(filtered_df, df, color_cols, sector_col, color_family_col, country_col, complexity_col, crosstab_dims):
-    """Detailed, filter-aware analytics dashboard — KPIs, distribution charts,
-    and an interactive cross-tab whose row dimension can be repointed at any
-    Logo Details/Design or Colors field via a dropdown (Sector always stays
-    as the fixed column dimension). Built as flush-left HTML strings (no
-    loop-concatenated multi-line blocks) so Streamlit's Markdown parser
-    doesn't misread indented fragments as code blocks."""
+    """Detailed, filter-aware analytics dashboard.
+
+    The cross-tab supports four explicit measures:
+      - Count
+      - % of row
+      - % of column
+      - Association (lift)
+
+    Association is calculated as:
+        observed_count / expected_count
+    where:
+        expected_count = (row_total * column_total) / total_logos
+
+    Therefore:
+        1.00 = expected under independence
+        >1.00 = overrepresented
+        <1.00 = underrepresented
+
+    This fixes the old asymmetric denominator problem while retaining the
+    descriptive percentage views.
+    """
 
     kpi_countries = (
         filtered_df[country_col].astype(str).str.strip().replace("", pd.NA).dropna().nunique()
@@ -1086,26 +1110,54 @@ def render_analytics_page(filtered_df, df, color_cols, sector_col, color_family_
     )
     st.markdown(html, unsafe_allow_html=True)
 
-    # ---- Interactive cross-tab: any field x any field, e.g. Shape x Color ----
+    # ---- Interactive cross-tab: any field x any field ----
     dim_labels = list(crosstab_dims.keys())
+
+    if not dim_labels:
+        st.info("No cross-tab dimensions are available.")
+        return
+
     if "crosstab_row_dim" not in st.session_state:
-        st.session_state.crosstab_row_dim = "Shape (Primary Form)" if "Shape (Primary Form)" in dim_labels else dim_labels[0]
+        st.session_state.crosstab_row_dim = (
+            "Shape (Primary Form)" if "Shape (Primary Form)" in dim_labels else dim_labels[0]
+        )
     if "crosstab_col_dim" not in st.session_state:
-        st.session_state.crosstab_col_dim = "Color" if "Color" in dim_labels else (dim_labels[1] if len(dim_labels) > 1 else dim_labels[0])
+        st.session_state.crosstab_col_dim = (
+            "Color" if "Color" in dim_labels and len(dim_labels) > 1
+            else (dim_labels[1] if len(dim_labels) > 1 else dim_labels[0])
+        )
+    if "crosstab_measure" not in st.session_state:
+        st.session_state.crosstab_measure = "Association"
 
     with st.container(key="crosstab_card"):
-        st.markdown('<div class="chart-title" style="margin-bottom:10px;">Cross-tab Explorer</div>', unsafe_allow_html=True)
+        st.markdown(
+            '<div class="chart-title" style="margin-bottom:10px;">Cross-tab Explorer</div>',
+            unsafe_allow_html=True
+        )
+
         sel_l, sel_r = st.columns(2)
         with sel_l:
             st.selectbox("Rows", options=dim_labels, key="crosstab_row_dim")
         with sel_r:
             st.selectbox("Columns", options=dim_labels, key="crosstab_col_dim")
 
+        measure_options = ["Association", "Count", "% of row", "% of column"]
+        st.selectbox(
+            "Measure",
+            options=measure_options,
+            key="crosstab_measure",
+            help=(
+                "Association compares the observed combination with what would be "
+                "expected from the overall row and column distributions."
+            ),
+        )
+
         n_options = ["Auto (all)", 3, 4, 5, 6, 8, 10, 12, 15, 20]
         if "crosstab_row_n" not in st.session_state:
             st.session_state.crosstab_row_n = "Auto (all)"
         if "crosstab_col_n" not in st.session_state:
             st.session_state.crosstab_col_n = "Auto (all)"
+
         n_l, n_r = st.columns(2)
         with n_l:
             st.selectbox("Rows to show", options=n_options, key="crosstab_row_n")
@@ -1114,74 +1166,254 @@ def render_analytics_page(filtered_df, df, color_cols, sector_col, color_family_
 
         row_label = st.session_state.crosstab_row_dim
         col_label = st.session_state.crosstab_col_dim
+        measure = st.session_state.crosstab_measure
         row_conf = crosstab_dims[row_label]
         col_conf = crosstab_dims[col_label]
 
         if row_label == col_label:
-            st.markdown('<div class="rr-footnote">Pick two different fields to compare — e.g. Shape (Primary Form) for Rows and Color for Columns.</div>', unsafe_allow_html=True)
-        else:
-            # "Auto" sizes the table to however many distinct values the field
-            # actually has in the current filter (e.g. 6 countries -> 6 rows),
-            # capped so an open-ended field can't blow up the table.
-            AUTO_CAP = 25
-            row_unique = dim_unique_count(filtered_df, row_conf)
-            col_unique = dim_unique_count(filtered_df, col_conf)
-            row_setting = st.session_state.crosstab_row_n
-            col_setting = st.session_state.crosstab_col_n
-            row_n = min(row_unique, AUTO_CAP) if row_setting == "Auto (all)" else row_setting
-            col_n = min(col_unique, AUTO_CAP) if col_setting == "Auto (all)" else col_setting
+            st.markdown(
+                '<div class="rr-footnote">Pick two different fields to compare — e.g. '
+                'Shape (Primary Form) for Rows and Color for Columns.</div>',
+                unsafe_allow_html=True
+            )
+            return
 
-            top_rows = [name for name, _ in dim_top_n(filtered_df, row_conf, n=max(row_n, 1))]
-            top_cols = [name for name, _ in dim_top_n(filtered_df, col_conf, n=max(col_n, 1))]
+        # "Auto" sizes the table to however many distinct values the field has,
+        # capped so an open-ended field cannot make the page unwieldy.
+        AUTO_CAP = 25
+        row_unique = dim_unique_count(filtered_df, row_conf)
+        col_unique = dim_unique_count(filtered_df, col_conf)
+        row_setting = st.session_state.crosstab_row_n
+        col_setting = st.session_state.crosstab_col_n
+        row_n = min(row_unique, AUTO_CAP) if row_setting == "Auto (all)" else int(row_setting)
+        col_n = min(col_unique, AUTO_CAP) if col_setting == "Auto (all)" else int(col_setting)
 
-            crosstab_html = '<div style="font-size:12px; color:var(--muted); margin-top:12px;">Not enough data for a cross-tab in this selection.</div>'
-            if top_rows and top_cols:
-                row_sets = filtered_df.apply(lambda r: dim_value_set(r, row_conf), axis=1)
-                col_sets = filtered_df.apply(lambda r: dim_value_set(r, col_conf), axis=1)
+        top_rows = [name for name, _ in dim_top_n(filtered_df, row_conf, n=max(row_n, 1))]
+        top_cols = [name for name, _ in dim_top_n(filtered_df, col_conf, n=max(col_n, 1))]
 
-                col_totals = {cv: 0 for cv in top_cols}
-                counts = {rv: {cv: 0 for cv in top_cols} for rv in top_rows}
-                for rset, cset in zip(row_sets, col_sets):
-                    matched_cols = [cv for cv in top_cols if cv in cset]
+        crosstab_html = (
+            '<div style="font-size:12px; color:var(--muted); margin-top:12px;">'
+            'Not enough data for a cross-tab in this selection.</div>'
+        )
+
+        # Build membership sets once. This preserves the existing behaviour for
+        # multi-value fields such as Color: one logo may belong to several buckets.
+        if top_rows and top_cols and len(filtered_df) > 0:
+            row_sets = filtered_df.apply(lambda r: dim_value_set(r, row_conf), axis=1)
+            col_sets = filtered_df.apply(lambda r: dim_value_set(r, col_conf), axis=1)
+
+            counts = {rv: {cv: 0 for cv in top_cols} for rv in top_rows}
+            row_totals = {rv: 0 for rv in top_rows}
+            col_totals = {cv: 0 for cv in top_cols}
+
+            for rset, cset in zip(row_sets, col_sets):
+                matched_rows = [rv for rv in top_rows if rv in rset]
+                matched_cols = [cv for cv in top_cols if cv in cset]
+
+                for rv in matched_rows:
+                    row_totals[rv] += 1
+                for cv in matched_cols:
+                    col_totals[cv] += 1
+                for rv in matched_rows:
                     for cv in matched_cols:
-                        col_totals[cv] += 1
-                    matched_rows = [rv for rv in top_rows if rv in rset]
-                    for rv in matched_rows:
-                        for cv in matched_cols:
-                            counts[rv][cv] += 1
+                        counts[rv][cv] += 1
 
-                if any(col_totals.values()):
-                    col_count = len(top_cols)
-                    min_table_width = 130 + col_count * 90
-                    head_cells = "".join(f'<div class="ct-cell ct-head">{c}</div>' for c in top_cols)
-                    rows_html = ""
-                    for rv in top_rows:
-                        row_html = f'<div class="ct-cell ct-row-label">{rv}</div>'
-                        for cv in top_cols:
-                            total = col_totals[cv]
-                            val = round(100 * counts[rv][cv] / total) if total else 0
-                            opacity = max(0.08, min(0.85, val / 100))
-                            row_html += f'<div class="ct-cell"><div class="heat" style="background:rgba(99,102,241,{opacity}); width:100%; padding:5px 0;">{val}%</div></div>'
-                        rows_html += row_html
-                    crosstab_html = (
-                        f'<div style="overflow-x:auto; margin-top:12px;">'
-                        f'<div class="crosstab" style="grid-template-columns: 130px repeat({col_count}, minmax(90px, 1fr)); min-width:{min_table_width}px;">'
-                        f'<div class="ct-cell ct-head"></div>{head_cells}{rows_html}</div>'
-                        f'</div>'
+            total_n = len(filtered_df)
+
+            if total_n > 0:
+                col_count = len(top_cols)
+                min_table_width = 130 + col_count * 100
+                head_cells = "".join(
+                    f'<div class="ct-cell ct-head">{c}</div>' for c in top_cols
+                )
+
+                def association_value(rv, cv):
+                    """Observed / expected, using the current filtered dataset."""
+                    expected = (row_totals[rv] * col_totals[cv]) / total_n
+                    observed = counts[rv][cv]
+                    return (observed / expected) if expected > 0 else None
+
+                def metric_value(rv, cv):
+                    observed = counts[rv][cv]
+                    if measure == "Count":
+                        return float(observed)
+
+                    if measure == "% of row":
+                        denominator = row_totals[rv]
+                        return (100 * observed / denominator) if denominator else 0.0
+
+                    if measure == "% of column":
+                        denominator = col_totals[cv]
+                        return (100 * observed / denominator) if denominator else 0.0
+
+                    return association_value(rv, cv)
+
+                def cell_display(rv, cv):
+                    val = metric_value(rv, cv)
+                    if val is None:
+                        return "—"
+                    if measure == "Association":
+                        return f"{val:.2f}×"
+                    if measure == "Count":
+                        return f"{int(round(val))}"
+                    return f"{val:.0f}%"
+
+                def cell_style(rv, cv):
+                    val = metric_value(rv, cv)
+
+                    if val is None:
+                        return (
+                            "background:var(--bg); color:var(--muted); "
+                            "border:1px solid var(--line);"
+                        )
+
+                    # Association needs a neutral midpoint at 1.0.
+                    # Use a diverging visual language: below 1 = underrepresented,
+                    # 1 = expected, above 1 = overrepresented.
+                    if measure == "Association":
+                        # Compress extreme values so one rare cell doesn't dominate.
+                        clipped = max(0.25, min(4.0, float(val)))
+                        if clipped < 1:
+                            strength = min(0.78, (1 - clipped) / 0.75)
+                            bg = f"rgba(99,102,241,{0.10 + strength * 0.50:.3f})"
+                        elif clipped > 1:
+                            strength = min(0.78, (clipped - 1) / 3.0)
+                            bg = f"rgba(224,123,57,{0.10 + strength * 0.50:.3f})"
+                        else:
+                            bg = "rgba(128,128,128,0.10)"
+                    else:
+                        # Descriptive measures retain a conventional intensity scale.
+                        if measure == "Count":
+                            max_count = max(
+                                [counts[r][c] for r in top_rows for c in top_cols] or [1]
+                            )
+                            intensity = val / max_count if max_count else 0
+                        else:
+                            intensity = val / 100
+
+                        intensity = max(0.08, min(0.85, intensity))
+                        bg = f"rgba(99,102,241,{intensity:.3f})"
+
+                    return (
+                        f"background:{bg}; width:100%; padding:7px 4px; "
+                        f"min-height:28px; box-sizing:border-box;"
                     )
 
-            capped_note = ""
-            if row_setting == "Auto (all)" and row_unique > AUTO_CAP:
-                capped_note += f' Showing top {AUTO_CAP} of {row_unique} row values.'
-            if col_setting == "Auto (all)" and col_unique > AUTO_CAP:
-                capped_note += f' Showing top {AUTO_CAP} of {col_unique} column values.'
+                rows_html = ""
+                for rv in top_rows:
+                    row_html = (
+                        f'<div class="ct-cell ct-row-label" '
+                        f'title="{rv}: n={row_totals[rv]}">{rv}</div>'
+                    )
 
-            st.markdown(
-                crosstab_html
-                + f'<div class="rr-footnote">Each cell = share of "{col_label}" logos in that column that are also "{row_label}" = that row. '
-                  f'E.g. the Red column shows what % of red logos have each {row_label.lower()}. Recalculates live from your current filters and selection.{capped_note}</div>',
-                unsafe_allow_html=True,
+                    for cv in top_cols:
+                        observed = counts[rv][cv]
+                        expected = (
+                            (row_totals[rv] * col_totals[cv]) / total_n
+                            if total_n else 0
+                        )
+                        display = cell_display(rv, cv)
+
+                        if measure == "Association":
+                            tooltip = (
+                                f'{row_label}: {rv} × {col_label}: {cv} | '
+                                f'Observed: {observed} | Expected: {expected:.2f} | '
+                                f'Row n: {row_totals[rv]} | Column n: {col_totals[cv]}'
+                            )
+                        elif measure == "% of row":
+                            tooltip = (
+                                f'{row_label}: {rv} × {col_label}: {cv} | '
+                                f'Observed: {observed} | Row total: {row_totals[rv]}'
+                            )
+                        elif measure == "% of column":
+                            tooltip = (
+                                f'{row_label}: {rv} × {col_label}: {cv} | '
+                                f'Observed: {observed} | Column total: {col_totals[cv]}'
+                            )
+                        else:
+                            tooltip = (
+                                f'{row_label}: {rv} × {col_label}: {cv} | '
+                                f'Observed count: {observed}'
+                            )
+
+                        row_html += (
+                            f'<div class="ct-cell">'
+                            f'<div class="heat" title="{tooltip}" '
+                            f'style="{cell_style(rv, cv)}">'
+                            f'{display}'
+                            f'</div></div>'
+                        )
+
+                    rows_html += row_html
+
+                crosstab_html = (
+                    f'<div style="overflow-x:auto; margin-top:12px;">'
+                    f'<div class="crosstab" '
+                    f'style="grid-template-columns:130px repeat({col_count}, minmax(100px, 1fr)); '
+                    f'min-width:{min_table_width}px;">'
+                    f'<div class="ct-cell ct-head"></div>{head_cells}{rows_html}'
+                    f'</div></div>'
+                )
+
+        capped_note = ""
+        if row_setting == "Auto (all)" and row_unique > AUTO_CAP:
+            capped_note += f' Showing top {AUTO_CAP} of {row_unique} row values.'
+        if col_setting == "Auto (all)" and col_unique > AUTO_CAP:
+            capped_note += f' Showing top {AUTO_CAP} of {col_unique} column values.'
+
+        if measure == "Association":
+            measure_note = (
+                f'Association = observed / expected. '
+                f'1.00× = expected; above 1.00× = overrepresented; '
+                f'below 1.00× = underrepresented. '
+                f'Expected count is based on the current filtered dataset.'
             )
+        elif measure == "% of row":
+            measure_note = (
+                f'Each cell = percentage of "{row_label}" logos in that row '
+                f'that also belong to "{col_label}". Rows sum to 100% for '
+                f'single-value dimensions.'
+            )
+        elif measure == "% of column":
+            measure_note = (
+                f'Each cell = percentage of "{col_label}" logos in that column '
+                f'that also belong to "{row_label}". Columns sum to 100% for '
+                f'single-value dimensions.'
+            )
+        else:
+            measure_note = (
+                f'Each cell = number of logos matching both "{row_label}" '
+                f'and "{col_label}".'
+            )
+
+        multi_note = ""
+        if col_conf.get("multi") or row_conf.get("multi"):
+            multi_note = (
+                ' Multi-value fields such as Color can count one logo in more '
+                'than one bucket, so their marginal totals may exceed the total '
+                'number of logos.'
+            )
+
+        # Small legend for Association mode.
+        association_legend = ""
+        if measure == "Association":
+            association_legend = (
+                '<div style="display:flex; gap:18px; align-items:center; '
+                'margin-top:12px; font-size:11px; color:var(--muted);">'
+                '<span><b style="color:var(--ink);">Underrepresented</b> &lt; 1.00×</span>'
+                '<span><b style="color:var(--ink);">Expected</b> = 1.00×</span>'
+                '<span><b style="color:var(--ink);">Overrepresented</b> &gt; 1.00×</span>'
+                '</div>'
+            )
+
+        st.markdown(
+            crosstab_html
+            + association_legend
+            + f'<div class="rr-footnote">{measure_note} '
+              f'Recalculates live from your current filters and selection.'
+              f'{capped_note}{multi_note}</div>',
+            unsafe_allow_html=True,
+        )
 
 # ===================== FIELD / CATEGORY DEFINITIONS =====================
 
@@ -1229,6 +1461,13 @@ for _fkey, _conf in FILTER_FIELDS.items():
         ALL_CROSSTAB_DIMS[_conf["label"]] = {"multi": True, "cols": _conf["col"]}
     else:
         ALL_CROSSTAB_DIMS[_conf["label"]] = {"multi": False, "col": _conf["col"]}
+
+# "Primary Color" is added on top of the sidebar filter set: it's the single
+# dominant color per logo (unlike "Color" above, which pools every color a
+# logo uses and can't be summed cleanly across a row/column because one logo
+# counts toward several color buckets at once). Use this whenever you want
+# percentages that add up to 100% per country/sector/etc.
+ALL_CROSSTAB_DIMS["Primary Color"] = {"multi": False, "col": primary_colour_col}
 
 CATEGORIES = [
     ("org_location", "🏢 Organization & Location"),
