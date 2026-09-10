@@ -911,7 +911,7 @@ def transform_image_url(url_str):
     return url_str
 
 COLOR_HEX_MAP = {
-    "black": "#1a1a1a", "white": "#e8e8e8", "blue": "#2451c9", "red": "#c0392b",
+    "black": "#1a1a1a", "white": "#ffffff", "blue": "#2451c9", "red": "#c0392b",
     "green": "#1e9e5a", "yellow": "#e8b923", "orange": "#e07b39", "purple": "#8e44ad",
     "pink": "#e75f95", "teal": "#159e96", "grey": "#9aa0a6", "gray": "#9aa0a6",
     "brown": "#8a5a3c", "navy": "#1f2a5e", "maroon": "#6e1f2a", "gold": "#c9a227",
