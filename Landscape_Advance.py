@@ -971,6 +971,20 @@ def _bar_rows_html(items, with_swatch=False):
         )
     return "".join(parts) if parts else '<div style="font-size:12px; color:var(--muted);">No data in this selection.</div>'
 
+
+def safe_val(row, col_name, default="—"):
+    """Read a cell safely: falls back to `default` for missing columns,
+    NaN floats, or blank/"nan"/"n/a" strings — not just missing keys.
+    Prevents pandas' NaN from rendering as the literal text "nan"."""
+    val = row.get(col_name, default)
+    if pd.isna(val):
+        return default
+    s = str(val).strip()
+    if s == "" or s.lower() in ("nan", "n/a"):
+        return default
+    return s
+
+
 def render_analytics_page(filtered_df, df, color_cols, sector_col, color_family_col, country_col, complexity_col):
     """Detailed, filter-aware analytics dashboard — KPIs, distribution charts,
     and a Color Family x Sector cross-tab. Built as flush-left HTML strings
@@ -1046,6 +1060,7 @@ brand_col = "Name"
 img_col = "Logo"
 type_of_logo_col = "Type of Logo"
 primary_form_col = "Primary form (Visually Dominating Form)"
+primary_colour_col = "Primary Colour"
 color_family_col = "Color Family"
 sector_col = "Sector"
 org_type_col = "Type of Organization"
@@ -1390,21 +1405,21 @@ cols = st.columns(cols_per_row, gap="large")
 for idx, (_, row) in enumerate(filtered_df.iterrows()):
     col = cols[idx % cols_per_row]
     with col:
-        b_name = str(row.get(brand_col, "Unknown Brand")).strip()
+        b_name = safe_val(row, brand_col, "Unknown Brand")
         raw_img = str(row.get(img_col, "")).strip() if pd.notna(row.get(img_col, "")) else ""
         img_url = transform_image_url(raw_img)
 
         img_html = f'<img src="{img_url}" alt="{b_name}" />' if (img_url and img_url.startswith("http")) else '<div style="color: #a0aec0; font-size: 12px;">📷 Image unavailable</div>'
 
-        p_form = str(row.get(primary_form_col, "—")).strip()
-        c_family = str(row.get(Primary Colour_col, "—")).strip()
-        sector_val = str(row.get(sector_col, "—")).strip()
-        cnt_val = str(row.get(country_col, "—")).strip()
-        complexity_val = str(row.get(complexity_col, "—")).strip()
-        symmetry_val = str(row.get(symmetry_col, "—")).strip()
-        type_class = str(row.get(type_class_col, "—")).strip()
-        symbolism_text = str(row.get(symbolism_col, "No symbolism recorded.")).strip()
-        case_type_val = str(row.get(case_type_col, "—")).strip()
+        p_form = safe_val(row, primary_form_col)
+        c_family = safe_val(row, primary_colour_col)
+        sector_val = safe_val(row, sector_col)
+        cnt_val = safe_val(row, country_col)
+        complexity_val = safe_val(row, complexity_col)
+        symmetry_val = safe_val(row, symmetry_col)
+        type_class = safe_val(row, type_class_col)
+        symbolism_text = safe_val(row, symbolism_col, "No symbolism recorded.")
+        case_type_val = safe_val(row, case_type_col)
 
         card_html = (
             f'<details class="flip-card" name="logo-flip-group">'
@@ -1417,7 +1432,7 @@ for idx, (_, row) in enumerate(filtered_df.iterrows()):
             f'<div class="card-meta-grid">'
             f'<div class="card-meta-item">Shape: <strong>{p_form}</strong></div>'
             f'<div class="card-meta-item">Sector: <strong>{sector_val}</strong></div>'
-            f'<div class="card-meta-item">Color: <strong>{c_family}</strong></div>'
+            f'<div class="card-meta-item">Primary Color: <strong>{c_family}</strong></div>'
             f'<div class="card-meta-item">Country: <strong>{cnt_val}</strong></div>'
             f'</div>'
             f'<div class="flip-hint">Tap card to flip details ↺</div>'
